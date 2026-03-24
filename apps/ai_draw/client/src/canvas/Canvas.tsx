@@ -992,6 +992,64 @@ export const Canvas: React.FC = () => {
   }, [viewport, setViewport])
 
   useEffect(() => {
+    const handleImagesUploaded = (e: CustomEvent<{
+      images: Array<{ url: string; width: number; height: number }>
+      startX: number
+      startY: number
+      placeholderId?: string
+    }>) => {
+      const { images, startX, startY, placeholderId } = e.detail
+      if (images.length === 0) return
+
+      const GAP = 20
+      const MAX_WIDTH = 400
+
+      let currentX = startX
+      let currentY = startY
+      const newIds: string[] = []
+
+      images.forEach((img) => {
+        let width = img.width
+        let height = img.height
+
+        if (width > MAX_WIDTH) {
+          const scale = MAX_WIDTH / width
+          width = MAX_WIDTH
+          height = height * scale
+        }
+
+        const newId = useCanvasStore.getState().addShape({
+          type: 'image',
+          x: currentX,
+          y: currentY,
+          width,
+          height,
+          rotation: 0,
+          fill: 'transparent',
+          stroke: 'transparent',
+          strokeWidth: 0,
+          opacity: 1,
+          imageUrl: img.url,
+        })
+        newIds.push(newId.id)
+
+        currentX += width + GAP
+      })
+
+      if (placeholderId) {
+        useCanvasStore.getState().deleteShape(placeholderId)
+      }
+
+      if (newIds.length > 0) {
+        setSelectedIds(newIds)
+      }
+    }
+
+    window.addEventListener('images-uploaded', handleImagesUploaded as EventListener)
+    return () => window.removeEventListener('images-uploaded', handleImagesUploaded as EventListener)
+  }, [setSelectedIds])
+
+  useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
 
@@ -1108,6 +1166,62 @@ export const Canvas: React.FC = () => {
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}
+      onDragOver={(e) => {
+        e.preventDefault()
+        e.dataTransfer.dropEffect = 'copy'
+      }}
+      onDrop={(e) => {
+        e.preventDefault()
+        const files = Array.from(e.dataTransfer.files).filter((f) =>
+          f.type.startsWith('image/')
+        )
+        if (files.length === 0) return
+
+        const canvasPoint = screenToCanvas(e.clientX, e.clientY)
+        const GAP = 20
+        const MAX_WIDTH = 400
+
+        let currentX = canvasPoint.x
+        let currentY = canvasPoint.y
+        const newIds: string[] = []
+
+        files.forEach((file) => {
+          const url = URL.createObjectURL(file)
+          const img = new Image()
+          img.onload = () => {
+            let width = img.naturalWidth
+            let height = img.naturalHeight
+
+            if (width > MAX_WIDTH) {
+              const scale = MAX_WIDTH / width
+              width = MAX_WIDTH
+              height = height * scale
+            }
+
+            const newId = useCanvasStore.getState().addShape({
+              type: 'image',
+              x: currentX,
+              y: currentY,
+              width,
+              height,
+              rotation: 0,
+              fill: 'transparent',
+              stroke: 'transparent',
+              strokeWidth: 0,
+              opacity: 1,
+              imageUrl: url,
+            })
+            newIds.push(newId.id)
+
+            currentX += width + GAP
+
+            if (newIds.length === files.length) {
+              setSelectedIds(newIds)
+            }
+          }
+          img.src = url
+        })
+      }}
     >
       <div
         ref={viewportRef}

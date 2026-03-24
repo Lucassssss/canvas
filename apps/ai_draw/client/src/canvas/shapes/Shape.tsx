@@ -125,7 +125,52 @@ export const Shape: React.FC<ShapeComponentProps> = ({ shape }) => {
         return shape.imageUrl ? (
           <img src={shape.imageUrl} alt="" className="w-full h-full object-cover" />
         ) : (
-          <span className="text-gray-400 text-xs">点击上传图片</span>
+          <div className="w-full h-full flex items-center justify-center">
+            <label className="px-3 py-1.5 bg-blue-500 text-white text-xs rounded-md cursor-pointer hover:bg-blue-600 transition-colors">
+              点击上传图片
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                className="hidden"
+                onChange={(e) => {
+                  const files = e.target.files
+                  if (!files || files.length === 0) return
+
+                  const images = Array.from(files).map((file) => ({
+                    url: URL.createObjectURL(file),
+                    width: 0,
+                    height: 0,
+                  }))
+
+                  let loadedCount = 0
+
+                  images.forEach((img, index) => {
+                    const image = new Image()
+                    image.onload = () => {
+                      images[index].width = image.naturalWidth
+                      images[index].height = image.naturalHeight
+                      loadedCount++
+
+                      if (loadedCount === images.length) {
+                        window.dispatchEvent(
+                          new CustomEvent('images-uploaded', {
+                            detail: {
+                              images: images.filter((i) => i.width > 0),
+                              startX: shape.x,
+                              startY: shape.y,
+                              placeholderId: shape.id,
+                            },
+                          })
+                        )
+                      }
+                    }
+                    image.src = img.url
+                  })
+                }}
+              />
+            </label>
+          </div>
         )
 
       case 'draw':
