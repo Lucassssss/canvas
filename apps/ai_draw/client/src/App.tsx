@@ -1,12 +1,14 @@
-import React from 'react'
-import { Header } from './canvas/components/Header'
+import React, { useState } from 'react'
+import { MessageSquare } from 'lucide-react'
 import { LeftSidebar } from './canvas/components/LeftSidebar'
 import { RightSidebar } from './canvas/components/RightSidebar'
 import { Toolbar } from './canvas/components/Toolbar'
 import { Canvas } from './canvas/Canvas'
+import { ZoomControls } from './canvas/components/ZoomControls'
 import { useCanvasStore } from './canvas/store'
 
 const App: React.FC = () => {
+  const [isChatOpen, setIsChatOpen] = useState(false)
   const { addShape, activeTool, viewport, setActiveTool, setSelectedIds } = useCanvasStore()
 
   const handleCanvasClick = (e: React.MouseEvent) => {
@@ -57,8 +59,17 @@ const App: React.FC = () => {
 
   return (
     <div className="w-full h-full">
-      <Header />
-      <div className="flex" style={{ height: 'calc(100% - 56px)' }}>
+      <div className="logo">Canvas</div>
+
+      <button
+        className={`chat-toggle ${isChatOpen ? 'active' : ''}`}
+        onClick={() => setIsChatOpen(!isChatOpen)}
+        style={{ display: isChatOpen ? 'none' : 'flex' }}
+      >
+        <MessageSquare size={20} />
+      </button>
+
+      <div className="flex w-full h-full">
         <LeftSidebar />
         <div
           className="flex-1 relative"
@@ -66,8 +77,9 @@ const App: React.FC = () => {
         >
           <Canvas />
           <Toolbar />
+          <ZoomControls />
         </div>
-        <RightSidebar />
+        <RightSidebar isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
       </div>
     </div>
   )

@@ -5,19 +5,67 @@ import { ToolType, ShapeProps, SHAPE_MIN_SIZE } from './shapes/types'
 
 const placementTools: ToolType[] = ['text', 'note', 'image', 'shape', 'arrow', 'pen']
 
-const presetZooms = [
-  { label: '50%', value: 0.5 },
-  { label: '75%', value: 0.75 },
-  { label: '100%', value: 1 },
-  { label: '150%', value: 1.5 },
-  { label: '200%', value: 2 },
-]
-
 interface SelectionBoxProps {
   shape: ShapeProps
   viewport: { x: number; y: number; zoom: number }
   onResizeStart: (e: React.MouseEvent, handle: string, shapeId: string) => void
   onRotateStart: (e: React.MouseEvent, corner: string, shapeId: string) => void
+}
+
+interface SelectionRect {
+  startX: number
+  startY: number
+  endX: number
+  endY: number
+}
+
+const SelectionBoxLayer: React.FC<{
+  shapes: ShapeProps[]
+  selectedIds: string[]
+  viewport: { x: number; y: number; zoom: number }
+  onResizeStart: (e: React.MouseEvent, handle: string, shapeId: string) => void
+  onRotateStart: (e: React.MouseEvent, corner: string, shapeId: string) => void
+}> = ({ shapes, selectedIds, viewport, onResizeStart, onRotateStart }) => {
+  const selectedShapes = shapes.filter((s) => selectedIds.includes(s.id))
+
+  if (selectedShapes.length === 0) return null
+
+  if (selectedShapes.length === 1) {
+    const shape = selectedShapes[0]
+    return (
+      <SelectionBox
+        key={shape.id}
+        shape={shape}
+        viewport={viewport}
+        onResizeStart={onResizeStart}
+        onRotateStart={onRotateStart}
+      />
+    )
+  }
+
+  const minX = Math.min(...selectedShapes.map((s) => s.x))
+  const minY = Math.min(...selectedShapes.map((s) => s.y))
+  const maxX = Math.max(...selectedShapes.map((s) => s.x + s.width))
+  const maxY = Math.max(...selectedShapes.map((s) => s.y + s.height))
+
+  const screenX = minX * viewport.zoom + viewport.x
+  const screenY = minY * viewport.zoom + viewport.y
+  const screenWidth = (maxX - minX) * viewport.zoom
+  const screenHeight = (maxY - minY) * viewport.zoom
+
+  return (
+    <div
+      className="absolute pointer-events-none"
+      style={{
+        left: screenX,
+        top: screenY,
+        width: screenWidth,
+        height: screenHeight,
+        outline: '1px solid var(--primary)',
+        background: 'rgba(37, 99, 235, 0.05)',
+      }}
+    />
+  )
 }
 
 const SelectionBox: React.FC<SelectionBoxProps> = ({ shape, viewport, onResizeStart, onRotateStart }) => {
@@ -204,9 +252,9 @@ const SelectionBox: React.FC<SelectionBoxProps> = ({ shape, viewport, onResizeSt
 export const Canvas: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null)
   const viewportRef = useRef<HTMLDivElement>(null)
-  const [showZoomMenu, setShowZoomMenu] = useState(false)
   const [previousTool, setPreviousTool] = useState<ToolType>('select')
   const [isSpacePressed, setIsSpacePressed] = useState(false)
+  const [selectionRect, setSelectionRect] = useState<SelectionRect | null>(null)
 
   const {
     shapes,
@@ -216,12 +264,13 @@ export const Canvas: React.FC = () => {
     isDragging,
     setViewport,
     setSelectedIds,
+    addToSelection,
     clearSelection,
     setIsDragging,
     setActiveTool,
-    resetZoom,
     updateShape,
     saveHistory,
+    screenToCanvas,
   } = useCanvasStore()
 
   const effectiveTool = isSpacePressed ? 'hand' : activeTool
@@ -230,9 +279,26 @@ export const Canvas: React.FC = () => {
   const viewportDragStartRef = useRef<{ x: number; y: number; viewportX: number; viewportY: number } | null>(null)
   const resizeStartRef = useRef<{ startMouseX: number; startMouseY: number; startWidth: number; startHeight: number; startPosX: number; startPosY: number; handle: string; shapeId: string } | null>(null)
   const rotateStartRef = useRef<{ x: number; y: number; startAngle: number; initialRotation: number; centerX: number; centerY: number; shapeId: string } | null>(null)
+  const multiSelectDragStartRef = useRef<{ x: number; y: number; shapePositions: Map<string, { x: number; y: number }> } | null>(null)
 
-  const getSelectedShapes = () => {
-    return shapes.filter((s) => selectedIds.includes(s.id))
+  const getShapesInRect = (rect: SelectionRect): string[] => {
+    const minX = Math.min(rect.startX, rect.endX)
+    const maxX = Math.max(rect.startX, rect.endX)
+    const minY = Math.min(rect.startY, rect.endY)
+    const maxY = Math.max(rect.startY, rect.endY)
+
+    return shapes
+      .filter((shape) => {
+        const shapeRight = shape.x + shape.width
+        const shapeBottom = shape.y + shape.height
+        return (
+          shape.x < maxX &&
+          shapeRight > minX &&
+          shape.y < maxY &&
+          shapeBottom > minY
+        )
+      })
+      .map((s) => s.id)
   }
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
@@ -253,11 +319,61 @@ export const Canvas: React.FC = () => {
       return
     }
 
-    if (effectiveTool === 'select' && isCanvasBackground) {
-      clearSelection()
-      return
+    if (effectiveTool === 'select') {
+      const canvasPoint = screenToCanvas(e.clientX, e.clientY)
+
+      if (isShapeElement) {
+        const shapeId = isShapeElement.getAttribute('data-id')
+        if (shapeId) {
+          if (e.shiftKey) {
+            if (selectedIds.includes(shapeId)) {
+              setSelectedIds(selectedIds.filter((id) => id !== shapeId))
+            } else {
+              addToSelection(shapeId)
+            }
+          } else {
+            if (!selectedIds.includes(shapeId)) {
+              setSelectedIds([shapeId])
+            }
+            multiSelectDragStartRef.current = {
+              x: e.clientX,
+              y: e.clientY,
+              shapePositions: new Map(
+                (selectedIds.includes(shapeId) ? selectedIds : [shapeId]).map((id) => {
+                  const shape = shapes.find((s) => s.id === id)
+                  return [id, { x: shape?.x || 0, y: shape?.y || 0 }]
+                })
+              ),
+            }
+            setIsDragging(true)
+          }
+          return
+        }
+      }
+
+      if (isCanvasBackground) {
+        if (e.shiftKey) {
+          setSelectionRect({
+            startX: canvasPoint.x,
+            startY: canvasPoint.y,
+            endX: canvasPoint.x,
+            endY: canvasPoint.y,
+          })
+          setIsDragging(true)
+        } else {
+          clearSelection()
+          setSelectionRect({
+            startX: canvasPoint.x,
+            startY: canvasPoint.y,
+            endX: canvasPoint.x,
+            endY: canvasPoint.y,
+          })
+          setIsDragging(true)
+        }
+        return
+      }
     }
-  }, [effectiveTool, viewport, clearSelection, setIsDragging])
+  }, [effectiveTool, viewport, screenToCanvas, shapes, selectedIds, addToSelection, setSelectedIds, clearSelection, setIsDragging])
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     if (!isDragging) return
@@ -269,6 +385,23 @@ export const Canvas: React.FC = () => {
       setViewport({
         x: viewportX + dx,
         y: viewportY + dy,
+      })
+      return
+    }
+
+    if (selectionRect) {
+      const canvasPoint = screenToCanvas(e.clientX, e.clientY)
+      setSelectionRect((prev) => prev ? { ...prev, endX: canvasPoint.x, endY: canvasPoint.y } : null)
+      return
+    }
+
+    if (multiSelectDragStartRef.current) {
+      const { x: startX, y: startY, shapePositions } = multiSelectDragStartRef.current
+      const dx = (e.clientX - startX) / viewport.zoom
+      const dy = (e.clientY - startY) / viewport.zoom
+
+      shapePositions.forEach((pos, id) => {
+        updateShape(id, { x: pos.x + dx, y: pos.y + dy })
       })
       return
     }
@@ -348,9 +481,22 @@ export const Canvas: React.FC = () => {
 
       updateShape(shapeId, { rotation: newRotation })
     }
-  }, [isDragging, viewport, setViewport, shapes, updateShape])
+  }, [isDragging, viewport, setViewport, screenToCanvas, shapes, selectionRect, updateShape])
 
   const handleMouseUp = useCallback(() => {
+    if (selectionRect) {
+      const shapesInRect = getShapesInRect(selectionRect)
+      if (shapesInRect.length > 0) {
+        setSelectedIds(shapesInRect)
+      }
+      setSelectionRect(null)
+    }
+
+    if (multiSelectDragStartRef.current) {
+      saveHistory()
+      multiSelectDragStartRef.current = null
+    }
+
     if (viewportDragStartRef.current) {
       viewportDragStartRef.current = null
     }
@@ -363,7 +509,7 @@ export const Canvas: React.FC = () => {
       saveHistory()
     }
     setIsDragging(false)
-  }, [setIsDragging, saveHistory])
+  }, [selectionRect, setSelectedIds, saveHistory, setIsDragging])
 
   const handleResizeStart = useCallback((e: React.MouseEvent, handle: string, shapeId: string) => {
     e.stopPropagation()
@@ -455,6 +601,27 @@ export const Canvas: React.FC = () => {
         return
       }
 
+      if ((e.metaKey || e.ctrlKey) && e.key === 'c') {
+        e.preventDefault()
+        useCanvasStore.getState().copySelectedShapes()
+        return
+      }
+
+      if ((e.metaKey || e.ctrlKey) && e.key === 'v') {
+        e.preventDefault()
+        const newIds = useCanvasStore.getState().pasteShapes()
+        if (newIds.length > 0) {
+          setSelectedIds(newIds)
+        }
+        return
+      }
+
+      if ((e.metaKey || e.ctrlKey) && e.key === 'd') {
+        e.preventDefault()
+        useCanvasStore.getState().duplicateSelectedShapes()
+        return
+      }
+
       if ((e.metaKey || e.ctrlKey) && e.key === 'z') {
         if (e.shiftKey) {
           useCanvasStore.getState().redo()
@@ -505,26 +672,33 @@ export const Canvas: React.FC = () => {
     return 'default'
   }
 
-  const handleZoomPreset = (zoom: number) => {
-    const container = containerRef.current
-    if (!container) return
+  const renderSelectionRect = () => {
+    if (!selectionRect) return null
 
-    const rect = container.getBoundingClientRect()
-    const centerX = rect.width / 2
-    const centerY = rect.height / 2
+    const minX = Math.min(selectionRect.startX, selectionRect.endX)
+    const maxX = Math.max(selectionRect.startX, selectionRect.endX)
+    const minY = Math.min(selectionRect.startY, selectionRect.endY)
+    const maxY = Math.max(selectionRect.startY, selectionRect.endY)
 
-    const canvasX = (centerX - viewport.x) / viewport.zoom
-    const canvasY = (centerY - viewport.y) / viewport.zoom
+    const screenX = minX * viewport.zoom + viewport.x
+    const screenY = minY * viewport.zoom + viewport.y
+    const screenWidth = (maxX - minX) * viewport.zoom
+    const screenHeight = (maxY - minY) * viewport.zoom
 
-    setViewport({
-      zoom,
-      x: centerX - canvasX * zoom,
-      y: centerY - canvasY * zoom,
-    })
-    setShowZoomMenu(false)
+    return (
+      <div
+        className="absolute pointer-events-none"
+        style={{
+          left: screenX,
+          top: screenY,
+          width: screenWidth,
+          height: screenHeight,
+          border: '1px dashed var(--primary)',
+          background: 'rgba(37, 99, 235, 0.1)',
+        }}
+      />
+    )
   }
-
-  const selectedShapes = getSelectedShapes()
 
   return (
     <div
@@ -552,52 +726,15 @@ export const Canvas: React.FC = () => {
         ))}
       </div>
 
-      {selectedShapes.map((shape) => (
-        <SelectionBox
-          key={shape.id}
-          shape={shape}
-          viewport={viewport}
-          onResizeStart={handleResizeStart}
-          onRotateStart={handleRotateStart}
-        />
-      ))}
+      <SelectionBoxLayer
+        shapes={shapes}
+        selectedIds={selectedIds}
+        viewport={viewport}
+        onResizeStart={handleResizeStart}
+        onRotateStart={handleRotateStart}
+      />
 
-      <div
-        className="absolute bottom-4 left-4 flex items-center gap-1 bg-white rounded-lg shadow-lg px-2 py-1 cursor-pointer z-50"
-        onClick={() => setShowZoomMenu(!showZoomMenu)}
-      >
-        <span className="text-sm text-gray-700 font-medium">
-          {Math.round(viewport.zoom * 100)}%
-        </span>
-      </div>
-
-      {showZoomMenu && (
-        <div className="absolute bottom-12 left-4 bg-white rounded-lg shadow-lg py-1 z-50">
-          {presetZooms.map((preset) => (
-            <button
-              key={preset.value}
-              className="w-full px-4 py-1.5 text-sm text-left hover:bg-gray-100 text-gray-700"
-              onClick={(e) => {
-                e.stopPropagation()
-                handleZoomPreset(preset.value)
-              }}
-            >
-              {preset.label}
-            </button>
-          ))}
-          <div className="border-t my-1" />
-          <button
-            className="w-full px-4 py-1.5 text-sm text-left hover:bg-gray-100 text-gray-700"
-            onClick={(e) => {
-              e.stopPropagation()
-              resetZoom()
-              setShowZoomMenu(false)
-            }}
-          >
-            重置为 100%
-          </button>
-        </div>
-      )}
+      {renderSelectionRect()}
     </div>
   )
 }

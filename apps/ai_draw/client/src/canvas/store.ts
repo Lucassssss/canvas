@@ -12,6 +12,7 @@ interface CanvasStore {
   isDragging: boolean
   isResizing: boolean
   isRotating: boolean
+  clipboard: ShapeProps[]
 
   setShapes: (shapes: ShapeProps[]) => void
   addShape: (shape: Omit<ShapeProps, 'id'>) => ShapeProps
@@ -40,6 +41,10 @@ interface CanvasStore {
   redo: () => void
   saveHistory: () => void
 
+  copySelectedShapes: () => void
+  pasteShapes: () => string[]
+  duplicateSelectedShapes: () => void
+
   screenToCanvas: (screenX: number, screenY: number) => { x: number; y: number }
   canvasToScreen: (canvasX: number, canvasY: number) => { x: number; y: number }
 }
@@ -54,6 +59,7 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
   isDragging: false,
   isResizing: false,
   isRotating: false,
+  clipboard: [],
 
   setShapes: (shapes) => set({ shapes }),
 
@@ -215,6 +221,60 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
       history: newHistory,
       historyIndex: newHistory.length - 1,
     })
+  },
+
+  copySelectedShapes: () => {
+    const { shapes, selectedIds } = get()
+    const selectedShapes = shapes.filter((s) => selectedIds.includes(s.id))
+    set({ clipboard: JSON.parse(JSON.stringify(selectedShapes)) })
+  },
+
+  pasteShapes: () => {
+    const { shapes, clipboard } = get()
+    if (clipboard.length === 0) return []
+
+    const PASTE_OFFSET = 20
+    const newIds: string[] = []
+
+    const newShapes = clipboard.map((shape) => {
+      const newId = generateId()
+      newIds.push(newId)
+      return {
+        ...shape,
+        id: newId,
+        x: shape.x + PASTE_OFFSET,
+        y: shape.y + PASTE_OFFSET,
+      }
+    })
+
+    set({ shapes: [...shapes, ...newShapes] })
+    get().saveHistory()
+    return newIds
+  },
+
+  duplicateSelectedShapes: () => {
+    const { shapes, selectedIds } = get()
+    const selectedShapes = shapes.filter((s) => selectedIds.includes(s.id))
+
+    const DUPLICATE_OFFSET = 20
+    const newIds: string[] = []
+
+    const newShapes = selectedShapes.map((shape) => {
+      const newId = generateId()
+      newIds.push(newId)
+      return {
+        ...shape,
+        id: newId,
+        x: shape.x + DUPLICATE_OFFSET,
+        y: shape.y + DUPLICATE_OFFSET,
+      }
+    })
+
+    set({
+      shapes: [...shapes, ...newShapes],
+      selectedIds: newIds,
+    })
+    get().saveHistory()
   },
 
   screenToCanvas: (screenX, screenY) => {

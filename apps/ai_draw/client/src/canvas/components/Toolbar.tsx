@@ -49,7 +49,10 @@ export const Toolbar: React.FC = () => {
         <button
           key={tool.type}
           className={`toolbar-btn ${activeTool === tool.type ? 'active' : ''}`}
-          onClick={() => setActiveTool(tool.type)}
+          onClick={(e) => {
+            e.stopPropagation()
+            setActiveTool(tool.type)
+          }}
           title={`${tool.label} (${tool.shortcut})`}
         >
           {tool.icon}
