@@ -5,11 +5,67 @@ import { ToolType, ShapeProps, SHAPE_MIN_SIZE } from './shapes/types'
 
 const placementTools: ToolType[] = ['text', 'note', 'image', 'shape', 'arrow', 'pen']
 
+function getRotatedBoundingBox(
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  rotation: number
+): { minX: number; minY: number; maxX: number; maxY: number } {
+  const cx = x + width / 2
+  const cy = y + height / 2
+  const rad = (rotation * Math.PI) / 180
+  const cos = Math.cos(rad)
+  const sin = Math.sin(rad)
+
+  const corners = [
+    { x: x, y: y },
+    { x: x + width, y: y },
+    { x: x + width, y: y + height },
+    { x: x, y: y + height },
+  ]
+
+  const rotatedCorners = corners.map((corner) => {
+    const dx = corner.x - cx
+    const dy = corner.y - cy
+    return {
+      x: cx + dx * cos - dy * sin,
+      y: cy + dx * sin + dy * cos,
+    }
+  })
+
+  const xs = rotatedCorners.map((c) => c.x)
+  const ys = rotatedCorners.map((c) => c.y)
+
+  return {
+    minX: Math.min(...xs),
+    minY: Math.min(...ys),
+    maxX: Math.max(...xs),
+    maxY: Math.max(...ys),
+  }
+}
+
 interface SelectionBoxProps {
   shape: ShapeProps
   viewport: { x: number; y: number; zoom: number }
   onResizeStart: (e: React.MouseEvent, handle: string, shapeId: string) => void
   onRotateStart: (e: React.MouseEvent, corner: string, shapeId: string) => void
+}
+
+interface MultiSelectResizeStart {
+  startMouseX: number
+  startMouseY: number
+  startBounds: { minX: number; minY: number; maxX: number; maxY: number }
+  shapePositions: Map<string, { x: number; y: number; width: number; height: number; rotation: number }>
+  handle: string
+}
+
+interface MultiSelectRotateStart {
+  startAngle: number
+  centerX: number
+  centerY: number
+  initialRotations: Map<string, number>
+  initialPositions: Map<string, { x: number; y: number; centerX: number; centerY: number }>
 }
 
 interface SelectionRect {
@@ -23,9 +79,11 @@ const SelectionBoxLayer: React.FC<{
   shapes: ShapeProps[]
   selectedIds: string[]
   viewport: { x: number; y: number; zoom: number }
-  onResizeStart: (e: React.MouseEvent, handle: string, shapeId: string) => void
-  onRotateStart: (e: React.MouseEvent, corner: string, shapeId: string) => void
-}> = ({ shapes, selectedIds, viewport, onResizeStart, onRotateStart }) => {
+  onSingleResizeStart: (e: React.MouseEvent, handle: string, shapeId: string) => void
+  onSingleRotateStart: (e: React.MouseEvent, corner: string, shapeId: string) => void
+  onMultiResizeStart: (e: React.MouseEvent, handle: string) => void
+  onMultiRotateStart: (e: React.MouseEvent) => void
+}> = ({ shapes, selectedIds, viewport, onSingleResizeStart, onSingleRotateStart, onMultiResizeStart, onMultiRotateStart }) => {
   const selectedShapes = shapes.filter((s) => selectedIds.includes(s.id))
 
   if (selectedShapes.length === 0) return null
@@ -37,42 +95,22 @@ const SelectionBoxLayer: React.FC<{
         key={shape.id}
         shape={shape}
         viewport={viewport}
-        onResizeStart={onResizeStart}
-        onRotateStart={onRotateStart}
+        onResizeStart={(e, handle) => onSingleResizeStart(e, handle, shape.id)}
+        onRotateStart={(e, corner) => onSingleRotateStart(e, corner, shape.id)}
       />
     )
   }
 
-  const minX = Math.min(...selectedShapes.map((s) => s.x))
-  const minY = Math.min(...selectedShapes.map((s) => s.y))
-  const maxX = Math.max(...selectedShapes.map((s) => s.x + s.width))
-  const maxY = Math.max(...selectedShapes.map((s) => s.y + s.height))
+  const allBounds = selectedShapes.map((s) => getRotatedBoundingBox(s.x, s.y, s.width, s.height, s.rotation))
+  const minX = Math.min(...allBounds.map((b) => b.minX))
+  const minY = Math.min(...allBounds.map((b) => b.minY))
+  const maxX = Math.max(...allBounds.map((b) => b.maxX))
+  const maxY = Math.max(...allBounds.map((b) => b.maxY))
 
   const screenX = minX * viewport.zoom + viewport.x
   const screenY = minY * viewport.zoom + viewport.y
   const screenWidth = (maxX - minX) * viewport.zoom
   const screenHeight = (maxY - minY) * viewport.zoom
-
-  return (
-    <div
-      className="absolute pointer-events-none"
-      style={{
-        left: screenX,
-        top: screenY,
-        width: screenWidth,
-        height: screenHeight,
-        outline: '1px solid var(--primary)',
-        background: 'rgba(37, 99, 235, 0.05)',
-      }}
-    />
-  )
-}
-
-const SelectionBox: React.FC<SelectionBoxProps> = ({ shape, viewport, onResizeStart, onRotateStart }) => {
-  const screenX = shape.x * viewport.zoom + viewport.x
-  const screenY = shape.y * viewport.zoom + viewport.y
-  const screenWidth = shape.width * viewport.zoom
-  const screenHeight = shape.height * viewport.zoom
 
   const handleSize = 8
   const rotateHandleSize = 24
@@ -86,8 +124,189 @@ const SelectionBox: React.FC<SelectionBoxProps> = ({ shape, viewport, onResizeSt
         top: screenY,
         width: screenWidth,
         height: screenHeight,
-        transform: `rotate(${shape.rotation}deg)`,
-        transformOrigin: 'center center',
+        outline: '1px solid var(--primary)',
+        background: 'rgba(37, 99, 235, 0.05)',
+      }}
+    >
+      <div
+        className="resize-handle pointer-events-auto absolute"
+        style={{
+          width: handleSize,
+          height: handleSize,
+          background: 'white',
+          border: '1px solid var(--primary)',
+          top: -handleSize / 2,
+          left: -handleSize / 2,
+          cursor: 'nw-resize',
+        }}
+        onMouseDown={(e) => onMultiResizeStart(e, 'nw')}
+      />
+      <div
+        className="resize-handle pointer-events-auto absolute"
+        style={{
+          width: handleSize,
+          height: handleSize,
+          background: 'white',
+          border: '1px solid var(--primary)',
+          top: -handleSize / 2,
+          right: -handleSize / 2,
+          cursor: 'ne-resize',
+        }}
+        onMouseDown={(e) => onMultiResizeStart(e, 'ne')}
+      />
+      <div
+        className="resize-handle pointer-events-auto absolute"
+        style={{
+          width: handleSize,
+          height: handleSize,
+          background: 'white',
+          border: '1px solid var(--primary)',
+          bottom: -handleSize / 2,
+          left: -handleSize / 2,
+          cursor: 'sw-resize',
+        }}
+        onMouseDown={(e) => onMultiResizeStart(e, 'sw')}
+      />
+      <div
+        className="resize-handle pointer-events-auto absolute"
+        style={{
+          width: handleSize,
+          height: handleSize,
+          background: 'white',
+          border: '1px solid var(--primary)',
+          bottom: -handleSize / 2,
+          right: -handleSize / 2,
+          cursor: 'se-resize',
+        }}
+        onMouseDown={(e) => onMultiResizeStart(e, 'se')}
+      />
+      <div
+        className="resize-handle pointer-events-auto absolute"
+        style={{
+          width: handleSize,
+          height: handleSize,
+          background: 'white',
+          border: '1px solid var(--primary)',
+          top: -handleSize / 2,
+          left: screenWidth / 2 - handleSize / 2,
+          cursor: 'n-resize',
+        }}
+        onMouseDown={(e) => onMultiResizeStart(e, 'n')}
+      />
+      <div
+        className="resize-handle pointer-events-auto absolute"
+        style={{
+          width: handleSize,
+          height: handleSize,
+          background: 'white',
+          border: '1px solid var(--primary)',
+          bottom: -handleSize / 2,
+          left: screenWidth / 2 - handleSize / 2,
+          cursor: 's-resize',
+        }}
+        onMouseDown={(e) => onMultiResizeStart(e, 's')}
+      />
+      <div
+        className="resize-handle pointer-events-auto absolute"
+        style={{
+          width: handleSize,
+          height: handleSize,
+          background: 'white',
+          border: '1px solid var(--primary)',
+          left: -handleSize / 2,
+          top: screenHeight / 2 - handleSize / 2,
+          cursor: 'w-resize',
+        }}
+        onMouseDown={(e) => onMultiResizeStart(e, 'w')}
+      />
+      <div
+        className="resize-handle pointer-events-auto absolute"
+        style={{
+          width: handleSize,
+          height: handleSize,
+          background: 'white',
+          border: '1px solid var(--primary)',
+          right: -handleSize / 2,
+          top: screenHeight / 2 - handleSize / 2,
+          cursor: 'e-resize',
+        }}
+        onMouseDown={(e) => onMultiResizeStart(e, 'e')}
+      />
+      <div
+        className="pointer-events-auto absolute"
+        style={{
+          width: rotateHandleSize,
+          height: rotateHandleSize,
+          background: 'transparent',
+          border: 'none',
+          top: -rotateHandleOffset,
+          left: -rotateHandleOffset,
+          cursor: `url('/rotate_1.svg') ${rotateHandleSize / 2} ${rotateHandleSize / 2}, crosshair`,
+        }}
+        onMouseDown={onMultiRotateStart}
+      />
+      <div
+        className="pointer-events-auto absolute"
+        style={{
+          width: rotateHandleSize,
+          height: rotateHandleSize,
+          background: 'transparent',
+          border: 'none',
+          top: -rotateHandleOffset,
+          right: -rotateHandleOffset,
+          cursor: `url('/rotate_2.svg') ${rotateHandleSize / 2} ${rotateHandleSize / 2}, crosshair`,
+        }}
+        onMouseDown={onMultiRotateStart}
+      />
+      <div
+        className="pointer-events-auto absolute"
+        style={{
+          width: rotateHandleSize,
+          height: rotateHandleSize,
+          background: 'transparent',
+          border: 'none',
+          bottom: -rotateHandleOffset,
+          left: -rotateHandleOffset,
+          cursor: `url('/rotate_4.svg') ${rotateHandleSize / 2} ${rotateHandleSize / 2}, crosshair`,
+        }}
+        onMouseDown={onMultiRotateStart}
+      />
+      <div
+        className="pointer-events-auto absolute"
+        style={{
+          width: rotateHandleSize,
+          height: rotateHandleSize,
+          background: 'transparent',
+          border: 'none',
+          bottom: -rotateHandleOffset,
+          right: -rotateHandleOffset,
+          cursor: `url('/rotate_3.svg') ${rotateHandleSize / 2} ${rotateHandleSize / 2}, crosshair`,
+        }}
+        onMouseDown={onMultiRotateStart}
+      />
+    </div>
+  )
+}
+
+const SelectionBox: React.FC<SelectionBoxProps> = ({ shape, viewport, onResizeStart, onRotateStart }) => {
+  const bounds = getRotatedBoundingBox(shape.x, shape.y, shape.width, shape.height, shape.rotation)
+  const screenX = bounds.minX * viewport.zoom + viewport.x
+  const screenY = bounds.minY * viewport.zoom + viewport.y
+  const screenWidth = (bounds.maxX - bounds.minX) * viewport.zoom
+  const screenHeight = (bounds.maxY - bounds.minY) * viewport.zoom
+
+  const handleSize = 8
+  const rotateHandleSize = 24
+  const rotateHandleOffset = 32
+
+  return (
+    <div
+      className="absolute pointer-events-none"
+      style={{
+        left: screenX,
+        top: screenY,
+        width: screenWidth,
+        height: screenHeight,
       }}
     >
       <div
@@ -280,6 +499,8 @@ export const Canvas: React.FC = () => {
   const resizeStartRef = useRef<{ startMouseX: number; startMouseY: number; startWidth: number; startHeight: number; startPosX: number; startPosY: number; handle: string; shapeId: string } | null>(null)
   const rotateStartRef = useRef<{ x: number; y: number; startAngle: number; initialRotation: number; centerX: number; centerY: number; shapeId: string } | null>(null)
   const multiSelectDragStartRef = useRef<{ x: number; y: number; shapePositions: Map<string, { x: number; y: number }> } | null>(null)
+  const multiSelectResizeStartRef = useRef<MultiSelectResizeStart | null>(null)
+  const multiSelectRotateStartRef = useRef<MultiSelectRotateStart | null>(null)
 
   const getShapesInRect = (rect: SelectionRect): string[] => {
     const minX = Math.min(rect.startX, rect.endX)
@@ -406,6 +627,107 @@ export const Canvas: React.FC = () => {
       return
     }
 
+    if (multiSelectResizeStartRef.current) {
+      const { startMouseX, startMouseY, startBounds, shapePositions, handle } = multiSelectResizeStartRef.current
+
+      const dx = e.clientX - startMouseX
+      const dy = e.clientY - startMouseY
+
+      const { minX, minY, maxX, maxY } = startBounds
+      const startWidth = maxX - minX
+      const startHeight = maxY - minY
+
+      let scaleX = 1
+      let scaleY = 1
+      let offsetX = 0
+      let offsetY = 0
+
+      if (handle === 'se') {
+        scaleX = (startWidth + dx) / startWidth
+        scaleY = (startHeight + dy) / startHeight
+      } else if (handle === 'nw') {
+        scaleX = (startWidth - dx) / startWidth
+        scaleY = (startHeight - dy) / startHeight
+        offsetX = dx
+        offsetY = dy
+      } else if (handle === 'ne') {
+        scaleX = (startWidth + dx) / startWidth
+        scaleY = (startHeight - dy) / startHeight
+        offsetY = dy
+      } else if (handle === 'sw') {
+        scaleX = (startWidth - dx) / startWidth
+        scaleY = (startHeight + dy) / startHeight
+        offsetX = dx
+      } else if (handle === 'n') {
+        scaleY = (startHeight - dy) / startHeight
+        offsetY = dy
+      } else if (handle === 's') {
+        scaleY = (startHeight + dy) / startHeight
+      } else if (handle === 'w') {
+        scaleX = (startWidth - dx) / startWidth
+        offsetX = dx
+      } else if (handle === 'e') {
+        scaleX = (startWidth + dx) / startWidth
+      }
+
+      shapePositions.forEach((pos, id) => {
+        const relX = pos.x - minX
+        const relY = pos.y - minY
+        updateShape(id, {
+          x: minX + offsetX + relX * scaleX,
+          y: minY + offsetY + relY * scaleY,
+          width: pos.width * scaleX,
+          height: pos.height * scaleY,
+        })
+      })
+      return
+    }
+
+    if (multiSelectRotateStartRef.current) {
+      const { startAngle, centerX, centerY, initialRotations, initialPositions } = multiSelectRotateStartRef.current
+
+      const currentAngle = Math.atan2(
+        e.clientY - centerY,
+        e.clientX - centerX
+      )
+
+      const angleDelta = currentAngle - startAngle
+
+      initialPositions.forEach((initialPos, id) => {
+        // Convert canvas coordinates to screen coordinates for rotation math
+        const screenInitialCenterX = initialPos.centerX * viewport.zoom + viewport.x
+        const screenInitialCenterY = initialPos.centerY * viewport.zoom + viewport.y
+
+        const offsetX = screenInitialCenterX - centerX
+        const offsetY = screenInitialCenterY - centerY
+
+        const cos = Math.cos(angleDelta)
+        const sin = Math.sin(angleDelta)
+
+        const newOffsetX = offsetX * cos - offsetY * sin
+        const newOffsetY = offsetX * sin + offsetY * cos
+
+        const newScreenCenterX = centerX + newOffsetX
+        const newScreenCenterY = centerY + newOffsetY
+
+        // Convert back to canvas coordinates
+        const newCanvasCenterX = (newScreenCenterX - viewport.x) / viewport.zoom
+        const newCanvasCenterY = (newScreenCenterY - viewport.y) / viewport.zoom
+
+        const shape = useCanvasStore.getState().shapes.find((s) => s.id === id)
+        if (!shape) return
+
+        const newRotation = (initialRotations.get(id) || 0) + (angleDelta * 180) / Math.PI
+
+        updateShape(id, {
+          rotation: newRotation,
+          x: newCanvasCenterX - shape.width / 2,
+          y: newCanvasCenterY - shape.height / 2,
+        })
+      })
+      return
+    }
+
     if (resizeStartRef.current) {
       const { startMouseX, startMouseY, startWidth, startHeight, startPosX, startPosY, handle, shapeId } = resizeStartRef.current
 
@@ -497,6 +819,16 @@ export const Canvas: React.FC = () => {
       multiSelectDragStartRef.current = null
     }
 
+    if (multiSelectResizeStartRef.current) {
+      multiSelectResizeStartRef.current = null
+      saveHistory()
+    }
+
+    if (multiSelectRotateStartRef.current) {
+      multiSelectRotateStartRef.current = null
+      saveHistory()
+    }
+
     if (viewportDragStartRef.current) {
       viewportDragStartRef.current = null
     }
@@ -511,7 +843,7 @@ export const Canvas: React.FC = () => {
     setIsDragging(false)
   }, [selectionRect, setSelectedIds, saveHistory, setIsDragging])
 
-  const handleResizeStart = useCallback((e: React.MouseEvent, handle: string, shapeId: string) => {
+  const handleSingleResizeStart = useCallback((e: React.MouseEvent, handle: string, shapeId: string) => {
     e.stopPropagation()
     e.preventDefault()
 
@@ -531,7 +863,7 @@ export const Canvas: React.FC = () => {
     setIsDragging(true)
   }, [shapes, setIsDragging])
 
-  const handleRotateStart = useCallback((e: React.MouseEvent, _corner: string, shapeId: string) => {
+  const handleSingleRotateStart = useCallback((e: React.MouseEvent, _corner: string, shapeId: string) => {
     e.stopPropagation()
     e.preventDefault()
 
@@ -557,6 +889,73 @@ export const Canvas: React.FC = () => {
     }
     setIsDragging(true)
   }, [shapes, viewport, setIsDragging])
+
+  const handleMultiResizeStart = useCallback((e: React.MouseEvent, handle: string) => {
+    e.stopPropagation()
+    e.preventDefault()
+
+    if (selectedIds.length < 2) return
+
+    const selectedShapesList = shapes.filter((s) => selectedIds.includes(s.id))
+    const minX = Math.min(...selectedShapesList.map((s) => s.x))
+    const minY = Math.min(...selectedShapesList.map((s) => s.y))
+    const maxX = Math.max(...selectedShapesList.map((s) => s.x + s.width))
+    const maxY = Math.max(...selectedShapesList.map((s) => s.y + s.height))
+
+    multiSelectResizeStartRef.current = {
+      startMouseX: e.clientX,
+      startMouseY: e.clientY,
+      startBounds: { minX, minY, maxX, maxY },
+      shapePositions: new Map(
+        selectedShapesList.map((s) => [s.id, { x: s.x, y: s.y, width: s.width, height: s.height, rotation: s.rotation }])
+      ),
+      handle,
+    }
+    setIsDragging(true)
+  }, [shapes, selectedIds, setIsDragging])
+
+  const handleMultiRotateStart = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation()
+    e.preventDefault()
+
+    if (selectedIds.length < 2) return
+
+    const selectedShapesList = shapes.filter((s) => selectedIds.includes(s.id))
+    const minX = Math.min(...selectedShapesList.map((s) => s.x))
+    const minY = Math.min(...selectedShapesList.map((s) => s.y))
+    const maxX = Math.max(...selectedShapesList.map((s) => s.x + s.width))
+    const maxY = Math.max(...selectedShapesList.map((s) => s.y + s.height))
+
+    const centerX = (minX + maxX) / 2
+    const centerY = (minY + maxY) / 2
+
+    const screenCenterX = centerX * viewport.zoom + viewport.x
+    const screenCenterY = centerY * viewport.zoom + viewport.y
+
+    const currentAngle = Math.atan2(
+      e.clientY - screenCenterY,
+      e.clientX - screenCenterX
+    )
+
+    multiSelectRotateStartRef.current = {
+      startAngle: currentAngle,
+      centerX: screenCenterX,
+      centerY: screenCenterY,
+      initialRotations: new Map(selectedShapesList.map((s) => [s.id, s.rotation])),
+      initialPositions: new Map(
+        selectedShapesList.map((s) => [
+          s.id,
+          {
+            x: s.x,
+            y: s.y,
+            centerX: s.x + s.width / 2,
+            centerY: s.y + s.height / 2,
+          },
+        ])
+      ),
+    }
+    setIsDragging(true)
+  }, [shapes, selectedIds, viewport, setIsDragging])
 
   useEffect(() => {
     const container = containerRef.current
@@ -730,8 +1129,10 @@ export const Canvas: React.FC = () => {
         shapes={shapes}
         selectedIds={selectedIds}
         viewport={viewport}
-        onResizeStart={handleResizeStart}
-        onRotateStart={handleRotateStart}
+        onSingleResizeStart={handleSingleResizeStart}
+        onSingleRotateStart={handleSingleRotateStart}
+        onMultiResizeStart={handleMultiResizeStart}
+        onMultiRotateStart={handleMultiRotateStart}
       />
 
       {renderSelectionRect()}

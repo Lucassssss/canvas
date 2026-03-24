@@ -14,6 +14,7 @@ export const Shape: React.FC<ShapeComponentProps> = ({ shape }) => {
   const {
     updateShape,
     setSelectedIds,
+    selectedIds,
     addToSelection,
     saveHistory,
     activeTool,
@@ -21,7 +22,7 @@ export const Shape: React.FC<ShapeComponentProps> = ({ shape }) => {
     viewport,
   } = useCanvasStore()
 
-  const dragStartRef = useRef<{ x: number; y: number; shapeX: number; shapeY: number } | null>(null)
+  const dragStartRef = useRef<{ x: number; y: number; shapePositions: Map<string, { x: number; y: number }> } | null>(null)
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     if (e.button !== 0) return
@@ -29,43 +30,55 @@ export const Shape: React.FC<ShapeComponentProps> = ({ shape }) => {
 
     if (activeTool !== 'select') return
 
+    const isAlreadySelected = selectedIds.includes(shape.id)
+
     if (e.shiftKey) {
-      addToSelection(shape.id)
+      if (isAlreadySelected) {
+        setSelectedIds(selectedIds.filter((id) => id !== shape.id))
+      } else {
+        addToSelection(shape.id)
+      }
     } else {
-      setSelectedIds([shape.id])
+      if (!isAlreadySelected) {
+        setSelectedIds([shape.id])
+      }
+
+      const idsToDrag = isAlreadySelected ? selectedIds : [shape.id]
+      dragStartRef.current = {
+        x: e.clientX,
+        y: e.clientY,
+        shapePositions: new Map(
+          idsToDrag.map((id) => {
+            const s = useCanvasStore.getState().shapes.find((sh) => sh.id === id)
+            return [id, { x: s?.x || 0, y: s?.y || 0 }]
+          })
+        ),
+      }
+
+      const handleMouseMove = (moveEvent: MouseEvent) => {
+        if (!dragStartRef.current) return
+
+        const dx = (moveEvent.clientX - dragStartRef.current.x) / viewport.zoom
+        const dy = (moveEvent.clientY - dragStartRef.current.y) / viewport.zoom
+
+        dragStartRef.current.shapePositions.forEach((pos, id) => {
+          updateShape(id, { x: pos.x + dx, y: pos.y + dy })
+        })
+        setIsDragging(true)
+      }
+
+      const handleMouseUp = () => {
+        dragStartRef.current = null
+        setIsDragging(false)
+        saveHistory()
+        window.removeEventListener('mousemove', handleMouseMove)
+        window.removeEventListener('mouseup', handleMouseUp)
+      }
+
+      window.addEventListener('mousemove', handleMouseMove)
+      window.addEventListener('mouseup', handleMouseUp)
     }
-
-    dragStartRef.current = {
-      x: e.clientX,
-      y: e.clientY,
-      shapeX: shape.x,
-      shapeY: shape.y,
-    }
-
-    const handleMouseMove = (moveEvent: MouseEvent) => {
-      if (!dragStartRef.current) return
-
-      const dx = (moveEvent.clientX - dragStartRef.current.x) / viewport.zoom
-      const dy = (moveEvent.clientY - dragStartRef.current.y) / viewport.zoom
-
-      updateShape(shape.id, {
-        x: dragStartRef.current.shapeX + dx,
-        y: dragStartRef.current.shapeY + dy,
-      })
-      setIsDragging(true)
-    }
-
-    const handleMouseUp = () => {
-      dragStartRef.current = null
-      setIsDragging(false)
-      saveHistory()
-      window.removeEventListener('mousemove', handleMouseMove)
-      window.removeEventListener('mouseup', handleMouseUp)
-    }
-
-    window.addEventListener('mousemove', handleMouseMove)
-    window.addEventListener('mouseup', handleMouseUp)
-  }, [shape, activeTool, viewport, updateShape, setSelectedIds, addToSelection, saveHistory, setIsDragging])
+  }, [shape, activeTool, viewport, selectedIds, updateShape, setSelectedIds, addToSelection, saveHistory, setIsDragging])
 
   const handleDoubleClick = useCallback((e: React.MouseEvent) => {
     e.stopPropagation()
