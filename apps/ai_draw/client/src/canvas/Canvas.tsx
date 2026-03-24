@@ -992,8 +992,9 @@ export const Canvas: React.FC = () => {
     if (!container) return
 
     const wheelHandler = (e: WheelEvent) => {
+      e.preventDefault()
+
       if (e.metaKey || e.ctrlKey) {
-        e.preventDefault()
         const delta = e.deltaY > 0 ? 0.9 : 1.1
         const newZoom = Math.max(0.1, Math.min(10, viewport.zoom * delta))
 
