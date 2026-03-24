@@ -9,6 +9,7 @@ import {
   StickyNote,
   ImageIcon,
   Square,
+  Shirt,
 } from 'lucide-react'
 import { useCanvasStore } from '../store'
 import { ToolType } from '../shapes/types'
@@ -23,6 +24,7 @@ const tools: { type: ToolType; icon: React.ReactNode; label: string; shortcut: s
   { type: 'note', icon: <StickyNote size={20} />, label: '便签', shortcut: 'N' },
   { type: 'image', icon: <ImageIcon size={20} />, label: '图片', shortcut: 'I' },
   { type: 'shape', icon: <Square size={20} />, label: '形状', shortcut: 'S' },
+  { type: 'clothing', icon: <Shirt size={20} />, label: '服装', shortcut: 'C' },
 ]
 
 export const Toolbar: React.FC = () => {

@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { MessageSquare } from 'lucide-react'
 import { LeftSidebar } from './canvas/components/LeftSidebar'
 import { RightSidebar } from './canvas/components/RightSidebar'
+import { ClothingSidebar } from './canvas/components/ClothingSidebar'
 import { Toolbar } from './canvas/components/Toolbar'
 import { Canvas } from './canvas/Canvas'
 import { ZoomControls } from './canvas/components/ZoomControls'
@@ -9,7 +10,11 @@ import { useCanvasStore } from './canvas/store'
 
 const App: React.FC = () => {
   const [isChatOpen, setIsChatOpen] = useState(false)
-  const { addShape, activeTool, viewport, setActiveTool, setSelectedIds } = useCanvasStore()
+  const { addShape, activeTool, viewport, setActiveTool, setSelectedIds, shapes, selectedIds } = useCanvasStore()
+
+  const selectedClothing = shapes.find(
+    (s) => s.type === 'clothing' && selectedIds.includes(s.id)
+  )
 
   const handleCanvasClick = (e: React.MouseEvent) => {
     if (activeTool === 'select' || activeTool === 'hand') return
@@ -59,7 +64,7 @@ const App: React.FC = () => {
 
   return (
     <div className="w-full h-full">
-      <div className="logo">Canvas</div>
+      <div className="logo">GKE 极客</div>
 
       <button
         className={`chat-toggle ${isChatOpen ? 'active' : ''}`}
@@ -79,6 +84,7 @@ const App: React.FC = () => {
           <Toolbar />
           <ZoomControls />
         </div>
+        {selectedClothing && <ClothingSidebar />}
         <RightSidebar isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
       </div>
     </div>

@@ -21,5 +21,5 @@ app.post('/api/agent/chat', async (req, res) => {
 })
 
 app.listen(PORT, () => {
-  console.log(`AI Draw API server running on http://localhost:${PORT}`)
+  console.log(`GKE API server running on http://localhost:${PORT}`)
 })

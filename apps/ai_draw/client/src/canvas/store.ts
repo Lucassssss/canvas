@@ -13,6 +13,12 @@ interface CanvasStore {
   isResizing: boolean
   isRotating: boolean
   clipboard: ShapeProps[]
+  logoEditingState: {
+    isEditing: boolean
+    previousViewport: ViewportState | null
+    targetShapeId: string | null
+    targetLogoId: string | null
+  }
 
   setShapes: (shapes: ShapeProps[]) => void
   addShape: (shape: Omit<ShapeProps, 'id'>) => ShapeProps
@@ -30,6 +36,8 @@ interface CanvasStore {
   zoomOut: () => void
   zoomToFit: () => void
   resetZoom: () => void
+  zoomToArea: (x: number, y: number, width: number, height: number) => void
+  exitLogoEditing: () => void
 
   setActiveTool: (tool: ToolType) => void
 
@@ -60,6 +68,12 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
   isResizing: false,
   isRotating: false,
   clipboard: [],
+  logoEditingState: {
+    isEditing: false,
+    previousViewport: null,
+    targetShapeId: null,
+    targetLogoId: null,
+  },
 
   setShapes: (shapes) => set({ shapes }),
 
@@ -174,6 +188,65 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
     set((state) => ({
       viewport: { ...state.viewport, zoom: 1 },
     }))
+  },
+
+  zoomToArea: (x, y, width, height) => {
+    const { viewport } = get()
+    const padding = 20
+    const sidebarWidth = 320
+    const topOffset = 56
+    const bottomOffset = 80
+
+    const containerWidth = window.innerWidth - sidebarWidth
+    const containerHeight = window.innerHeight - topOffset - bottomOffset
+
+    const scaleX = containerWidth / (width + padding * 2)
+    const scaleY = containerHeight / (height + padding * 2)
+    const zoom = Math.min(scaleX, scaleY, 10)
+
+    const centerX = x + width / 2
+    const centerY = y + height / 2
+
+    const newViewport = {
+      x: containerWidth / 2 - centerX * zoom,
+      y: containerHeight / 2 - centerY * zoom + topOffset,
+      zoom,
+    }
+
+    set({
+      viewport: newViewport,
+      logoEditingState: {
+        isEditing: true,
+        previousViewport: { x: viewport.x, y: viewport.y, zoom: viewport.zoom },
+        targetShapeId: null,
+        targetLogoId: null,
+      },
+    })
+  },
+
+  exitLogoEditing: () => {
+    const { logoEditingState, shapes, selectedIds } = get()
+    if (logoEditingState.previousViewport) {
+      set({
+        viewport: logoEditingState.previousViewport,
+      })
+    }
+
+    const selectedClothing = shapes.find(
+      (s) => s.type === 'clothing' && selectedIds.includes(s.id) && s.activeLogoId
+    )
+    if (selectedClothing) {
+      useCanvasStore.getState().updateShape(selectedClothing.id, { activeLogoId: undefined })
+    }
+
+    set({
+      logoEditingState: {
+        isEditing: false,
+        previousViewport: null,
+        targetShapeId: null,
+        targetLogoId: null,
+      },
+    })
   },
 
   setActiveTool: (tool) => set({ activeTool: tool }),

@@ -2,8 +2,10 @@ import React, { useRef, useEffect, useCallback, useState } from 'react'
 import { useCanvasStore } from './store'
 import { Shape } from './shapes/Shape'
 import { ToolType, ShapeProps, SHAPE_MIN_SIZE } from './shapes/types'
+import { LogoEditorLayer } from './components/LogoEditorLayer'
+import { LogoMaterialPanel } from './components/LogoMaterialPanel'
 
-const placementTools: ToolType[] = ['text', 'note', 'image', 'shape', 'arrow', 'pen']
+const placementTools: ToolType[] = ['text', 'note', 'image', 'shape', 'arrow', 'pen', 'clothing']
 
 function getRotatedBoundingBox(
   x: number,
@@ -594,7 +596,35 @@ export const Canvas: React.FC = () => {
         return
       }
     }
-  }, [effectiveTool, viewport, screenToCanvas, shapes, selectedIds, addToSelection, setSelectedIds, clearSelection, setIsDragging])
+
+    if (effectiveTool === 'clothing' && isCanvasBackground) {
+      const canvasPoint = screenToCanvas(e.clientX, e.clientY)
+      const newId = useCanvasStore.getState().addShape({
+        type: 'clothing',
+        x: canvasPoint.x - 400,
+        y: canvasPoint.y - 400,
+        width: 800,
+        height: 800,
+        rotation: 0,
+        fill: 'transparent',
+        stroke: 'transparent',
+        strokeWidth: 0,
+        opacity: 1,
+        clothingView: 'front',
+        clothingColors: {
+          body: '#191919',
+          sleeveLeft: '#8C8C8E',
+          sleeveRight: '#8C8C8E',
+          collar: '#8C8C8E',
+        },
+        logoAreas: [],
+        activeLogoId: undefined,
+      })
+      setSelectedIds([newId.id])
+      setActiveTool('select')
+      return
+    }
+  }, [effectiveTool, viewport, screenToCanvas, shapes, selectedIds, addToSelection, setSelectedIds, clearSelection, setIsDragging, setActiveTool])
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     if (!isDragging) return
@@ -1248,6 +1278,14 @@ export const Canvas: React.FC = () => {
         onMultiResizeStart={handleMultiResizeStart}
         onMultiRotateStart={handleMultiRotateStart}
       />
+
+      <LogoEditorLayer
+        shapes={shapes}
+        selectedIds={selectedIds}
+        viewport={viewport}
+      />
+
+      <LogoMaterialPanel />
 
       {renderSelectionRect()}
     </div>

@@ -1,6 +1,7 @@
 import React, { useRef, useCallback, useState } from 'react'
 import { useCanvasStore } from '../store'
 import { ShapeProps } from './types'
+import { ClothingComponent } from './ClothingComponent'
 
 interface ShapeComponentProps {
   shape: ShapeProps
@@ -218,6 +219,9 @@ export const Shape: React.FC<ShapeComponentProps> = ({ shape }) => {
           </svg>
         )
 
+      case 'clothing':
+        return <ClothingComponent shape={shape} />
+
       default:
         return null
     }
@@ -230,8 +234,8 @@ export const Shape: React.FC<ShapeComponentProps> = ({ shape }) => {
     height: shape.height,
     transform: `rotate(${shape.rotation}deg)`,
     opacity: shape.opacity,
-    backgroundColor: shape.type !== 'draw' && shape.type !== 'arrow' ? shape.fill : undefined,
-    border: shape.type !== 'draw' && shape.type !== 'arrow' ? `${shape.strokeWidth}px solid ${shape.stroke}` : undefined,
+    backgroundColor: shape.type !== 'draw' && shape.type !== 'arrow' && shape.type !== 'clothing' ? shape.fill : undefined,
+    border: shape.type !== 'draw' && shape.type !== 'arrow' && shape.type !== 'clothing' ? `${shape.strokeWidth}px solid ${shape.stroke}` : undefined,
     borderRadius: shape.type === 'circle' ? '50%' : shape.type === 'note' ? '4px' : undefined,
   }
 

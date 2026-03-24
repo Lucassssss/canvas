@@ -553,3 +553,60 @@ body {
 .zoom-dropdown button:hover {
   background: #f4f4f5;
 }
+
+.clothing-sidebar {
+  position: fixed;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 320px;
+  z-index: 50;
+  background: white;
+  border-left: 1px solid #e4e4e7;
+  display: flex;
+  flex-direction: column;
+  animation: slideInRight 0.2s ease-out;
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.clothing-sidebar-header {
+  padding: 20px;
+  background: linear-gradient(to bottom, #fafafa, #ffffff);
+  border-bottom: 1px solid #f0f0f0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.clothing-sidebar-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+}
+
+.clothing-sidebar-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.clothing-sidebar-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.clothing-sidebar-content::-webkit-scrollbar-thumb {
+  background: #d4d4d8;
+  border-radius: 3px;
+}
+
+.clothing-sidebar-content::-webkit-scrollbar-thumb:hover {
+  background: #a1a1aa;
+}

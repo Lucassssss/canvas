@@ -1,5 +1,7 @@
-import React, { useState } from 'react'
-import { Send, Plus, ChevronDown, MessageSquare, ArrowRightFromLine, MessageSquarePlus } from 'lucide-react'
+import React, { useState, useEffect } from 'react'
+import { Send, Plus, ChevronDown, MessageSquare, ArrowRightFromLine, MessageSquarePlus, Shirt } from 'lucide-react'
+import { useCanvasStore } from '../store'
+import { ClothingPanel } from './ClothingPanel'
 
 interface RightSidebarProps {
   isOpen: boolean
@@ -19,10 +21,27 @@ interface ChatThread {
   messages: ChatMessage[]
 }
 
+type TabType = 'chat' | 'clothing'
+
 export const RightSidebar: React.FC<RightSidebarProps> = ({ isOpen, onClose }) => {
   const [input, setInput] = useState('')
   const [showHistory, setShowHistory] = useState(false)
   const [currentThreadId, setCurrentThreadId] = useState('thread-1')
+  const [activeTab, setActiveTab] = useState<TabType>('chat')
+
+  const { shapes, selectedIds } = useCanvasStore()
+
+  const selectedClothing = shapes.find(
+    (s) => s.type === 'clothing' && selectedIds.includes(s.id)
+  )
+
+  const showClothingTab = selectedClothing !== undefined
+
+  useEffect(() => {
+    if (selectedClothing && activeTab === 'chat') {
+      setActiveTab('clothing')
+    }
+  }, [selectedClothing, activeTab])
 
   const [threads, setThreads] = useState<ChatThread[]>([
     {
@@ -100,108 +119,137 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({ isOpen, onClose }) =
   return (
     <div className={`sidebar-right ${isOpen ? 'open' : ''}`}>
       <div className="chat-header">
-        <div className="relative" style={{ flex: 1 }}>
-          <div className='flex items-center'>
+        {showClothingTab && (
+          <div className="flex gap-1 p-1 bg-gray-100 rounded-lg mb-3">
             <button
-              onClick={() => setShowHistory(!showHistory)}
-              className="chat-header-btn"
-              style={{ width: 'auto', paddingLeft: 8, paddingRight: 8, gap: 4, display: 'flex' }}
+              className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-all ${activeTab === 'chat' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+              onClick={() => setActiveTab('chat')}
             >
-              <span className="chat-header-title" style={{ maxWidth: 160 }}>{currentThread.title}</span>
-              <ChevronDown size={18} />
+              <MessageSquare size={14} />
+              助手
             </button>
             <button
-              onClick={handleNewChat}
-              className="chat-header-btn"
-              title="新建对话"
+              className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-all ${activeTab === 'clothing' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+              onClick={() => setActiveTab('clothing')}
             >
-              <MessageSquarePlus size={18} />
+              <Shirt size={14} />
+              服装
             </button>
           </div>
+        )}
 
-          {showHistory && (
-            <div className="chat-history-dropdown">
-              <div
-                className="chat-history-item"
-                onClick={handleNewChat}
-                style={{ color: 'var(--primary)' }}
+        {activeTab === 'chat' && !showClothingTab && (
+          <div className="relative">
+            <div className='flex items-center'>
+              <button
+                onClick={() => setShowHistory(!showHistory)}
+                className="chat-header-btn"
+                style={{ width: 'auto', paddingLeft: 8, paddingRight: 8, gap: 4, display: 'flex' }}
               >
-                <span>新建对话</span>
-                <Plus size={14} />
-              </div>
-              {threads.map(thread => (
+                <span className="chat-header-title" style={{ maxWidth: 160 }}>{currentThread.title}</span>
+                <ChevronDown size={18} />
+              </button>
+              <button
+                onClick={handleNewChat}
+                className="chat-header-btn"
+                title="新建对话"
+              >
+                <MessageSquarePlus size={18} />
+              </button>
+            </div>
+
+            {showHistory && (
+              <div className="chat-history-dropdown">
                 <div
-                  key={thread.id}
                   className="chat-history-item"
-                  onClick={() => handleSelectThread(thread.id)}
-                  style={{ background: thread.id === currentThreadId ? 'var(--secondary)' : undefined }}
+                  onClick={handleNewChat}
+                  style={{ color: 'var(--primary)' }}
                 >
-                  <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {thread.title}
-                  </span>
-                  <span style={{ fontSize: 11, color: 'var(--muted-foreground)' }}>
-                    {thread.messages.length}
-                  </span>
+                  <span>新建对话</span>
+                  <Plus size={14} />
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <button
-          onClick={onClose}
-          className="chat-header-btn"
-          title="折叠"
-        >
-          <ArrowRightFromLine size={18} />
-        </button>
-      </div>
-
-      <div className="chat-messages bg-[#f4f4f5]">
-        {currentThread.messages.length === 0 ? (
-          <div className="h-full flex flex-col items-center justify-center text-gray-400 text-sm gap-2">
-            <MessageSquare size={32} strokeWidth={1.5} />
-            <p>你可以问我任何关于设计的问题</p>
+                {threads.map(thread => (
+                  <div
+                    key={thread.id}
+                    className="chat-history-item"
+                    onClick={() => handleSelectThread(thread.id)}
+                    style={{ background: thread.id === currentThreadId ? 'var(--secondary)' : undefined }}
+                  >
+                    <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {thread.title}
+                    </span>
+                    <span style={{ fontSize: 11, color: 'var(--muted-foreground)' }}>
+                      {thread.messages.length}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
-        ) : (
-          currentThread.messages.map((msg) => (
-            <div
-              key={msg.id}
-              className={`mb-4 p-3 rounded-lg ${
-                msg.role === 'user'
-                  ? 'bg-blue-50 ml-8'
-                  : 'bg-gray-100 mr-8'
-              }`}
-            >
-              <p className="text-sm">{msg.content}</p>
-            </div>
-          ))
+        )}
+
+        {activeTab === 'chat' && !showClothingTab && (
+          <button
+            onClick={onClose}
+            className="chat-header-btn"
+            title="折叠"
+          >
+            <ArrowRightFromLine size={18} />
+          </button>
         )}
       </div>
 
-      <div className="chat-input-container bg-[#f4f4f5]">
-        <div className="relative">
-          <textarea
-            className="chat-input pr-10"
-            placeholder="输入消息..."
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault()
-                handleSend()
-              }
-            }}
-            rows={1}
-          />
-          <button
-            className="absolute right-2 bottom-2 p-1 text-primary hover:bg-blue-50 rounded"
-            onClick={handleSend}
-          >
-            <Send size={18} />
-          </button>
-        </div>
-      </div>
+      {activeTab === 'clothing' && showClothingTab ? (
+        <ClothingPanel />
+      ) : (
+        <>
+          <div className="chat-messages bg-[#f4f4f5]">
+            {currentThread.messages.length === 0 ? (
+              <div className="h-full flex flex-col items-center justify-center text-gray-400 text-sm gap-2">
+                <MessageSquare size={32} strokeWidth={1.5} />
+                <p>你可以问我任何关于设计的问题</p>
+              </div>
+            ) : (
+              currentThread.messages.map((msg) => (
+                <div
+                  key={msg.id}
+                  className={`mb-4 p-3 rounded-lg ${
+                    msg.role === 'user'
+                      ? 'bg-blue-50 ml-8'
+                      : 'bg-gray-100 mr-8'
+                  }`}
+                >
+                  <p className="text-sm">{msg.content}</p>
+                </div>
+              ))
+            )}
+          </div>
+
+          <div className="chat-input-container bg-[#f4f4f5]">
+            <div className="relative">
+              <textarea
+                className="chat-input pr-10"
+                placeholder="输入消息..."
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault()
+                    handleSend()
+                  }
+                }}
+                rows={1}
+              />
+              <button
+                className="absolute right-2 bottom-2 p-1 text-primary hover:bg-blue-50 rounded"
+                onClick={handleSend}
+              >
+                <Send size={18} />
+              </button>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   )
 }
