@@ -1,4 +1,4 @@
-import { tool, ToolSet } from "ai";
+import { tool, ToolSet } from "ai6";
 import { z } from "zod";
 import type { ToolDefinition } from "../types/index.js";
 import { stagehandTool, navigateTool, extractTool, observeTool } from "./stagehand.js";
@@ -44,14 +44,14 @@ export const tools: ToolSet = {
   getCurrentTimeTool,
   weatherTool,
   calculatorTool,
-  stagehandTool,
-  navigateTool,
-  extractTool,
-  observeTool,
+  // stagehandTool,
+  // navigateTool,
+  // extractTool,
+  // observeTool,
   bash: bash as any,
   ...artifactTools,
-  sendEmailTool,
-  checkEmailConfigTool,
+  // sendEmailTool,
+  // checkEmailConfigTool,
 };
 
 // export function getToolDefinitions(): ToolDefinition[] {

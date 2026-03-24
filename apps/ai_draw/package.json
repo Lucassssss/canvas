@@ -1,0 +1,13 @@
+{
+  "name": "ai-draw",
+  "private": true,
+  "version": "1.0.0",
+  "workspaces": [
+    "client",
+    "server"
+  ],
+  "scripts": {
+    "dev": "bun --cwd client vite",
+    "dev:server": "bun --cwd server src/index.ts"
+  }
+}

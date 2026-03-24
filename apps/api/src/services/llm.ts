@@ -2,7 +2,7 @@ import { deepseek, DeepSeekLanguageModelOptions } from '@ai-sdk/deepseek';
 import { createMinimax } from 'vercel-minimax-ai-provider';
 import { ModelMessage, stepCountIs, streamText, ToolLoopAgent, ToolSet } from 'ai6';
 import { tools } from '../tools/index.js';
-import { theStartupFoundersLastStandPrompt } from '../prompts/index.js';
+import prompts from '../prompts/index.js';
 import "dotenv/config";
 import Model from './model.js';
 import Agent from './agent.js';
@@ -35,7 +35,7 @@ export const runChat = async (
   
   messages = [{
     role: "system",
-    content: theStartupFoundersLastStandPrompt,
+    content: prompts,
   }, ...messages];
 
   if(mode === "auto") {
@@ -45,7 +45,7 @@ export const runChat = async (
     });
   } else if(mode === "agent") {
     result = await streamText({
-      system: theStartupFoundersLastStandPrompt,
+      system: prompts,
       model: Model.create(modelName),
       messages: messages,
       tools: tools,

@@ -1,1 +1,5 @@
-export * from "./the-startup-founders-last-stand.js";
+import fs from "fs";
+
+const prompts = fs.readFileSync("./prompts/promt.md", "utf-8");
+
+export default prompts;
