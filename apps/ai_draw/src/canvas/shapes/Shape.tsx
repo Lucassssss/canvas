@@ -3,6 +3,8 @@ import { useCanvasStore } from '../store'
 import { ShapeProps } from './types'
 import { ClothingComponent } from './ClothingComponent'
 import { AICombinationComponent } from './AICombinationComponent'
+import { aiCombinationService } from '@/ai-combination/service'
+import { Loader2 } from 'lucide-react'
 
 interface ShapeComponentProps {
   shape: ShapeProps
@@ -12,6 +14,8 @@ interface ShapeComponentProps {
 export const Shape: React.FC<ShapeComponentProps> = ({ shape }) => {
   const elementRef = useRef<HTMLDivElement>(null)
   const [isEditing, setIsEditing] = useState(false)
+  const [imageLoaded, setImageLoaded] = useState(false)
+  const [imageError, setImageError] = useState(false)
 
   const {
     updateShape,
@@ -125,7 +129,25 @@ export const Shape: React.FC<ShapeComponentProps> = ({ shape }) => {
 
       case 'image':
         return shape.imageUrl ? (
-          <img src={shape.imageUrl} alt="" className="w-full h-full object-cover" />
+          <div className="relative w-full h-full">
+            {!imageLoaded && !imageError && (
+              <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
+                <Loader2 size={24} className="animate-spin text-gray-400" />
+              </div>
+            )}
+            {imageError && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-100 text-gray-400 gap-1">
+                <span className="text-xs">加载失败</span>
+              </div>
+            )}
+            <img
+              src={shape.imageUrl}
+              alt=""
+              className={`w-full h-full object-cover transition-opacity ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
+              onLoad={() => setImageLoaded(true)}
+              onError={() => setImageError(true)}
+            />
+          </div>
         ) : (
           <div className="w-full h-full flex items-center justify-center">
             <label className="px-3 py-1.5 bg-blue-500 text-white text-xs rounded-md cursor-pointer hover:bg-blue-600 transition-colors">
@@ -135,40 +157,45 @@ export const Shape: React.FC<ShapeComponentProps> = ({ shape }) => {
                 accept="image/*"
                 multiple
                 className="hidden"
-                onChange={(e) => {
+                onChange={async (e) => {
                   const files = e.target.files
                   if (!files || files.length === 0) return
 
-                  const images = Array.from(files).map((file) => ({
-                    url: URL.createObjectURL(file),
-                    width: 0,
-                    height: 0,
-                  }))
+                  const images: Array<{ url: string; width: number; height: number }> = []
+                  let uploadedCount = 0
 
-                  let loadedCount = 0
-
-                  images.forEach((img, index) => {
-                    const image = new Image()
-                    image.onload = () => {
-                      images[index].width = image.naturalWidth
-                      images[index].height = image.naturalHeight
-                      loadedCount++
-
-                      if (loadedCount === images.length) {
-                        window.dispatchEvent(
-                          new CustomEvent('images-uploaded', {
-                            detail: {
-                              images: images.filter((i) => i.width > 0),
-                              startX: shape.x,
-                              startY: shape.y,
-                              placeholderId: shape.id,
-                            },
+                  for (const file of Array.from(files)) {
+                    const result = await aiCombinationService.uploadImage(file, 'canvas-uploads')
+                    if (result.success && result.url) {
+                      const img = new Image()
+                      img.src = result.url
+                      await new Promise<void>((resolve) => {
+                        img.onload = () => {
+                          images.push({
+                            url: result.url!,
+                            width: img.naturalWidth,
+                            height: img.naturalHeight,
                           })
-                        )
-                      }
+                          resolve()
+                        }
+                        img.onerror = () => resolve()
+                      })
                     }
-                    image.src = img.url
-                  })
+                    uploadedCount++
+
+                    if (uploadedCount === files.length) {
+                      window.dispatchEvent(
+                        new CustomEvent('images-uploaded', {
+                          detail: {
+                            images: images.filter((i) => i.width > 0),
+                            startX: shape.x,
+                            startY: shape.y,
+                            placeholderId: shape.id,
+                          },
+                        })
+                      )
+                    }
+                  }
                 }}
               />
             </label>

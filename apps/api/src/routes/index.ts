@@ -3,6 +3,7 @@ import { generateText } from "ai";
 import { deepseek } from "@ai-sdk/deepseek";
 import { runChat } from "../services/llm.js";
 import { imageService } from "../services/image.js";
+import { s3UploadService } from "../services/s3.js";
 import {
   getConversation,
   getConversations,
@@ -183,6 +184,81 @@ router.post("/api/chat", async (req, res) => {
       res.write(`data: ${JSON.stringify({ error: "Internal server error" })}\n\n`);
       res.end();
     }
+  }
+});
+
+router.post("/api/upload", async (req, res) => {
+  try {
+    const { file, filename, contentType, folder } = req.body;
+
+    if (!file) {
+      return res.status(400).json({ success: false, error: "file is required (base64 encoded)" });
+    }
+
+    const buffer = Buffer.from(file, "base64");
+    const result = await s3UploadService.uploadFile(
+      buffer,
+      filename || "upload.png",
+      {
+        folder: folder || "uploads",
+        contentType: contentType || "image/png",
+      }
+    );
+
+    if (result.success) {
+      res.json({ success: true, url: result.url, key: result.key });
+    } else {
+      res.status(500).json({ success: false, error: result.error });
+    }
+  } catch (error) {
+    console.error("[API] Upload error:", error);
+    res.status(500).json({ success: false, error: "Upload failed" });
+  }
+});
+
+router.post("/api/upload/url", async (req, res) => {
+  try {
+    const { imageUrl, folder } = req.body;
+
+    if (!imageUrl) {
+      return res.status(400).json({ success: false, error: "imageUrl is required" });
+    }
+
+    const result = await s3UploadService.uploadFromUrl(imageUrl, folder || "ai-generated");
+
+    if (result.success) {
+      res.json({ success: true, url: result.url, key: result.key });
+    } else {
+      res.status(500).json({ success: false, error: result.error });
+    }
+  } catch (error) {
+    console.error("[API] Upload from URL error:", error);
+    res.status(500).json({ success: false, error: "Upload from URL failed" });
+  }
+});
+
+router.post("/api/upload/signed-url", async (req, res) => {
+  try {
+    const { filename, contentType, folder } = req.body;
+
+    if (!filename) {
+      return res.status(400).json({ success: false, error: "filename is required" });
+    }
+
+    const result = await s3UploadService.getSignedUploadUrl(
+      filename,
+      contentType || "image/png",
+      folder || "uploads"
+    );
+
+    if (result.success) {
+      res.json({ success: true, uploadUrl: result.uploadUrl, key: result.key, url: result.url });
+    } else {
+      res.status(500).json({ success: false, error: result.error });
+    }
+  } catch (error) {
+    console.error("[API] Signed URL error:", error);
+    res.status(500).json({ success: false, error: "Failed to generate signed URL" });
   }
 });
 

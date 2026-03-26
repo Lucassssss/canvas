@@ -4,6 +4,7 @@ import { Shape } from './shapes/Shape'
 import { ToolType, ShapeProps, SHAPE_MIN_SIZE } from './shapes/types'
 import { LogoEditorLayer } from './components/LogoEditorLayer'
 import { LogoMaterialPanel } from './components/LogoMaterialPanel'
+import { aiCombinationService } from '@/ai-combination/service'
 
 function getRotatedBoundingBox(
   x: number,
@@ -1197,42 +1198,56 @@ export const Canvas: React.FC = () => {
         let currentY = canvasPoint.y
         const newIds: string[] = []
 
-        files.forEach((file) => {
-          const url = URL.createObjectURL(file)
-          const img = new Image()
-          img.onload = () => {
-            let width = img.naturalWidth
-            let height = img.naturalHeight
+        const uploadAndCreateImages = async () => {
+          for (const file of files) {
+            const result = await aiCombinationService.uploadImage(file, 'canvas-uploads')
+            if (result.success && result.url) {
+              let width = 0
+              let height = 0
 
-            if (width > MAX_WIDTH) {
-              const scale = MAX_WIDTH / width
-              width = MAX_WIDTH
-              height = height * scale
-            }
+              const img = new Image()
+              img.src = result.url
+              await new Promise<void>((resolve) => {
+                img.onload = () => {
+                  width = img.naturalWidth
+                  height = img.naturalHeight
+                  resolve()
+                }
+                img.onerror = () => resolve()
+              })
 
-            const newId = useCanvasStore.getState().addShape({
-              type: 'image',
-              x: currentX,
-              y: currentY,
-              width,
-              height,
-              rotation: 0,
-              fill: 'transparent',
-              stroke: 'transparent',
-              strokeWidth: 0,
-              opacity: 1,
-              imageUrl: url,
-            })
-            newIds.push(newId.id)
+              if (width > MAX_WIDTH) {
+                const scale = MAX_WIDTH / width
+                width = MAX_WIDTH
+                height = height * scale
+              }
 
-            currentX += width + GAP
-
-            if (newIds.length === files.length) {
-              setSelectedIds(newIds)
+              if (width > 0 && height > 0) {
+                const newId = useCanvasStore.getState().addShape({
+                  type: 'image',
+                  x: currentX,
+                  y: currentY,
+                  width,
+                  height,
+                  rotation: 0,
+                  fill: 'transparent',
+                  stroke: 'transparent',
+                  strokeWidth: 0,
+                  opacity: 1,
+                  imageUrl: result.url,
+                })
+                newIds.push(newId.id)
+                currentX += width + GAP
+              }
             }
           }
-          img.src = url
-        })
+
+          if (newIds.length > 0) {
+            setSelectedIds(newIds)
+          }
+        }
+
+        uploadAndCreateImages()
       }}
     >
       <div

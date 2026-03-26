@@ -3,7 +3,6 @@ import { useCanvasStore } from '../store'
 import { combinationRegistry } from '../../ai-combination/registry'
 import { aiCombinationService } from '../../ai-combination/service'
 import { Upload, Play, X, Loader2, User, Shirt, Image as ImageIcon, Plus, Equal } from 'lucide-react'
-import { imageStore } from '@/lib/storage/image'
 import type { SlotDefinition, SlotContent } from '../../ai-combination/types'
 
 interface AICombinationComponentProps {
@@ -261,14 +260,16 @@ export const AICombinationComponent: React.FC<AICombinationComponentProps> = ({ 
     slotId: string,
     file: File
   ) => {
-    const imageId = `img-${shape.id}-${slotId}-${Date.now()}`
-    imageStore.save(imageId, file).then((dataUrl) => {
+    const uploadImage = async () => {
+      const result = await aiCombinationService.uploadImage(file, 'canvas-uploads')
+      const imageUrl = result.success && result.url ? result.url : null
       const newSlotContents: Record<string, SlotContent> = {
         ...shape.slotContents,
-        [slotId]: { imageUrl: dataUrl, source: 'upload' },
+        [slotId]: { imageUrl, source: 'upload' },
       }
       updateShape(shape.id, { slotContents: newSlotContents })
-    })
+    }
+    uploadImage()
   }, [shape.id, shape.slotContents, updateShape])
 
   const handleTextChange = useCallback((slotId: string, text: string) => {

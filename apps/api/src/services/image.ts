@@ -1,4 +1,5 @@
 import "dotenv/config";
+import { s3UploadService } from "./s3.js";
 
 export interface ImageGenerateInput {
   combinationTypeId: string;
@@ -95,7 +96,8 @@ class ImageService {
       clothingImage,
     });
 
-    return { success: true, imageUrl: resultImageUrl };
+    const uploadedUrl = await this.uploadToS3IfNeeded(resultImageUrl);
+    return { success: true, imageUrl: uploadedUrl };
   }
 
   private async handleFixedFaceTryon(input: ImageGenerateInput): Promise<ImageGenerateResult> {
@@ -107,7 +109,8 @@ class ImageService {
       settings: input.settings,
     });
 
-    return { success: true, imageUrl: resultImageUrl };
+    const uploadedUrl = await this.uploadToS3IfNeeded(resultImageUrl);
+    return { success: true, imageUrl: uploadedUrl };
   }
 
   private async handleFixedFaceBgTryon(input: ImageGenerateInput): Promise<ImageGenerateResult> {
@@ -119,7 +122,8 @@ class ImageService {
       settings: input.settings,
     });
 
-    return { success: true, imageUrl: resultImageUrl };
+    const uploadedUrl = await this.uploadToS3IfNeeded(resultImageUrl);
+    return { success: true, imageUrl: uploadedUrl };
   }
 
   private async handleFixedFaceBgPoseTryon(input: ImageGenerateInput): Promise<ImageGenerateResult> {
@@ -131,7 +135,8 @@ class ImageService {
       settings: input.settings,
     });
 
-    return { success: true, imageUrl: resultImageUrl };
+    const uploadedUrl = await this.uploadToS3IfNeeded(resultImageUrl);
+    return { success: true, imageUrl: uploadedUrl };
   }
 
   private async handlePoseFission(input: ImageGenerateInput): Promise<ImageGenerateResult> {
@@ -148,7 +153,8 @@ class ImageService {
       settings: input.settings,
     });
 
-    return { success: true, imageUrl: resultImageUrl };
+    const uploadedUrl = await this.uploadToS3IfNeeded(resultImageUrl);
+    return { success: true, imageUrl: uploadedUrl };
   }
 
   private async callTryOnAPI(input: TryOnInput): Promise<string> {
@@ -225,6 +231,32 @@ class ImageService {
 
   private getMockPoseFissionResult(): string {
     return `https://picsum.photos/512/512?random=${Date.now()}`;
+  }
+
+  private async uploadToS3IfNeeded(imageUrl: string): Promise<string> {
+    if (!imageUrl || !s3UploadService.isConfigured()) {
+      return imageUrl;
+    }
+
+    if (imageUrl.startsWith("data:") || imageUrl.startsWith("blob:")) {
+      return imageUrl;
+    }
+
+    if (imageUrl.includes(".s3.amazonaws.com") || imageUrl.includes(this.getCdnDomain())) {
+      return imageUrl;
+    }
+
+    const result = await s3UploadService.uploadFromUrl(imageUrl, "ai-generated");
+    if (result.success && result.url) {
+      return result.url;
+    }
+
+    console.warn("[ImageService] Failed to upload to S3, returning original URL");
+    return imageUrl;
+  }
+
+  private getCdnDomain(): string {
+    return process.env.BITIFUL_CDN_URL || "";
   }
 }
 

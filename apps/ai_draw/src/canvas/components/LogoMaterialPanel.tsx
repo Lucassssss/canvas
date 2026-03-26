@@ -1,6 +1,7 @@
-import React, { useState, useCallback } from 'react'
+import React, { useState, useCallback, useRef } from 'react'
 import { useCanvasStore } from '../store'
-import { X, Upload, Image as ImageIcon, Square, Circle, Triangle } from 'lucide-react'
+import { X, Upload, Image as ImageIcon, Square, Circle, Triangle, Loader2 } from 'lucide-react'
+import { aiCombinationService } from '@/ai-combination/service'
 
 const SHAPE_PRESETS = [
   { id: 'rect', icon: <Square size={20} />, name: '矩形' },
@@ -13,6 +14,8 @@ const PRESET_LOGO_IMAGE = '/asset_logo.svg.png'
 export const LogoMaterialPanel: React.FC = () => {
   const { logoEditingState, exitLogoEditing, shapes, selectedIds, updateShape } = useCanvasStore()
   const [activeTab, setActiveTab] = useState<'shapes' | 'text' | 'images' | 'templates'>('images')
+  const [isUploading, setIsUploading] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const clothingShape = shapes.find(
     (s) => s.type === 'clothing' && selectedIds.includes(s.id) && s.activeLogoId
@@ -34,6 +37,32 @@ export const LogoMaterialPanel: React.FC = () => {
     const newLogoContent = { ...currentLogoContent }
     delete newLogoContent[logoId]
     updateShape(clothingShape.id, { logoContent: newLogoContent })
+  }, [clothingShape, updateShape])
+
+  const handleUploadClick = useCallback(() => {
+    fileInputRef.current?.click()
+  }, [])
+
+  const handleFileChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file || !clothingShape || !clothingShape.activeLogoId) return
+
+    setIsUploading(true)
+    try {
+      const result = await aiCombinationService.uploadImage(file, 'logo-uploads')
+      if (result.success && result.url) {
+        const logoId = clothingShape.activeLogoId
+        const currentLogoContent = clothingShape.logoContent || {}
+        updateShape(clothingShape.id, {
+          logoContent: { ...currentLogoContent, [logoId]: result.url },
+        })
+      }
+    } finally {
+      setIsUploading(false)
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''
+      }
+    }
   }, [clothingShape, updateShape])
 
   const activeLogoId = clothingShape?.activeLogoId
@@ -148,10 +177,30 @@ export const LogoMaterialPanel: React.FC = () => {
               </div>
             )}
             <div className="flex items-center justify-center w-full pt-2">
-              <button className="w-full py-6 rounded-xl border-2 border-dashed border-gray-300 hover:border-amber-400 hover:bg-amber-50/50 flex flex-col items-center justify-center gap-2 transition-all">
-                <Upload size={28} className="text-gray-400" />
-                <span className="text-sm text-gray-500">上传图片</span>
-                <span className="text-xs text-gray-400">PNG, SVG, JPG</span>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleFileChange}
+              />
+              <button
+                onClick={handleUploadClick}
+                disabled={isUploading || !clothingShape?.activeLogoId}
+                className="w-full py-6 rounded-xl border-2 border-dashed border-gray-300 hover:border-amber-400 hover:bg-amber-50/50 flex flex-col items-center justify-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isUploading ? (
+                  <>
+                    <Loader2 size={28} className="text-gray-400 animate-spin" />
+                    <span className="text-sm text-gray-500">上传中...</span>
+                  </>
+                ) : (
+                  <>
+                    <Upload size={28} className="text-gray-400" />
+                    <span className="text-sm text-gray-500">上传图片</span>
+                    <span className="text-xs text-gray-400">PNG, SVG, JPG</span>
+                  </>
+                )}
               </button>
             </div>
           </div>
