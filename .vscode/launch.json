@@ -6,13 +6,13 @@
     "configurations": [
         {
             "type": "bun",
-            "internalConsoleOptions": "neverOpen",
+            "internalConsoleOptions": "openOnFirstSessionStart",
             "request": "launch",
             "name": "Debug API",
-            "program": "${workspaceFolder}/apps/api/src/index.ts",
-            "cwd": "${workspaceFolder}",
+            "program": "src/index.ts",
+            "cwd": "${workspaceFolder}/apps/api",
             "stopOnEntry": false,
-            "watchMode": false
+            "watchMode": true
         }
     ]
 }
