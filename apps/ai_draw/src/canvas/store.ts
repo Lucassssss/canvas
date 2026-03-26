@@ -1,6 +1,10 @@
 import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
 import { ShapeProps, ViewportState, ToolType, HistoryEntry } from './shapes/types'
 import { generateId } from '@/lib/utils'
+import { localStorageManager } from '@/lib/storage/local'
+import { jsonExporter, jsonImporter } from '@/lib/import-export/json'
+import type { CanvasHistoryEntry, OperationType } from '@/types/canvas/mvp'
 
 interface CanvasStore {
   shapes: ShapeProps[]
@@ -20,6 +24,11 @@ interface CanvasStore {
     targetShapeId: string | null
     targetLogoId: string | null
   }
+
+  projectId: string | null
+  projectName: string
+  isDirty: boolean
+  lastSavedAt: number | null
 
   setShapes: (shapes: ShapeProps[]) => void
   addShape: (shape: Omit<ShapeProps, 'id'>) => ShapeProps
@@ -50,7 +59,7 @@ interface CanvasStore {
 
   undo: () => void
   redo: () => void
-  saveHistory: () => void
+  saveHistory: (operationType?: OperationType, description?: string) => void
 
   copySelectedShapes: () => void
   pasteShapes: () => string[]
@@ -58,62 +67,88 @@ interface CanvasStore {
 
   screenToCanvas: (screenX: number, screenY: number) => { x: number; y: number }
   canvasToScreen: (canvasX: number, canvasY: number) => { x: number; y: number }
+
+  setProjectId: (id: string | null) => void
+  setProjectName: (name: string) => void
+  markDirty: () => void
+  markSaved: () => void
+  resetCanvas: () => void
+  loadFromSnapshot: (snapshot: { shapes: ShapeProps[]; viewport: ViewportState }) => void
+  exportProject: (name: string) => void
+  importProject: (jsonString: string) => { success: boolean; error?: string }
+  importFromFile: (file: File) => Promise<{ success: boolean; error?: string }>
+  autoSave: () => void
+  loadAutoSave: () => boolean
 }
 
-export const useCanvasStore = create<CanvasStore>((set, get) => ({
-  shapes: [],
-  selectedIds: [],
-  viewport: { x: 0, y: 0, zoom: 1 },
-  activeTool: 'select',
-  activeAICategory: null,
-  history: [],
+const initialState = {
+  shapes: [] as ShapeProps[],
+  selectedIds: [] as string[],
+  viewport: { x: 0, y: 0, zoom: 1 } as ViewportState,
+  activeTool: 'select' as ToolType,
+  activeAICategory: null as string | null,
+  history: [] as HistoryEntry[],
   historyIndex: -1,
   isDragging: false,
   isResizing: false,
   isRotating: false,
-  clipboard: [],
+  clipboard: [] as ShapeProps[],
   logoEditingState: {
     isEditing: false,
     previousViewport: null,
     targetShapeId: null,
     targetLogoId: null,
   },
+  projectId: null as string | null,
+  projectName: 'Untitled Project',
+  isDirty: false,
+  lastSavedAt: null as number | null,
+}
 
-  setShapes: (shapes) => set({ shapes }),
+export const useCanvasStore = create<CanvasStore>()(
+  persist(
+    (set, get) => ({
+      ...initialState,
 
-  addShape: (shape) => {
-    const newShape: ShapeProps = {
-      ...shape,
-      id: generateId(),
-    }
-    set((state) => ({ shapes: [...state.shapes, newShape] }))
-    get().saveHistory()
-    return newShape
-  },
+      setShapes: (shapes) => set({ shapes, isDirty: true }),
 
-  updateShape: (id, props) => {
-    set((state) => ({
-      shapes: state.shapes.map((s) =>
-        s.id === id ? { ...s, ...props } : s
-      ),
-    }))
-  },
+      addShape: (shape) => {
+        const newShape: ShapeProps = {
+          ...shape,
+          id: generateId(),
+        }
+        set((state) => ({ shapes: [...state.shapes, newShape], isDirty: true }))
+        get().saveHistory('create', `Create ${shape.type}`)
+        return newShape
+      },
 
-  deleteShape: (id) => {
-    set((state) => ({
-      shapes: state.shapes.filter((s) => s.id !== id),
-      selectedIds: state.selectedIds.filter((sid) => sid !== id),
-    }))
-    get().saveHistory()
-  },
+      updateShape: (id, props) => {
+        set((state) => ({
+          shapes: state.shapes.map((s) =>
+            s.id === id ? { ...s, ...props } : s
+          ),
+          isDirty: true
+        }))
+      },
 
-  deleteSelectedShapes: () => {
-    set((state) => ({
-      shapes: state.shapes.filter((s) => !state.selectedIds.includes(s.id)),
-      selectedIds: [],
-    }))
-    get().saveHistory()
-  },
+      deleteShape: (id) => {
+        set((state) => ({
+          shapes: state.shapes.filter((s) => s.id !== id),
+          selectedIds: state.selectedIds.filter((sid) => sid !== id),
+          isDirty: true
+        }))
+        get().saveHistory('delete', 'Delete shape')
+      },
+
+      deleteSelectedShapes: () => {
+        const { selectedIds } = get()
+        set((state) => ({
+          shapes: state.shapes.filter((s) => !state.selectedIds.includes(s.id)),
+          selectedIds: [],
+          isDirty: true
+        }))
+        get().saveHistory('batch', `Delete ${selectedIds.length} shapes`)
+      },
 
   setSelectedIds: (ids) => set({ selectedIds: ids }),
 
@@ -310,90 +345,205 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
     }
   },
 
-  saveHistory: () => {
-    const { shapes, selectedIds, history, historyIndex } = get()
-    const newEntry: HistoryEntry = {
-      shapes: JSON.parse(JSON.stringify(shapes)),
-      selectedIds: [...selectedIds],
+  saveHistory: (operationType?: OperationType, description?: string) => {
+        const { shapes, selectedIds, history, historyIndex } = get()
+        const newEntry: HistoryEntry = {
+          shapes: JSON.parse(JSON.stringify(shapes)),
+          selectedIds: [...selectedIds],
+        }
+        const newHistory = history.slice(0, historyIndex + 1)
+        newHistory.push(newEntry)
+        if (newHistory.length > 50) {
+          newHistory.shift()
+        }
+        set({
+          history: newHistory,
+          historyIndex: newHistory.length - 1,
+        })
+
+        localStorageManager.saveHistory(
+          newHistory.map((e) => ({
+            ...e,
+            id: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+            timestamp: Date.now(),
+            operationType: operationType || 'batch',
+            description: description || 'Operation',
+          })) as CanvasHistoryEntry[],
+          newHistory.length - 1
+        )
+      },
+
+      copySelectedShapes: () => {
+        const { shapes, selectedIds } = get()
+        const selectedShapes = shapes.filter((s) => selectedIds.includes(s.id))
+        set({ clipboard: JSON.parse(JSON.stringify(selectedShapes)) })
+        localStorageManager.saveClipboard(selectedShapes)
+      },
+
+      pasteShapes: () => {
+        const { shapes, clipboard } = get()
+        if (clipboard.length === 0) return []
+
+        const PASTE_OFFSET = 20
+        const newIds: string[] = []
+
+        const newShapes = clipboard.map((shape) => {
+          const newId = generateId()
+          newIds.push(newId)
+          return {
+            ...shape,
+            id: newId,
+            x: shape.x + PASTE_OFFSET,
+            y: shape.y + PASTE_OFFSET,
+          }
+        })
+
+        set({ shapes: [...shapes, ...newShapes], isDirty: true })
+        get().saveHistory('batch', `Paste ${newShapes.length} shapes`)
+        return newIds
+      },
+
+      duplicateSelectedShapes: () => {
+        const { shapes, selectedIds } = get()
+        const selectedShapes = shapes.filter((s) => selectedIds.includes(s.id))
+
+        const DUPLICATE_OFFSET = 20
+        const newIds: string[] = []
+
+        const newShapes = selectedShapes.map((shape) => {
+          const newId = generateId()
+          newIds.push(newId)
+          return {
+            ...shape,
+            id: newId,
+            x: shape.x + DUPLICATE_OFFSET,
+            y: shape.y + DUPLICATE_OFFSET,
+          }
+        })
+
+        set({
+          shapes: [...shapes, ...newShapes],
+          selectedIds: newIds,
+          isDirty: true,
+        })
+        get().saveHistory('batch', `Duplicate ${newShapes.length} shapes`)
+      },
+
+      screenToCanvas: (screenX, screenY) => {
+        const { viewport } = get()
+        return {
+          x: (screenX - viewport.x) / viewport.zoom,
+          y: (screenY - viewport.y) / viewport.zoom,
+        }
+      },
+
+      canvasToScreen: (canvasX, canvasY) => {
+        const { viewport } = get()
+        return {
+          x: canvasX * viewport.zoom + viewport.x,
+          y: canvasY * viewport.zoom + viewport.y,
+        }
+      },
+
+      setProjectId: (id) => set({ projectId: id }),
+      setProjectName: (name) => set({ projectName: name, isDirty: true }),
+      markDirty: () => set({ isDirty: true }),
+      markSaved: () => set({ isDirty: false, lastSavedAt: Date.now() }),
+
+      resetCanvas: () => {
+        const { projectId, projectName } = get()
+        set({
+          ...initialState,
+          projectId,
+          projectName,
+        })
+      },
+
+      loadFromSnapshot: (snapshot) => {
+        set({
+          shapes: snapshot.shapes,
+          viewport: snapshot.viewport,
+          selectedIds: [],
+          history: [],
+          historyIndex: -1,
+          isDirty: false,
+        })
+      },
+
+      exportProject: (name) => {
+        const { shapes, viewport } = get()
+        jsonExporter.downloadAsFile({ shapes, viewport }, name)
+      },
+
+      importProject: (jsonString) => {
+        const result = jsonImporter.import(jsonString)
+        if (result.success && result.project) {
+          const canvasState = jsonImporter.extractCanvasState(result.project)
+          get().loadFromSnapshot(canvasState)
+          const meta = result.project.metadata
+          set({
+            projectName: meta.name,
+            isDirty: false,
+          })
+          return { success: true }
+        }
+        return { success: false, error: result.error }
+      },
+
+      importFromFile: async (file) => {
+        const result = await jsonImporter.importFromFile(file)
+        if (result.success && result.project) {
+          const canvasState = jsonImporter.extractCanvasState(result.project)
+          get().loadFromSnapshot(canvasState)
+          const meta = result.project.metadata
+          set({
+            projectName: meta.name,
+            isDirty: false,
+          })
+          return { success: true }
+        }
+        return { success: false, error: result.error }
+      },
+
+      autoSave: () => {
+        const { shapes, viewport, projectId, projectName } = get()
+        localStorageManager.saveProjectSnapshot({
+          id: projectId || `local-${Date.now()}`,
+          name: projectName,
+          shapes,
+          viewport,
+          selectedIds: [],
+          updatedAt: Date.now(),
+          version: '1.0',
+        })
+        set({ isDirty: false, lastSavedAt: Date.now() })
+      },
+
+      loadAutoSave: () => {
+        const snapshot = localStorageManager.loadProjectSnapshot()
+        if (snapshot) {
+          get().loadFromSnapshot({
+            shapes: snapshot.shapes,
+            viewport: snapshot.viewport,
+          })
+          set({
+            projectName: snapshot.name,
+            isDirty: false,
+          })
+          return true
+        }
+        return false
+      },
+    }),
+    {
+      name: 'gke-canvas-state',
+      partialize: (state) => ({
+        shapes: state.shapes,
+        viewport: state.viewport,
+        projectId: state.projectId,
+        projectName: state.projectName,
+        lastSavedAt: state.lastSavedAt,
+      }),
     }
-    const newHistory = history.slice(0, historyIndex + 1)
-    newHistory.push(newEntry)
-    if (newHistory.length > 50) {
-      newHistory.shift()
-    }
-    set({
-      history: newHistory,
-      historyIndex: newHistory.length - 1,
-    })
-  },
-
-  copySelectedShapes: () => {
-    const { shapes, selectedIds } = get()
-    const selectedShapes = shapes.filter((s) => selectedIds.includes(s.id))
-    set({ clipboard: JSON.parse(JSON.stringify(selectedShapes)) })
-  },
-
-  pasteShapes: () => {
-    const { shapes, clipboard } = get()
-    if (clipboard.length === 0) return []
-
-    const PASTE_OFFSET = 20
-    const newIds: string[] = []
-
-    const newShapes = clipboard.map((shape) => {
-      const newId = generateId()
-      newIds.push(newId)
-      return {
-        ...shape,
-        id: newId,
-        x: shape.x + PASTE_OFFSET,
-        y: shape.y + PASTE_OFFSET,
-      }
-    })
-
-    set({ shapes: [...shapes, ...newShapes] })
-    get().saveHistory()
-    return newIds
-  },
-
-  duplicateSelectedShapes: () => {
-    const { shapes, selectedIds } = get()
-    const selectedShapes = shapes.filter((s) => selectedIds.includes(s.id))
-
-    const DUPLICATE_OFFSET = 20
-    const newIds: string[] = []
-
-    const newShapes = selectedShapes.map((shape) => {
-      const newId = generateId()
-      newIds.push(newId)
-      return {
-        ...shape,
-        id: newId,
-        x: shape.x + DUPLICATE_OFFSET,
-        y: shape.y + DUPLICATE_OFFSET,
-      }
-    })
-
-    set({
-      shapes: [...shapes, ...newShapes],
-      selectedIds: newIds,
-    })
-    get().saveHistory()
-  },
-
-  screenToCanvas: (screenX, screenY) => {
-    const { viewport } = get()
-    return {
-      x: (screenX - viewport.x) / viewport.zoom,
-      y: (screenY - viewport.y) / viewport.zoom,
-    }
-  },
-
-  canvasToScreen: (canvasX, canvasY) => {
-    const { viewport } = get()
-    return {
-      x: canvasX * viewport.zoom + viewport.x,
-      y: canvasY * viewport.zoom + viewport.y,
-    }
-  },
-}))
+  )
+)

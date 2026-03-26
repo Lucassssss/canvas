@@ -3,6 +3,7 @@ import { useCanvasStore } from '../store'
 import { combinationRegistry } from '../../ai-combination/registry'
 import { aiCombinationService } from '../../ai-combination/service'
 import { Upload, Play, X, Loader2, User, Shirt, Image as ImageIcon, Plus, Equal } from 'lucide-react'
+import { imageStore } from '@/lib/storage/image'
 import type { SlotDefinition, SlotContent } from '../../ai-combination/types'
 
 interface AICombinationComponentProps {
@@ -62,6 +63,9 @@ const ImageSlotRenderer: React.FC<ImageSlotRendererProps> = ({
   onDragEnter,
   onDragLeave,
 }) => {
+  const [imageLoaded, setImageLoaded] = React.useState(false)
+  const [imageError, setImageError] = React.useState(false)
+
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault()
     if (slot.acceptDrop !== false) {
@@ -104,15 +108,30 @@ const ImageSlotRenderer: React.FC<ImageSlotRendererProps> = ({
     >
       {content.imageUrl ? (
         <div className="relative w-full h-full">
+          {!imageLoaded && !imageError && (
+            <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
+              <Loader2 size={20} className="animate-spin text-gray-400" />
+            </div>
+          )}
+          {imageError && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-100 text-gray-400 gap-1">
+              <ImageIcon size={20} />
+              <span className="text-xs">加载失败</span>
+            </div>
+          )}
           <img
             src={content.imageUrl}
             alt={slot.name}
-            className="w-full h-full object-contain"
+            className={`w-full h-full object-contain transition-opacity ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
+            onLoad={() => setImageLoaded(true)}
+            onError={() => setImageError(true)}
           />
           <button
             className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors shadow"
             onClick={(e) => {
               e.stopPropagation()
+              setImageLoaded(false)
+              setImageError(false)
               onClear(slot.id)
             }}
           >
@@ -188,6 +207,7 @@ interface OutputSlotContentProps {
 }
 
 const OutputSlotContent: React.FC<OutputSlotContentProps> = ({ slot, resultImage }) => {
+  const [imageLoaded, setImageLoaded] = React.useState(false)
   const placeholderImage = `https://picsum.photos/${SLOT_WIDTH}/${SLOT_HEIGHT}?random=${slot.id}`
 
   return (
@@ -195,10 +215,17 @@ const OutputSlotContent: React.FC<OutputSlotContentProps> = ({ slot, resultImage
       className="relative bg-gray-100 border-2 border-gray-200 rounded-lg overflow-hidden"
       style={{ width: SLOT_WIDTH, height: SLOT_HEIGHT }}
     >
+      {!imageLoaded && (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <Loader2 size={20} className="animate-spin text-gray-400" />
+        </div>
+      )}
       <img
         src={resultImage || placeholderImage}
         alt={slot.name}
-        className="w-full h-full object-contain"
+        className={`w-full h-full object-contain transition-opacity ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
+        onLoad={() => setImageLoaded(true)}
+        onError={() => setImageLoaded(true)}
       />
     </div>
   )
@@ -210,12 +237,8 @@ export const AICombinationComponent: React.FC<AICombinationComponentProps> = ({ 
 
   const combinationType = combinationRegistry.get(shape.combinationTypeId || 'simple-tryon')
 
-  if (!combinationType) {
-    return <div className="text-red-500">Unknown combination type</div>
-  }
-
-  const inputSlots = combinationType.slots.filter((slot) => slot.role === 'input')
-  const outputSlots = combinationType.slots.filter((slot) => slot.role === 'output')
+  const inputSlots = combinationType?.slots.filter((slot) => slot.role === 'input') || []
+  const outputSlots = combinationType?.slots.filter((slot) => slot.role === 'output') || []
 
   const inputCount = inputSlots.length
   const outputCount = outputSlots.length
@@ -223,28 +246,29 @@ export const AICombinationComponent: React.FC<AICombinationComponentProps> = ({ 
   const totalInputWidth = inputCount * SLOT_WIDTH + Math.max(0, inputCount - 1) * SLOT_GAP
   const totalOutputWidth = outputCount * SLOT_WIDTH + Math.max(0, outputCount - 1) * SLOT_GAP
 
-  // 单输出模式：输入槽位 + Plus图标 + 按钮 + Equal图标 + 输出槽位
   const inputPlusIconsWidth = Math.max(0, inputCount - 1) * (PLUS_WIDTH + SLOT_GAP * 2)
-  const outputPlusIconsWidth = 0 // 移除输出槽位之间的 Plus 图标
+  const outputPlusIconsWidth = 0
   const totalWidth = totalInputWidth + inputPlusIconsWidth + totalOutputWidth + outputPlusIconsWidth + BUTTON_WIDTH + EQUAL_WIDTH + PADDING * 2 + SLOT_GAP * 3
   const totalHeight = SLOT_HEIGHT + LABEL_HEIGHT + PADDING * 2
 
   useEffect(() => {
-    if (shape.width !== totalWidth || shape.height !== totalHeight) {
+    if (combinationType && (shape.width !== totalWidth || shape.height !== totalHeight)) {
       updateShape(shape.id, { width: totalWidth, height: totalHeight })
     }
-  }, [shape.id, shape.width, shape.height, totalWidth, totalHeight, updateShape])
+  }, [combinationType, shape.id, shape.width, shape.height, totalWidth, totalHeight, updateShape])
 
   const handleFileSelect = useCallback((
     slotId: string,
     file: File
   ) => {
-    const url = URL.createObjectURL(file)
-    const newSlotContents: Record<string, SlotContent> = {
-      ...shape.slotContents,
-      [slotId]: { imageUrl: url, source: 'upload' },
-    }
-    updateShape(shape.id, { slotContents: newSlotContents })
+    const imageId = `img-${shape.id}-${slotId}-${Date.now()}`
+    imageStore.save(imageId, file).then((dataUrl) => {
+      const newSlotContents: Record<string, SlotContent> = {
+        ...shape.slotContents,
+        [slotId]: { imageUrl: dataUrl, source: 'upload' },
+      }
+      updateShape(shape.id, { slotContents: newSlotContents })
+    })
   }, [shape.id, shape.slotContents, updateShape])
 
   const handleTextChange = useCallback((slotId: string, text: string) => {
@@ -281,6 +305,7 @@ export const AICombinationComponent: React.FC<AICombinationComponentProps> = ({ 
   }, [shape, updateShape])
 
   const clearSlot = useCallback((slotId: string) => {
+    if (!combinationType) return
     const slot = combinationType.slots.find((s) => s.id === slotId)
     const newSlotContents: Record<string, SlotContent> = {
       ...shape.slotContents,
@@ -289,7 +314,18 @@ export const AICombinationComponent: React.FC<AICombinationComponentProps> = ({ 
         : { imageUrl: null, source: 'none' },
     }
     updateShape(shape.id, { slotContents: newSlotContents })
-  }, [shape.id, shape.slotContents, updateShape, combinationType.slots])
+  }, [shape.id, shape.slotContents, updateShape, combinationType])
+
+  if (!combinationType) {
+    return (
+      <div className="w-full h-full inline-flex items-center justify-center p-3 bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg">
+        <div className="text-center text-gray-400">
+          <Loader2 size={24} className="animate-spin mx-auto mb-2" />
+          <span className="text-xs">加载中...</span>
+        </div>
+      </div>
+    )
+  }
 
   const renderInputSlot = (slot: SlotDefinition) => {
     const content = shape.slotContents?.[slot.id] || { source: 'none' as const }

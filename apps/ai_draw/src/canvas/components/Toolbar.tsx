@@ -13,6 +13,8 @@ import {
   Sparkles,
   ChevronDown,
   Check,
+  Undo2,
+  Redo2,
 } from 'lucide-react'
 import { useCanvasStore } from '../store'
 import { ToolType } from '../shapes/types'
@@ -279,9 +281,12 @@ function createAICombinationShape(categoryId: string): void {
 }
 
 export const Toolbar: React.FC = () => {
-  const { activeTool, setActiveTool, activeAICategory, setActiveAICategory } = useCanvasStore()
+  const { activeTool, setActiveTool, activeAICategory, setActiveAICategory, undo, redo, historyIndex, history } = useCanvasStore()
   const [aiTypes, setAITypes] = useState<CombinationType[]>([])
   const [dropdownOpen, setDropdownOpen] = useState(false)
+
+  const canUndo = historyIndex > 0
+  const canRedo = historyIndex < history.length - 1
 
   useEffect(() => {
     setAITypes(combinationRegistry.getAll())
@@ -311,6 +316,22 @@ export const Toolbar: React.FC = () => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
 
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+        e.preventDefault()
+        if (e.shiftKey) {
+          canRedo && redo()
+        } else {
+          canUndo && undo()
+        }
+        return
+      }
+
+      if ((e.ctrlKey || e.metaKey) && e.key === 'y') {
+        e.preventDefault()
+        canRedo && redo()
+        return
+      }
+
       const key = e.key.toLowerCase()
       const baseTool = baseTools.find((t) => t.shortcut.toLowerCase() === key)
       if (baseTool) {
@@ -330,7 +351,7 @@ export const Toolbar: React.FC = () => {
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [setActiveTool, aiTypes, activeAICategory, handleAITypeSelect, handleBaseToolClick])
+  }, [setActiveTool, aiTypes, activeAICategory, handleAITypeSelect, handleBaseToolClick, undo, redo, canUndo, canRedo])
 
   const isAIToolActive = activeTool === 'ai-combination'
 
@@ -385,6 +406,26 @@ export const Toolbar: React.FC = () => {
           </DropdownMenu>
         </>
       )}
+
+      <div className="toolbar-divider" />
+
+      <button
+        className={`toolbar-btn ${!canUndo ? 'opacity-50 cursor-not-allowed' : ''}`}
+        onClick={() => canUndo && undo()}
+        disabled={!canUndo}
+        title="撤销 (Ctrl+Z)"
+      >
+        <Undo2 size={20} />
+      </button>
+
+      <button
+        className={`toolbar-btn ${!canRedo ? 'opacity-50 cursor-not-allowed' : ''}`}
+        onClick={() => canRedo && redo()}
+        disabled={!canRedo}
+        title="重做 (Ctrl+Y)"
+      >
+        <Redo2 size={20} />
+      </button>
     </div>
   )
 }
