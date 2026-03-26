@@ -5,7 +5,7 @@ export const Header: React.FC = () => {
   return (
     <header className="header">
       <div className="header-left">
-        <span className="logo">GKE</span>
+        <span className="logo">Joii</span>
       </div>
       <div className="header-right">
         <div className="credits">

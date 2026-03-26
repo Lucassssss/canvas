@@ -1,10 +1,10 @@
-# GKE 画布数据架构方案
+# Joii 画布数据架构方案
 
 ## 文档信息
 
 | 项目 | 内容 |
 |------|------|
-| **产品名称** | GKE - 无限画布智能设计平台 |
+| **产品名称** | Joii - 无限画布智能设计平台 |
 | **版本** | v1.0.0 |
 | **状态** | 设计阶段 |
 | **架构师** | 数据架构设计 |
@@ -450,11 +450,11 @@ export interface ContentMetadata {
 // lib/storage/local.ts
 
 const STORAGE_KEYS = {
-  PROJECT_META: 'gke_project_meta',
-  PROJECT_SNAPSHOT: 'gke_project_snapshot',
-  HISTORY: 'gke_history',
-  USER_PREFERENCES: 'gke_user_prefs',
-  CLIPBOARD: 'gke_clipboard',
+  PROJECT_META: 'joii_project_meta',
+  PROJECT_SNAPSHOT: 'joii_project_snapshot',
+  HISTORY: 'joii_history',
+  USER_PREFERENCES: 'joii_user_prefs',
+  CLIPBOARD: 'joii_clipboard',
 } as const
 
 interface ProjectSnapshot {
@@ -548,7 +548,7 @@ export const localStorageManager = new LocalStorageManager()
 ```typescript
 // lib/storage/indexed-db.ts
 
-const DB_NAME = 'gke_canvas'
+const DB_NAME = 'joii_canvas'
 const DB_VERSION = 1
 
 interface CanvasDB {
@@ -917,7 +917,7 @@ export const useCanvasStore = create<CanvasStore>()(
       },
     }),
     {
-      name: 'gke-canvas-state',
+      name: 'joii-canvas-state',
       partialize: (state) => ({
         shapes: state.shapes,
         viewport: state.viewport,
@@ -1048,7 +1048,7 @@ export const useStore = create<AppState>()((...a) => ({
 
 export interface ProjectExportV1 {
   version: '1.0'
-  type: 'gke-project'
+  type: 'joii-project'
   metadata: {
     name: string
     exportedAt: number
@@ -1071,11 +1071,11 @@ class JSONProjectExporter {
   export(state: { shapes: ShapeProps[]; viewport: ViewportState }, name: string): ProjectExportV1 {
     return {
       version: '1.0',
-      type: 'gke-project',
+      type: 'joii-project',
       metadata: {
         name,
         exportedAt: Date.now(),
-        exportedBy: 'GKE Canvas'
+        exportedBy: 'Joii Canvas'
       },
       canvas: {
         viewport: state.viewport,
@@ -1099,7 +1099,7 @@ class JSONProjectImporter {
 
     const obj = data as Record<string, unknown>
 
-    if (obj.version !== '1.0' || obj.type !== 'gke-project') {
+    if (obj.version !== '1.0' || obj.type !== 'joii-project') {
       errors.push('Invalid project format')
     }
 
@@ -1136,12 +1136,12 @@ export const jsonExporter = new JSONProjectExporter()
 export const jsonImporter = new JSONProjectImporter()
 ```
 
-### 6.2 完整阶段：GKE 包格式
+### 6.2 完整阶段：Joii 包格式
 
 ```typescript
-// lib/import-export/gke.ts
+// lib/import-export/joii.ts
 
-export interface GKEPackage {
+export interface JoiiPackage {
   header: {
     version: string
     createdAt: number
@@ -1170,16 +1170,16 @@ export interface GKEPackage {
   checksum: string
 }
 
-class GKEExporter {
+class JoiiExporter {
   async export(project: Project, options: { includeHistory?: boolean; includeResources?: boolean }): Promise<Blob> {
     const resources = options.includeResources ? await this.collectResources(project) : []
 
-    const pkg: GKEPackage = {
+    const pkg: JoiiPackage = {
       header: {
         version: '1.0',
         createdAt: Date.now(),
-        exportedBy: 'GKE Canvas',
-        application: 'GKE'
+        exportedBy: 'Joii Canvas',
+        application: 'Joii'
       },
       project: {
         id: project.id,
@@ -1197,8 +1197,8 @@ class GKEExporter {
     return new Blob([JSON.stringify(pkg, null, 2)], { type: 'application/json' })
   }
 
-  private async collectResources(project: Project): Promise<GKEPackage['resources']> {
-    const resources: GKEPackage['resources'] = []
+  private async collectResources(project: Project): Promise<JoiiPackage['resources']> {
+    const resources: JoiiPackage['resources'] = []
     const imageUrls = new Set<string>()
 
     for (const shape of project.canvas.shapes) {
@@ -1229,7 +1229,7 @@ class GKEExporter {
     return resources
   }
 
-  private async computeChecksum(pkg: GKEPackage): Promise<string> {
+  private async computeChecksum(pkg: JoiiPackage): Promise<string> {
     const data = JSON.stringify({ header: pkg.header, project: pkg.project })
     const encoder = new TextEncoder()
     const dataBuffer = encoder.encode(data)
@@ -1258,7 +1258,7 @@ class GKEExporter {
   }
 }
 
-export const gkeExporter = new GKEExporter()
+export const joiiExporter = new JoiiExporter()
 ```
 
 ---
@@ -1305,7 +1305,7 @@ export const gkeExporter = new GKEExporter()
 |-----|------|-------|
 | 1 | Store 拆分为 slices |
 | 2 | 完善 ShapePropsFull 类型 |
-| 3 | 实现 GKE 包格式导入导出 |
+| 3 | 实现 Joii 包格式导入导出 |
 | 4 | 实现资源去重（基于 hash） |
 | 5 | 实现版本迁移机制 |
 | 6 | 云端同步基础架构 |
@@ -1483,7 +1483,7 @@ apps/ai_draw/src/
     │   └── content-cache.ts # 内容缓存
     └── import-export/
         ├── json.ts          # JSON 导入导出（MVP）
-        └── gke.ts           # GKE 包格式（完整）
+        └── joii.ts           # Joii 包格式（完整）
 ```
 
 ---

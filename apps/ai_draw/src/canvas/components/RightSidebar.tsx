@@ -118,7 +118,7 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({ isOpen, onClose }) =
 
   return (
     <div className={`sidebar-right ${isOpen ? 'open' : ''}`}>
-      <div className="chat-header">
+      <div className="chat-header flex justify-between items-center p-3">
         {showClothingTab && (
           <div className="flex gap-1 p-1 bg-gray-100 rounded-lg mb-3">
             <button

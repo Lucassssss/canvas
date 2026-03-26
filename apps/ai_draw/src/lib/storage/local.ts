@@ -2,11 +2,11 @@ import type { ShapeProps } from '../../canvas/shapes/types'
 import type { ProjectSnapshot, HistorySnapshot, UserPreferences, CanvasHistoryEntry } from '../../types/canvas/mvp'
 
 const STORAGE_KEYS = {
-  PROJECT_META: 'gke_project_meta',
-  PROJECT_SNAPSHOT: 'gke_project_snapshot',
-  HISTORY: 'gke_history',
-  USER_PREFERENCES: 'gke_user_preferences',
-  CLIPBOARD: 'gke_clipboard',
+  PROJECT_META: 'joii_project_meta',
+  PROJECT_SNAPSHOT: 'joii_project_snapshot',
+  HISTORY: 'joii_history',
+  USER_PREFERENCES: 'joii_user_preferences',
+  CLIPBOARD: 'joii_clipboard',
 } as const
 
 const MAX_STORAGE_SIZE = 4.5 * 1024 * 1024

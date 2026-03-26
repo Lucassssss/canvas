@@ -536,7 +536,7 @@ export const useCanvasStore = create<CanvasStore>()(
       },
     }),
     {
-      name: 'gke-canvas-state',
+      name: 'joii-canvas-state',
       partialize: (state) => ({
         shapes: state.shapes,
         viewport: state.viewport,

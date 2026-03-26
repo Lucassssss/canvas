@@ -1,8 +1,8 @@
-# GKE 项目交接文档
+# Joii 项目交接文档
 
 ## 项目概述
 
-GKE 是一个基于纯 DOM 渲染的无限画布设计平台，使用 React 19 + TypeScript + Zustand 构建。项目代号 GKE 极客。
+Joii 是一个基于纯 DOM 渲染的无限画布设计平台，使用 React 19 + TypeScript + Zustand 构建。项目代号 Joii 极客。
 
 ### 技术栈
 - **前端框架**: React 19 + TypeScript

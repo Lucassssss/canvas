@@ -2,7 +2,7 @@ import type { ShapeProps, ViewportState } from '../../canvas/shapes/types'
 
 export interface ProjectExportV1 {
   version: '1.0'
-  type: 'gke-project'
+  type: 'joii-project'
   metadata: {
     name: string
     exportedAt: number
@@ -33,11 +33,11 @@ class JSONProjectExporter {
   ): ProjectExportV1 {
     return {
       version: '1.0',
-      type: 'gke-project',
+      type: 'joii-project',
       metadata: {
         name,
         exportedAt: Date.now(),
-        exportedBy: 'GKE Canvas',
+        exportedBy: 'Joii Canvas',
       },
       canvas: {
         viewport: state.viewport,
@@ -62,7 +62,7 @@ class JSONProjectExporter {
 
     const a = document.createElement('a')
     a.href = url
-    a.download = `${name.replace(/[^a-z0-9]/gi, '_')}.gke.json`
+    a.download = `${name.replace(/[^a-z0-9]/gi, '_')}.joii.json`
     document.body.appendChild(a)
     a.click()
     document.body.removeChild(a)
@@ -84,8 +84,8 @@ class JSONProjectImporter {
       errors.push('Unsupported project version')
     }
 
-    if (obj.type !== 'gke-project') {
-      errors.push('Invalid project format: not a GKE project')
+    if (obj.type !== 'joii-project') {
+      errors.push('Invalid project format: not a Joii project')
     }
 
     if (!obj.canvas || typeof obj.canvas !== 'object') {

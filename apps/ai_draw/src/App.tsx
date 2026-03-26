@@ -65,7 +65,10 @@ const App: React.FC = () => {
 
   return (
     <div className="w-full h-full">
-      <div className="logo">GKE 极客</div>
+      <a className="logo block w-16 flex items-center justify-center" href="https://joii.cc" target="_blank">
+        {/* <div className="border py-0.5 px-2 border-2 border-black bg-black text-white">joii.cc</div> */}
+        <img src="/joii_logo.svg" alt="Joii.cc" />
+      </a>
 
       <button
         className={`chat-toggle ${isChatOpen ? 'active' : ''}`}

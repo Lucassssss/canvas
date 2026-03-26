@@ -1,4 +1,4 @@
-const DB_NAME = 'gke-image-store'
+const DB_NAME = 'joii-image-store'
 const DB_VERSION = 1
 const STORE_NAME = 'images'
 
