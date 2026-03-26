@@ -2,6 +2,7 @@ import { Router } from "express";
 import { generateText } from "ai";
 import { deepseek } from "@ai-sdk/deepseek";
 import { runChat } from "../services/llm.js";
+import { imageService } from "../services/image.js";
 import {
   getConversation,
   getConversations,
@@ -63,6 +64,31 @@ router.get("/conversations/:id/messages", (req, res) => {
 router.delete("/conversations/:id/messages", (req, res) => {
   clearMessages(req.params.id);
   res.json({ success: true });
+});
+
+router.post("/api/image/generate", async (req, res) => {
+  try {
+    const { combinationTypeId, slotContents, settings } = req.body;
+
+    if (!combinationTypeId) {
+      return res.status(400).json({ success: false, error: "combinationTypeId is required" });
+    }
+
+    if (!slotContents || typeof slotContents !== "object") {
+      return res.status(400).json({ success: false, error: "slotContents is required" });
+    }
+
+    const result = await imageService.generate({
+      combinationTypeId,
+      slotContents,
+      settings: settings || { resolution: { width: 768, height: 1024 } },
+    });
+
+    res.json(result);
+  } catch (error) {
+    console.error("[API] Image generate error:", error);
+    res.status(500).json({ success: false, error: "Internal server error" });
+  }
 });
 
 router.post("/api/chat", async (req, res) => {

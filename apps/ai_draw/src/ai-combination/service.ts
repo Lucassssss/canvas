@@ -1,5 +1,7 @@
 import { SlotContent } from './types'
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001'
+
 interface GenerationResult {
   success: boolean
   imageUrl?: string
@@ -17,35 +19,48 @@ interface GenerateInput {
 }
 
 class AICombinationService {
-  async generate(
-    instance: GenerateInput
-  ): Promise<GenerationResult> {
-    const contents = instance.slotContents
+  async generate(instance: GenerateInput): Promise<GenerationResult> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/image/generate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          combinationTypeId: instance.combinationTypeId,
+          slotContents: instance.slotContents,
+          settings: instance.settings,
+        }),
+      })
 
-    const missingSlots = this.validateSlots(contents)
-    if (missingSlots.length > 0) {
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
+        return {
+          success: false,
+          error: errorData.error || `HTTP error ${response.status}`,
+        }
+      }
+
+      const data = await response.json()
+
+      if (data.success && data.imageUrl) {
+        return {
+          success: true,
+          imageUrl: data.imageUrl,
+        }
+      } else {
+        return {
+          success: false,
+          error: data.error || 'Generation failed',
+        }
+      }
+    } catch (error) {
+      console.error('[AICombinationService] Generate error:', error)
       return {
         success: false,
-        error: `缺少必填图片: ${missingSlots.join(', ')}`,
+        error: error instanceof Error ? error.message : 'Network error',
       }
     }
-
-    await new Promise((resolve) => setTimeout(resolve, 2000))
-
-    return {
-      success: true,
-      imageUrl: `https://picsum.photos/768/1024?random=${Date.now()}`,
-    }
-  }
-
-  private validateSlots(contents: Record<string, SlotContent>): string[] {
-    const missing: string[] = []
-    for (const [slotId, content] of Object.entries(contents)) {
-      if (!content.imageUrl) {
-        missing.push(slotId)
-      }
-    }
-    return missing
   }
 }
 
