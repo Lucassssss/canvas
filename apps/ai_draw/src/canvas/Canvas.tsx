@@ -5,8 +5,6 @@ import { ToolType, ShapeProps, SHAPE_MIN_SIZE } from './shapes/types'
 import { LogoEditorLayer } from './components/LogoEditorLayer'
 import { LogoMaterialPanel } from './components/LogoMaterialPanel'
 
-const placementTools: ToolType[] = ['text', 'note', 'image', 'shape', 'arrow', 'pen', 'clothing']
-
 function getRotatedBoundingBox(
   x: number,
   y: number,
@@ -301,6 +299,9 @@ const SelectionBox: React.FC<SelectionBoxProps> = ({ shape, viewport, onResizeSt
   const rotateHandleSize = 24
   const rotateHandleOffset = 32
 
+  const canResize = shape.resizable !== false
+  const canRotate = shape.rotatable !== false
+
   return (
     <div
       className="absolute pointer-events-none"
@@ -316,156 +317,164 @@ const SelectionBox: React.FC<SelectionBoxProps> = ({ shape, viewport, onResizeSt
         style={{ outline: '1px solid var(--primary)' }}
       />
 
-      <div
-        className="resize-handle pointer-events-auto absolute"
-        style={{
-          width: handleSize,
-          height: handleSize,
-          background: 'white',
-          border: '1px solid var(--primary)',
-          top: -handleSize / 2,
-          left: -handleSize / 2,
-          cursor: 'nw-resize',
-        }}
-        onMouseDown={(e) => onResizeStart(e, 'nw', shape.id)}
-      />
-      <div
-        className="resize-handle pointer-events-auto absolute"
-        style={{
-          width: handleSize,
-          height: handleSize,
-          background: 'white',
-          border: '1px solid var(--primary)',
-          top: -handleSize / 2,
-          right: -handleSize / 2,
-          cursor: 'ne-resize',
-        }}
-        onMouseDown={(e) => onResizeStart(e, 'ne', shape.id)}
-      />
-      <div
-        className="resize-handle pointer-events-auto absolute"
-        style={{
-          width: handleSize,
-          height: handleSize,
-          background: 'white',
-          border: '1px solid var(--primary)',
-          bottom: -handleSize / 2,
-          left: -handleSize / 2,
-          cursor: 'sw-resize',
-        }}
-        onMouseDown={(e) => onResizeStart(e, 'sw', shape.id)}
-      />
-      <div
-        className="resize-handle pointer-events-auto absolute"
-        style={{
-          width: handleSize,
-          height: handleSize,
-          background: 'white',
-          border: '1px solid var(--primary)',
-          bottom: -handleSize / 2,
-          right: -handleSize / 2,
-          cursor: 'se-resize',
-        }}
-        onMouseDown={(e) => onResizeStart(e, 'se', shape.id)}
-      />
+      {canResize && (
+        <>
+          <div
+            className="resize-handle pointer-events-auto absolute"
+            style={{
+              width: handleSize,
+              height: handleSize,
+              background: 'white',
+              border: '1px solid var(--primary)',
+              top: -handleSize / 2,
+              left: -handleSize / 2,
+              cursor: 'nw-resize',
+            }}
+            onMouseDown={(e) => onResizeStart(e, 'nw', shape.id)}
+          />
+          <div
+            className="resize-handle pointer-events-auto absolute"
+            style={{
+              width: handleSize,
+              height: handleSize,
+              background: 'white',
+              border: '1px solid var(--primary)',
+              top: -handleSize / 2,
+              right: -handleSize / 2,
+              cursor: 'ne-resize',
+            }}
+            onMouseDown={(e) => onResizeStart(e, 'ne', shape.id)}
+          />
+          <div
+            className="resize-handle pointer-events-auto absolute"
+            style={{
+              width: handleSize,
+              height: handleSize,
+              background: 'white',
+              border: '1px solid var(--primary)',
+              bottom: -handleSize / 2,
+              left: -handleSize / 2,
+              cursor: 'sw-resize',
+            }}
+            onMouseDown={(e) => onResizeStart(e, 'sw', shape.id)}
+          />
+          <div
+            className="resize-handle pointer-events-auto absolute"
+            style={{
+              width: handleSize,
+              height: handleSize,
+              background: 'white',
+              border: '1px solid var(--primary)',
+              bottom: -handleSize / 2,
+              right: -handleSize / 2,
+              cursor: 'se-resize',
+            }}
+            onMouseDown={(e) => onResizeStart(e, 'se', shape.id)}
+          />
 
-      <div
-        className="edge-hitarea pointer-events-auto absolute"
-        style={{
-          top: -handleSize / 2,
-          left: handleSize,
-          right: handleSize,
-          height: handleSize,
-          cursor: 'n-resize',
-        }}
-        onMouseDown={(e) => onResizeStart(e, 'n', shape.id)}
-      />
-      <div
-        className="edge-hitarea pointer-events-auto absolute"
-        style={{
-          bottom: -handleSize / 2,
-          left: handleSize,
-          right: handleSize,
-          height: handleSize,
-          cursor: 's-resize',
-        }}
-        onMouseDown={(e) => onResizeStart(e, 's', shape.id)}
-      />
-      <div
-        className="edge-hitarea pointer-events-auto absolute"
-        style={{
-          left: -handleSize / 2,
-          top: handleSize,
-          bottom: handleSize,
-          width: handleSize,
-          cursor: 'w-resize',
-        }}
-        onMouseDown={(e) => onResizeStart(e, 'w', shape.id)}
-      />
-      <div
-        className="edge-hitarea pointer-events-auto absolute"
-        style={{
-          right: -handleSize / 2,
-          top: handleSize,
-          bottom: handleSize,
-          width: handleSize,
-          cursor: 'e-resize',
-        }}
-        onMouseDown={(e) => onResizeStart(e, 'e', shape.id)}
-      />
+          <div
+            className="edge-hitarea pointer-events-auto absolute"
+            style={{
+              top: -handleSize / 2,
+              left: handleSize,
+              right: handleSize,
+              height: handleSize,
+              cursor: 'n-resize',
+            }}
+            onMouseDown={(e) => onResizeStart(e, 'n', shape.id)}
+          />
+          <div
+            className="edge-hitarea pointer-events-auto absolute"
+            style={{
+              bottom: -handleSize / 2,
+              left: handleSize,
+              right: handleSize,
+              height: handleSize,
+              cursor: 's-resize',
+            }}
+            onMouseDown={(e) => onResizeStart(e, 's', shape.id)}
+          />
+          <div
+            className="edge-hitarea pointer-events-auto absolute"
+            style={{
+              left: -handleSize / 2,
+              top: handleSize,
+              bottom: handleSize,
+              width: handleSize,
+              cursor: 'w-resize',
+            }}
+            onMouseDown={(e) => onResizeStart(e, 'w', shape.id)}
+          />
+          <div
+            className="edge-hitarea pointer-events-auto absolute"
+            style={{
+              right: -handleSize / 2,
+              top: handleSize,
+              bottom: handleSize,
+              width: handleSize,
+              cursor: 'e-resize',
+            }}
+            onMouseDown={(e) => onResizeStart(e, 'e', shape.id)}
+          />
+        </>
+      )}
 
-      <div
-        className="pointer-events-auto absolute"
-        style={{
-          width: rotateHandleSize,
-          height: rotateHandleSize,
-          background: 'transparent',
-          border: 'none',
-          top: -rotateHandleOffset,
-          left: -rotateHandleOffset,
-          cursor: `url('/rotate_1.svg') ${rotateHandleSize / 2} ${rotateHandleSize / 2}, crosshair`,
-        }}
-        onMouseDown={(e) => onRotateStart(e, 'nw', shape.id)}
-      />
-      <div
-        className="pointer-events-auto absolute"
-        style={{
-          width: rotateHandleSize,
-          height: rotateHandleSize,
-          background: 'transparent',
-          border: 'none',
-          top: -rotateHandleOffset,
-          right: -rotateHandleOffset,
-          cursor: `url('/rotate_2.svg') ${rotateHandleSize / 2} ${rotateHandleSize / 2}, crosshair`,
-        }}
-        onMouseDown={(e) => onRotateStart(e, 'ne', shape.id)}
-      />
-      <div
-        className="pointer-events-auto absolute"
-        style={{
-          width: rotateHandleSize,
-          height: rotateHandleSize,
-          background: 'transparent',
-          border: 'none',
-          bottom: -rotateHandleOffset,
-          left: -rotateHandleOffset,
-          cursor: `url('/rotate_4.svg') ${rotateHandleSize / 2} ${rotateHandleSize / 2}, crosshair`,
-        }}
-        onMouseDown={(e) => onRotateStart(e, 'sw', shape.id)}
-      />
-      <div
-        className="pointer-events-auto absolute"
-        style={{
-          width: rotateHandleSize,
-          height: rotateHandleSize,
-          background: 'transparent',
-          border: 'none',
-          bottom: -rotateHandleOffset,
-          right: -rotateHandleOffset,
-          cursor: `url('/rotate_3.svg') ${rotateHandleSize / 2} ${rotateHandleSize / 2}, crosshair`,
-        }}
-        onMouseDown={(e) => onRotateStart(e, 'se', shape.id)}
-      />
+      {canRotate && (
+        <>
+          <div
+            className="pointer-events-auto absolute"
+            style={{
+              width: rotateHandleSize,
+              height: rotateHandleSize,
+              background: 'transparent',
+              border: 'none',
+              top: -rotateHandleOffset,
+              left: -rotateHandleOffset,
+              cursor: `url('/rotate_1.svg') ${rotateHandleSize / 2} ${rotateHandleSize / 2}, crosshair`,
+            }}
+            onMouseDown={(e) => onRotateStart(e, 'nw', shape.id)}
+          />
+          <div
+            className="pointer-events-auto absolute"
+            style={{
+              width: rotateHandleSize,
+              height: rotateHandleSize,
+              background: 'transparent',
+              border: 'none',
+              top: -rotateHandleOffset,
+              right: -rotateHandleOffset,
+              cursor: `url('/rotate_2.svg') ${rotateHandleSize / 2} ${rotateHandleSize / 2}, crosshair`,
+            }}
+            onMouseDown={(e) => onRotateStart(e, 'ne', shape.id)}
+          />
+          <div
+            className="pointer-events-auto absolute"
+            style={{
+              width: rotateHandleSize,
+              height: rotateHandleSize,
+              background: 'transparent',
+              border: 'none',
+              bottom: -rotateHandleOffset,
+              left: -rotateHandleOffset,
+              cursor: `url('/rotate_4.svg') ${rotateHandleSize / 2} ${rotateHandleSize / 2}, crosshair`,
+            }}
+            onMouseDown={(e) => onRotateStart(e, 'sw', shape.id)}
+          />
+          <div
+            className="pointer-events-auto absolute"
+            style={{
+              width: rotateHandleSize,
+              height: rotateHandleSize,
+              background: 'transparent',
+              border: 'none',
+              bottom: -rotateHandleOffset,
+              right: -rotateHandleOffset,
+              cursor: `url('/rotate_3.svg') ${rotateHandleSize / 2} ${rotateHandleSize / 2}, crosshair`,
+            }}
+            onMouseDown={(e) => onRotateStart(e, 'se', shape.id)}
+          />
+        </>
+      )}
     </div>
   )
 }
@@ -495,7 +504,7 @@ export const Canvas: React.FC = () => {
   } = useCanvasStore()
 
   const effectiveTool = isSpacePressed ? 'hand' : activeTool
-  const showCrosshair = placementTools.includes(activeTool)
+  const showCrosshair = false
 
   const viewportDragStartRef = useRef<{ x: number; y: number; viewportX: number; viewportY: number } | null>(null)
   const resizeStartRef = useRef<{ startMouseX: number; startMouseY: number; startWidth: number; startHeight: number; startPosX: number; startPosY: number; handle: string; shapeId: string } | null>(null)
@@ -595,34 +604,6 @@ export const Canvas: React.FC = () => {
         }
         return
       }
-    }
-
-    if (effectiveTool === 'clothing' && isCanvasBackground) {
-      const canvasPoint = screenToCanvas(e.clientX, e.clientY)
-      const newId = useCanvasStore.getState().addShape({
-        type: 'clothing',
-        x: canvasPoint.x - 400,
-        y: canvasPoint.y - 400,
-        width: 800,
-        height: 800,
-        rotation: 0,
-        fill: 'transparent',
-        stroke: 'transparent',
-        strokeWidth: 0,
-        opacity: 1,
-        clothingView: 'front',
-        clothingColors: {
-          body: '#191919',
-          sleeveLeft: '#8C8C8E',
-          sleeveRight: '#8C8C8E',
-          collar: '#8C8C8E',
-        },
-        logoAreas: [],
-        activeLogoId: undefined,
-      })
-      setSelectedIds([newId.id])
-      setActiveTool('select')
-      return
     }
   }, [effectiveTool, viewport, screenToCanvas, shapes, selectedIds, addToSelection, setSelectedIds, clearSelection, setIsDragging, setActiveTool])
 

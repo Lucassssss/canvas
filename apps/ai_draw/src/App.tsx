@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { MessageSquare } from 'lucide-react'
 import { LeftSidebar } from './canvas/components/LeftSidebar'
 import { RightSidebar } from './canvas/components/RightSidebar'
@@ -7,10 +7,15 @@ import { Toolbar } from './canvas/components/Toolbar'
 import { Canvas } from './canvas/Canvas'
 import { ZoomControls } from './canvas/components/ZoomControls'
 import { useCanvasStore } from './canvas/store'
+import { registerBuiltInTypes } from './ai-combination/built-in-types'
 
 const App: React.FC = () => {
   const [isChatOpen, setIsChatOpen] = useState(false)
   const { addShape, activeTool, viewport, setActiveTool, setSelectedIds, shapes, selectedIds } = useCanvasStore()
+
+  useEffect(() => {
+    registerBuiltInTypes()
+  }, [])
 
   const selectedClothing = shapes.find(
     (s) => s.type === 'clothing' && selectedIds.includes(s.id)

@@ -1,4 +1,6 @@
-export type ShapeType = 'rect' | 'circle' | 'text' | 'note' | 'image' | 'arrow' | 'draw' | 'clothing'
+import type { SlotContent } from '../../ai-combination/types'
+
+export type ShapeType = 'rect' | 'circle' | 'text' | 'note' | 'image' | 'arrow' | 'draw' | 'clothing' | 'ai-combination'
 
 export const SHAPE_MIN_SIZE: Record<ShapeType, { minWidth: number; minHeight: number }> = {
   rect: { minWidth: 20, minHeight: 20 },
@@ -9,6 +11,7 @@ export const SHAPE_MIN_SIZE: Record<ShapeType, { minWidth: number; minHeight: nu
   arrow: { minWidth: 20, minHeight: 2 },
   draw: { minWidth: 1, minHeight: 1 },
   clothing: { minWidth: 100, minHeight: 100 },
+  'ai-combination': { minWidth: 400, minHeight: 200 },
 }
 
 export type ClothingView = 'front' | 'back' | 'side'
@@ -48,6 +51,17 @@ export interface ShapeProps {
   logoAreas?: LogoArea[]
   activeLogoId?: string
   logoContent?: Record<string, string>
+  combinationTypeId?: string
+  slotContents?: Record<string, SlotContent>
+  combinationSettings?: {
+    prompt: string
+    resolution: { width: number; height: number }
+  }
+  combinationStatus?: 'idle' | 'generating' | 'completed' | 'error'
+  combinationResults?: string[]
+  combinationError?: string
+  resizable?: boolean
+  rotatable?: boolean
 }
 
 export interface ViewportState {
@@ -56,7 +70,7 @@ export interface ViewportState {
   zoom: number
 }
 
-export type ToolType = 'select' | 'hand' | 'pen' | 'eraser' | 'arrow' | 'text' | 'note' | 'image' | 'shape' | 'clothing'
+export type ToolType = 'select' | 'hand' | 'pen' | 'eraser' | 'arrow' | 'text' | 'note' | 'image' | 'shape' | 'clothing' | 'ai-combination'
 
 export interface HistoryEntry {
   shapes: ShapeProps[]

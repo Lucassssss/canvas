@@ -7,6 +7,7 @@ interface CanvasStore {
   selectedIds: string[]
   viewport: ViewportState
   activeTool: ToolType
+  activeAICategory: string | null
   history: HistoryEntry[]
   historyIndex: number
   isDragging: boolean
@@ -37,9 +38,11 @@ interface CanvasStore {
   zoomToFit: () => void
   resetZoom: () => void
   zoomToArea: (x: number, y: number, width: number, height: number) => void
+  focusOnArea: (x: number, y: number, width: number, height: number, options?: { padding?: number; maxZoom?: number }) => void
   exitLogoEditing: () => void
 
   setActiveTool: (tool: ToolType) => void
+  setActiveAICategory: (categoryId: string | null) => void
 
   setIsDragging: (isDragging: boolean) => void
   setIsResizing: (isResizing: boolean) => void
@@ -62,6 +65,7 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
   selectedIds: [],
   viewport: { x: 0, y: 0, zoom: 1 },
   activeTool: 'select',
+  activeAICategory: null,
   history: [],
   historyIndex: -1,
   isDragging: false,
@@ -224,6 +228,32 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
     })
   },
 
+  focusOnArea: (x, y, width, height, options) => {
+    const padding = options?.padding ?? 40
+    const maxZoom = options?.maxZoom ?? 1
+    const sidebarWidth = 320
+    const topOffset = 56
+    const bottomOffset = 80
+
+    const containerWidth = window.innerWidth - sidebarWidth
+    const containerHeight = window.innerHeight - topOffset - bottomOffset
+
+    const scaleX = containerWidth / (width + padding * 2)
+    const scaleY = containerHeight / (height + padding * 2)
+    const zoom = Math.min(scaleX, scaleY, maxZoom)
+
+    const centerX = x + width / 2
+    const centerY = y + height / 2
+
+    const newViewport = {
+      x: containerWidth / 2 - centerX * zoom,
+      y: containerHeight / 2 - centerY * zoom + topOffset,
+      zoom,
+    }
+
+    set({ viewport: newViewport })
+  },
+
   exitLogoEditing: () => {
     const { logoEditingState, shapes, selectedIds } = get()
     if (logoEditingState.previousViewport) {
@@ -250,6 +280,7 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
   },
 
   setActiveTool: (tool) => set({ activeTool: tool }),
+  setActiveAICategory: (categoryId) => set({ activeAICategory: categoryId }),
 
   setIsDragging: (isDragging) => set({ isDragging }),
   setIsResizing: (isResizing) => set({ isResizing }),

@@ -2,6 +2,7 @@ import React, { useRef, useCallback, useState } from 'react'
 import { useCanvasStore } from '../store'
 import { ShapeProps } from './types'
 import { ClothingComponent } from './ClothingComponent'
+import { AICombinationComponent } from './AICombinationComponent'
 
 interface ShapeComponentProps {
   shape: ShapeProps
@@ -222,11 +223,16 @@ export const Shape: React.FC<ShapeComponentProps> = ({ shape }) => {
       case 'clothing':
         return <ClothingComponent shape={shape} />
 
+      case 'ai-combination':
+        return <AICombinationComponent shape={shape as ShapeProps & { type: 'ai-combination' }} />
+
       default:
         return null
     }
   }
 
+  const isCustomComponent = shape.type === 'draw' || shape.type === 'arrow' || shape.type === 'clothing' || shape.type === 'ai-combination'
+  
   const style: React.CSSProperties = {
     left: shape.x,
     top: shape.y,
@@ -234,15 +240,16 @@ export const Shape: React.FC<ShapeComponentProps> = ({ shape }) => {
     height: shape.height,
     transform: `rotate(${shape.rotation}deg)`,
     opacity: shape.opacity,
-    backgroundColor: shape.type !== 'draw' && shape.type !== 'arrow' && shape.type !== 'clothing' ? shape.fill : undefined,
-    border: shape.type !== 'draw' && shape.type !== 'arrow' && shape.type !== 'clothing' ? `${shape.strokeWidth}px solid ${shape.stroke}` : undefined,
+    backgroundColor: !isCustomComponent ? shape.fill : undefined,
+    border: !isCustomComponent ? `${shape.strokeWidth}px solid ${shape.stroke}` : undefined,
     borderRadius: shape.type === 'circle' ? '50%' : shape.type === 'note' ? '4px' : undefined,
+    overflow: shape.type === 'ai-combination' ? 'visible' : undefined,
   }
 
   return (
     <div
       ref={elementRef}
-      className="canvas-shape"
+      className={`canvas-shape ${shape.type === 'ai-combination' ? 'pointer-events-auto' : ''}`}
       data-type={shape.type}
       data-shape-id={shape.id}
       style={style}
