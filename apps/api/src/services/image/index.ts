@@ -4,7 +4,6 @@
  * 整合上传服务、AI生成服务、LLM服务
  */
 
-import { s3UploadService } from "../s3.js";
 export { s3UploadService } from "../s3.js";
 
 import { GenerationMode, ProviderId, GenerationStatus } from "./types.js";
