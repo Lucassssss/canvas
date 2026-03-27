@@ -2,8 +2,7 @@ import { Router } from "express";
 import { generateText } from "ai";
 import { deepseek } from "@ai-sdk/deepseek";
 import { runChat } from "../services/llm.js";
-import { imageService } from "../services/image.js";
-import { s3UploadService } from "../services/s3.js";
+import { imageGenerationService, s3UploadService } from "../services/image/index.js";
 import {
   getConversation,
   getConversations,
@@ -79,7 +78,7 @@ router.post("/api/image/generate", async (req, res) => {
       return res.status(400).json({ success: false, error: "slotContents is required" });
     }
 
-    const result = await imageService.generate({
+    const result = await imageGenerationService.generate({
       combinationTypeId,
       slotContents,
       settings: settings || { resolution: { width: 768, height: 1024 } },

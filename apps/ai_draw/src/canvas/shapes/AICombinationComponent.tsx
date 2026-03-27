@@ -292,6 +292,8 @@ export const AICombinationComponent: React.FC<AICombinationComponentProps> = ({ 
       settings: shape.combinationSettings || { prompt: '', resolution: { width: 768, height: 1024 } },
     })
 
+    // todo 这里返回的 imageUrl 是 base64，不能直接使用，要上传到 S3 并返回 URL 类型
+
     if (result.success && result.imageUrl) {
       updateShape(shape.id, {
         combinationStatus: 'completed',
