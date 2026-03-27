@@ -1,10 +1,11 @@
-import React, { useRef, useEffect, useCallback, useState } from 'react'
+import React, { useRef, useEffect, useCallback, useState, useMemo } from 'react'
 import { useCanvasStore } from './store'
 import { Shape } from './shapes/Shape'
 import { ToolType, ShapeProps, SHAPE_MIN_SIZE } from './shapes/types'
 import { LogoEditorLayer } from './components/LogoEditorLayer'
 import { LogoMaterialPanel } from './components/LogoMaterialPanel'
 import { aiCombinationService } from '@/ai-combination/service'
+import { TransformMatrix } from '@/lib/canvas/transform'
 
 function getRotatedBoundingBox(
   x: number,
@@ -112,23 +113,44 @@ const SelectionBoxLayer: React.FC<{
   const screenY = minY * viewport.zoom + viewport.y
   const screenWidth = (maxX - minX) * viewport.zoom
   const screenHeight = (maxY - minY) * viewport.zoom
+  const centerX = screenX + screenWidth / 2
+  const centerY = screenY + screenHeight / 2
 
   const handleSize = 8
   const rotateHandleSize = 24
   const rotateHandleOffset = 32
 
+  const containerTransform = useMemo(() => {
+    const matrix = TransformMatrix.compose(
+      centerX,
+      centerY,
+      screenWidth,
+      screenHeight,
+      0,
+      1,
+      1
+    )
+    return TransformMatrix.toCssString(matrix)
+  }, [centerX, centerY, screenWidth, screenHeight])
+
   return (
     <div
       className="absolute pointer-events-none"
       style={{
-        left: screenX,
-        top: screenY,
+        left: 0,
+        top: 0,
         width: screenWidth,
         height: screenHeight,
-        outline: '1px solid var(--primary)',
-        background: 'rgba(37, 99, 235, 0.05)',
+        transform: containerTransform,
       }}
     >
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          outline: '1px solid var(--primary)',
+          background: 'rgba(37, 99, 235, 0.05)',
+        }}
+      />
       <div
         className="resize-handle pointer-events-auto absolute"
         style={{
@@ -295,6 +317,8 @@ const SelectionBox: React.FC<SelectionBoxProps> = ({ shape, viewport, onResizeSt
   const screenY = bounds.minY * viewport.zoom + viewport.y
   const screenWidth = (bounds.maxX - bounds.minX) * viewport.zoom
   const screenHeight = (bounds.maxY - bounds.minY) * viewport.zoom
+  const centerX = screenX + screenWidth / 2
+  const centerY = screenY + screenHeight / 2
 
   const handleSize = 8
   const rotateHandleSize = 24
@@ -303,14 +327,28 @@ const SelectionBox: React.FC<SelectionBoxProps> = ({ shape, viewport, onResizeSt
   const canResize = shape.resizable !== false
   const canRotate = shape.rotatable !== false
 
+  const containerTransform = useMemo(() => {
+    const matrix = TransformMatrix.compose(
+      centerX,
+      centerY,
+      screenWidth,
+      screenHeight,
+      0,
+      1,
+      1
+    )
+    return TransformMatrix.toCssString(matrix)
+  }, [centerX, centerY, screenWidth, screenHeight])
+
   return (
     <div
       className="absolute pointer-events-none"
       style={{
-        left: screenX,
-        top: screenY,
+        left: 0,
+        top: 0,
         width: screenWidth,
         height: screenHeight,
+        transform: containerTransform,
       }}
     >
       <div
@@ -642,8 +680,8 @@ export const Canvas: React.FC = () => {
     if (multiSelectResizeStartRef.current) {
       const { startMouseX, startMouseY, startBounds, shapePositions, handle } = multiSelectResizeStartRef.current
 
-      const dx = e.clientX - startMouseX
-      const dy = e.clientY - startMouseY
+      const dx = (e.clientX - startMouseX) / viewport.zoom
+      const dy = (e.clientY - startMouseY) / viewport.zoom
 
       const { minX, minY, maxX, maxY } = startBounds
       const startWidth = maxX - minX
@@ -750,8 +788,8 @@ export const Canvas: React.FC = () => {
       const minWidth = minSize.minWidth
       const minHeight = minSize.minHeight
 
-      let dx = e.clientX - startMouseX
-      let dy = e.clientY - startMouseY
+      let dx = (e.clientX - startMouseX) / viewport.zoom
+      let dy = (e.clientY - startMouseY) / viewport.zoom
 
       let newWidth = startWidth
       let newHeight = startHeight

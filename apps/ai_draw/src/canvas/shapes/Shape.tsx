@@ -1,10 +1,11 @@
-import React, { useRef, useCallback, useState } from 'react'
+import React, { useRef, useCallback, useState, useMemo } from 'react'
 import { useCanvasStore } from '../store'
 import { ShapeProps } from './types'
 import { ClothingComponent } from './ClothingComponent'
 import { AICombinationComponent } from './AICombinationComponent'
 import { aiCombinationService } from '@/ai-combination/service'
 import { Loader2 } from 'lucide-react'
+import { TransformMatrix } from '@/lib/canvas/transform'
 
 interface ShapeComponentProps {
   shape: ShapeProps
@@ -281,13 +282,31 @@ export const Shape: React.FC<ShapeComponentProps> = ({ shape }) => {
   }
 
   const isCustomComponent = shape.type === 'draw' || shape.type === 'arrow' || shape.type === 'clothing' || shape.type === 'ai-combination'
-  
+
+  const transformStyle = useMemo(() => {
+    const cx = shape.x + shape.width / 2
+    const cy = shape.y + shape.height / 2
+    const matrix = TransformMatrix.compose(
+      cx,
+      cy,
+      shape.width,
+      shape.height,
+      shape.rotation,
+      shape.scaleX ?? 1,
+      shape.scaleY ?? 1
+    )
+    return {
+      transform: TransformMatrix.toCssString(matrix),
+    }
+  }, [shape.x, shape.y, shape.width, shape.height, shape.rotation, shape.scaleX, shape.scaleY])
+
   const style: React.CSSProperties = {
-    left: shape.x,
-    top: shape.y,
+    position: 'absolute',
+    left: 0,
+    top: 0,
     width: shape.width,
     height: shape.height,
-    transform: `rotate(${shape.rotation}deg)`,
+    ...transformStyle,
     opacity: shape.opacity,
     backgroundColor: !isCustomComponent ? shape.fill : undefined,
     border: !isCustomComponent ? `${shape.strokeWidth}px solid ${shape.stroke}` : undefined,
