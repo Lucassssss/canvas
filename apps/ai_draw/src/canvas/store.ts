@@ -56,6 +56,8 @@ interface CanvasStore {
   setIsDragging: (isDragging: boolean) => void
   setIsResizing: (isResizing: boolean) => void
   setIsRotating: (isRotating: boolean) => void
+  dragData: { shapeId: string; imageUrl: string } | null
+  setDragData: (data: { shapeId: string; imageUrl: string } | null) => void
 
   undo: () => void
   redo: () => void
@@ -103,6 +105,7 @@ const initialState = {
   projectName: 'Untitled Project',
   isDirty: false,
   lastSavedAt: null as number | null,
+  dragData: null as { shapeId: string; imageUrl: string } | null,
 }
 
 export const useCanvasStore = create<CanvasStore>()(
@@ -320,6 +323,7 @@ export const useCanvasStore = create<CanvasStore>()(
   setIsDragging: (isDragging) => set({ isDragging }),
   setIsResizing: (isResizing) => set({ isResizing }),
   setIsRotating: (isRotating) => set({ isRotating }),
+  setDragData: (data) => set({ dragData: data }),
 
   undo: () => {
     const { history, historyIndex } = get()

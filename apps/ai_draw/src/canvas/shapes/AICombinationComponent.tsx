@@ -46,7 +46,7 @@ const SLOT_ICONS: Record<string, React.ReactNode> = {
 interface ImageSlotRendererProps {
   slot: SlotDefinition
   content: SlotContent
-  onFileSelect: (slotId: string, file: File) => void
+  onFileSelect: (slotId: string, fileOrUrl: File | string, source?: 'upload' | 'canvas') => void
   onClear: (slotId: string) => void
   isDragOver: boolean
   onDragEnter: () => void
@@ -76,6 +76,12 @@ const ImageSlotRenderer: React.FC<ImageSlotRendererProps> = ({
     e.preventDefault()
     e.stopPropagation()
     onDragLeave()
+
+    const dragData = useCanvasStore.getState().dragData
+    if (dragData) {
+      onFileSelect(slot.id, dragData.imageUrl, 'canvas')
+      return
+    }
 
     const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'))
     if (files.length > 0) {
@@ -258,18 +264,29 @@ export const AICombinationComponent: React.FC<AICombinationComponentProps> = ({ 
 
   const handleFileSelect = useCallback((
     slotId: string,
-    file: File
+    fileOrUrl: File | string,
+    source: 'upload' | 'canvas' = 'upload'
   ) => {
-    const uploadImage = async () => {
-      const result = await aiCombinationService.uploadImage(file, 'canvas-uploads')
-      const imageUrl = result.success && result.url ? result.url : null
+    const processImage = async (imageUrl: string) => {
       const newSlotContents: Record<string, SlotContent> = {
         ...shape.slotContents,
-        [slotId]: { imageUrl, source: 'upload' },
+        [slotId]: { imageUrl, source },
       }
       updateShape(shape.id, { slotContents: newSlotContents })
     }
-    uploadImage()
+
+    if (source === 'canvas' && typeof fileOrUrl === 'string') {
+      processImage(fileOrUrl)
+    } else if (source === 'upload' && typeof fileOrUrl !== 'string') {
+      const uploadImage = async () => {
+        const result = await aiCombinationService.uploadImage(fileOrUrl, 'canvas-uploads')
+        const imageUrl = result.success && result.url ? result.url : null
+        if (imageUrl) {
+          processImage(imageUrl)
+        }
+      }
+      uploadImage()
+    }
   }, [shape.id, shape.slotContents, updateShape])
 
   const handleTextChange = useCallback((slotId: string, text: string) => {

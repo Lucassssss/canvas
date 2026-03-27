@@ -16,6 +16,7 @@ export const Shape: React.FC<ShapeComponentProps> = ({ shape }) => {
   const [isEditing, setIsEditing] = useState(false)
   const [imageLoaded, setImageLoaded] = useState(false)
   const [imageError, setImageError] = useState(false)
+  const [isMouseDragging, setIsMouseDragging] = useState(false)
 
   const {
     updateShape,
@@ -26,6 +27,7 @@ export const Shape: React.FC<ShapeComponentProps> = ({ shape }) => {
     activeTool,
     setIsDragging,
     viewport,
+    setDragData,
   } = useCanvasStore()
 
   const dragStartRef = useRef<{ x: number; y: number; shapePositions: Map<string, { x: number; y: number }> } | null>(null)
@@ -35,6 +37,10 @@ export const Shape: React.FC<ShapeComponentProps> = ({ shape }) => {
     e.stopPropagation()
 
     if (activeTool !== 'select') return
+
+    if (shape.type === 'image') {
+      e.preventDefault()
+    }
 
     const isAlreadySelected = selectedIds.includes(shape.id)
 
@@ -76,6 +82,7 @@ export const Shape: React.FC<ShapeComponentProps> = ({ shape }) => {
       const handleMouseUp = () => {
         dragStartRef.current = null
         setIsDragging(false)
+        setIsMouseDragging(false)
         saveHistory()
         window.removeEventListener('mousemove', handleMouseMove)
         window.removeEventListener('mouseup', handleMouseUp)
@@ -83,8 +90,9 @@ export const Shape: React.FC<ShapeComponentProps> = ({ shape }) => {
 
       window.addEventListener('mousemove', handleMouseMove)
       window.addEventListener('mouseup', handleMouseUp)
+      setIsMouseDragging(true)
     }
-  }, [shape, activeTool, viewport, selectedIds, updateShape, setSelectedIds, addToSelection, saveHistory, setIsDragging])
+  }, [shape, activeTool, viewport, selectedIds, updateShape, setSelectedIds, addToSelection, saveHistory, setIsDragging, setIsMouseDragging])
 
   const handleDoubleClick = useCallback((e: React.MouseEvent) => {
     e.stopPropagation()
@@ -129,7 +137,20 @@ export const Shape: React.FC<ShapeComponentProps> = ({ shape }) => {
 
       case 'image':
         return shape.imageUrl ? (
-          <div className="relative w-full h-full">
+          <div
+            className="relative w-full h-full"
+            draggable={!isMouseDragging}
+            onDragStart={(e) => {
+              e.dataTransfer.effectAllowed = 'copy'
+              e.dataTransfer.setData('text/plain', shape.id)
+              if (shape.imageUrl) {
+                setDragData({ shapeId: shape.id, imageUrl: shape.imageUrl })
+              }
+            }}
+            onDragEnd={() => {
+              setDragData(null)
+            }}
+          >
             {!imageLoaded && !imageError && (
               <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
                 <Loader2 size={24} className="animate-spin text-gray-400" />
@@ -143,6 +164,7 @@ export const Shape: React.FC<ShapeComponentProps> = ({ shape }) => {
             <img
               src={shape.imageUrl}
               alt=""
+              draggable={false}
               className={`w-full h-full object-cover transition-opacity ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
               onLoad={() => setImageLoaded(true)}
               onError={() => setImageError(true)}
