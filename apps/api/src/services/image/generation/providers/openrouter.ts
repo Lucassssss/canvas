@@ -302,7 +302,13 @@ export class OpenRouterProvider extends BaseProvider {
     }
 
     if (imageUrl.startsWith("data:") || imageUrl.startsWith("blob:")) {
-      console.log(`[OpenRouter服务商] 检测到 data/blob URL，直接返回`);
+      console.log(`[OpenRouter服务商] 检测到 data/blob URL，需要上传到 S3`);
+      const result = await s3UploadService.uploadFromUrl(imageUrl, "ai-generated");
+      if (result.success && result.url) {
+        console.log(`[OpenRouter服务商] data URL 上传成功: ${result.url}`);
+        return result.url;
+      }
+      console.warn(`[OpenRouter服务商] data URL 上传失败，返回原始 URL`);
       return imageUrl;
     }
 
