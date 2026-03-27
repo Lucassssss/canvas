@@ -1,5 +1,10 @@
 export class TransformMatrix {
   private static DEG_TO_RAD = Math.PI / 180
+  private static DECIMALS = 2
+
+  private static round(value: number): number {
+    return Math.round(value * Math.pow(10, this.DECIMALS)) / Math.pow(10, this.DECIMALS)
+  }
 
   static compose(
     x: number,
@@ -16,13 +21,13 @@ export class TransformMatrix {
     const cos = Math.cos(rad)
     const sin = Math.sin(rad)
 
-    const a = cos * scaleX
-    const b = sin * scaleX
-    const c = -sin * scaleY
-    const d = cos * scaleY
+    const a = this.round(cos * scaleX)
+    const b = this.round(sin * scaleX)
+    const c = this.round(-sin * scaleY)
+    const d = this.round(cos * scaleY)
 
-    const e = x - cx
-    const f = y - cy
+    const e = this.round(x - cx)
+    const f = this.round(y - cy)
 
     return new Float32Array([a, b, c, d, e, f])
   }

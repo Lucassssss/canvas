@@ -6,6 +6,24 @@ import { localStorageManager } from '@/lib/storage/local'
 import { jsonExporter, jsonImporter } from '@/lib/import-export/json'
 import type { CanvasHistoryEntry, OperationType } from '@/types/canvas/mvp'
 
+const DECIMALS = 2
+
+function roundValue(value: number): number {
+  return Math.round(value * Math.pow(10, DECIMALS)) / Math.pow(10, DECIMALS)
+}
+
+function roundProps<T extends Record<string, unknown>>(props: T): T {
+  const result: Record<string, unknown> = {}
+  for (const [key, value] of Object.entries(props)) {
+    if (typeof value === 'number') {
+      result[key] = roundValue(value)
+    } else {
+      result[key] = value
+    }
+  }
+  return result as T
+}
+
 interface CanvasStore {
   shapes: ShapeProps[]
   selectedIds: string[]
@@ -126,9 +144,10 @@ export const useCanvasStore = create<CanvasStore>()(
       },
 
       updateShape: (id, props) => {
+        const roundedProps = roundProps(props)
         set((state) => ({
           shapes: state.shapes.map((s) =>
-            s.id === id ? { ...s, ...props } : s
+            s.id === id ? { ...s, ...roundedProps } : s
           ),
           isDirty: true
         }))
