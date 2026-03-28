@@ -1,5 +1,6 @@
 import React from 'react'
-import { User, Shirt, Image, Scan, Copy, ArrowRight } from 'lucide-react'
+import { User, Shirt, Image, Scan, Copy, ArrowRight, Sparkles, Sparkle } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 
 interface TryonMode {
   id: string
@@ -41,22 +42,22 @@ const tryonModes: TryonMode[] = [
     }],
     description: '保持面部特征不变',
   },
-  {
-    id: 'fixed-bg-tryon',
-    name: '固定面部背景换衣',
-    icon: Image,
-    inputs: [
-      { name: '面部参考', icon: User, image: 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=100&h=133&fit=crop' },
-      { name: '背景参考', icon: Image, image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=100&h=133&fit=crop' },
-      { name: '服装图', icon: Shirt, image: 'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=100&h=133&fit=crop' },
-    ],
-    outputs: [{ 
-      name: '结果图', 
-      count: 1, 
-      images: ['https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=100&h=133&fit=crop'] 
-    }],
-    description: '保持面部和背景不变',
-  },
+  // {
+  //   id: 'fixed-bg-tryon',
+  //   name: '固定面部背景换衣',
+  //   icon: Image,
+  //   inputs: [
+  //     { name: '面部参考', icon: User, image: 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=100&h=133&fit=crop' },
+  //     { name: '背景参考', icon: Image, image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=100&h=133&fit=crop' },
+  //     { name: '服装图', icon: Shirt, image: 'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=100&h=133&fit=crop' },
+  //   ],
+  //   outputs: [{ 
+  //     name: '结果图', 
+  //     count: 1, 
+  //     images: ['https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=100&h=133&fit=crop'] 
+  //   }],
+  //   description: '保持面部和背景不变',
+  // },
   {
     id: 'fixed-pose-tryon',
     name: '固定姿势换衣',
@@ -89,7 +90,7 @@ const tryonModes: TryonMode[] = [
         'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=100&h=133&fit=crop',
         'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=100&h=133&fit=crop',
         'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=100&h=133&fit=crop',
-        'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=133&fit=crop',
+        // 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=133&fit=crop',
       ] 
     }],
     description: '单图输入生成 5 个姿势',
@@ -205,7 +206,7 @@ export const EcommerceMaster: React.FC = () => {
         <p className="text-sm text-neutral-500 mt-1">智能搭配场景与模特，丝滑获得服装套图</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-4 gap-4">
         {tryonModes.map((mode) => {
           const Icon = mode.icon
           const inputImages = mode.inputs.map(i => ({ src: i.image || '', label: i.name }))
@@ -229,17 +230,23 @@ export const EcommerceMaster: React.FC = () => {
             : undefined
 
           return (
-            <button
+            <div
               key={mode.id}
               onClick={() => handleModeClick(mode.id)}
               className="group bg-white rounded-xl p-4 border border-neutral-200 hover:border-neutral-400 hover:shadow-lg transition-all duration-200 text-left"
             >
               {/* 标题 */}
-              <div className="flex items-center gap-2 mb-4">
-                <div className="p-1.5 rounded-lg bg-neutral-900">
-                  <Icon className="w-4 h-4 text-white" />
+              <div className="flex items-center gap-2 mb-4 flex justify-between">
+                <div className='flex items-center gap-2'>
+                <div className="p-1 rounded-sm border">
+                  <Icon className="w-3 h-3 text-dark" />
                 </div>
                 <span className="text-sm font-medium text-neutral-800">{mode.name}</span>
+                </div>
+                <Button variant="link" size="xs" className="text-sm transition-colors flex items-center gap-1">
+                  做同款
+                  {/* <span> <Sparkle className="w-4 h-4 border-0" fill='#000000' /> </span> */}
+                </Button>
               </div>
 
               {/* 输入 → 输出 */}
@@ -266,10 +273,10 @@ export const EcommerceMaster: React.FC = () => {
               </div>
 
               {/* 描述 */}
-              <p className="text-xs text-neutral-500 pt-3 border-t border-neutral-100">
+              {/* <p className="text-xs text-neutral-500 pt-3 border-t border-neutral-100">
                 {mode.description}
-              </p>
-            </button>
+              </p> */}
+            </div>
           )
         })}
       </div>
