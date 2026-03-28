@@ -1,15 +1,15 @@
 'use client'
 
 import { LeftSidebar } from '@/components/LeftSidebar'
+import { ProjectsPage as ProjectsPageContent } from '@/features/projects/ProjectsPage'
 
 export default function ProjectsPage() {
   return (
-    <div className="min-h-screen w-full bg-gray-50">
+    <div className="min-h-screen w-full bg-background">
       <LeftSidebar />
-      <main className="pt-20 px-8">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-2xl font-semibold text-neutral-900">我的项目</h1>
-          <p className="text-neutral-500 mt-2">项目页面开发中...</p>
+      <main className="pt-20 px-8 ml-24">
+        <div className="max-w-7xl mx-auto">
+          <ProjectsPageContent />
         </div>
       </main>
     </div>
