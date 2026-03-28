@@ -96,7 +96,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
       await get().loadProjectConversations(projectId)
       
       // 选择新创建的会话
-      get().selectThread(result.id)
+      await get().selectThread(result.id)
     } catch (error) {
       console.error('[Chat Store] Failed to create conversation:', error)
     }
