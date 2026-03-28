@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useRef, useState, useCallback } from 'react'
 import { Plus, ChevronDown, MessageSquare, ArrowRightFromLine, MessageSquarePlus, Shirt } from 'lucide-react'
 import { useCanvasStore } from '../store'
 import { ClothingPanel } from './ClothingPanel'
@@ -13,9 +13,22 @@ interface RightSidebarProps {
 
 type TabType = 'chat' | 'clothing'
 
+const STORAGE_KEY = 'right-sidebar-width'
+const MIN_WIDTH = 280
+const MAX_WIDTH = 600
+const DEFAULT_WIDTH = 360
+
 export const RightSidebar: React.FC<RightSidebarProps> = ({ isOpen, onClose }) => {
-  const [showHistory, setShowHistory] = React.useState(false)
-  const [activeTab, setActiveTab] = React.useState<TabType>('chat')
+  const [showHistory, setShowHistory] = useState(false)
+  const [activeTab, setActiveTab] = useState<TabType>('chat')
+  const [sidebarWidth, setSidebarWidth] = useState(() => {
+    const stored = localStorage.getItem(STORAGE_KEY)
+    return stored ? Number(stored) : DEFAULT_WIDTH
+  })
+  const [isResizing, setIsResizing] = useState(false)
+  const sidebarRef = useRef<HTMLDivElement>(null)
+  const widthRef = useRef(sidebarWidth)
+  widthRef.current = sidebarWidth
 
   const { shapes, selectedIds } = useCanvasStore()
   const {
@@ -64,8 +77,55 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({ isOpen, onClose }) =
     setShowHistory(false)
   }
 
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault()
+    setIsResizing(true)
+  }, [])
+
+  useEffect(() => {
+    if (!isResizing || !sidebarRef.current) return
+
+    const sidebar = sidebarRef.current
+    sidebar.style.transition = 'none'
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const newWidth = window.innerWidth - e.clientX
+      const clampedWidth = Math.min(Math.max(newWidth, MIN_WIDTH), MAX_WIDTH)
+      sidebar.style.width = `${clampedWidth}px`
+    }
+
+    const handleMouseUp = () => {
+      const finalWidth = parseInt(sidebar.style.width) || DEFAULT_WIDTH
+      sidebar.style.transition = ''
+      sidebar.style.width = ''
+      setIsResizing(false)
+      setSidebarWidth(finalWidth)
+      localStorage.setItem(STORAGE_KEY, String(finalWidth))
+    }
+
+    document.addEventListener('mousemove', handleMouseMove)
+    document.addEventListener('mouseup', handleMouseUp)
+    document.body.style.cursor = 'ew-resize'
+    document.body.style.userSelect = 'none'
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove)
+      document.removeEventListener('mouseup', handleMouseUp)
+      document.body.style.cursor = ''
+      document.body.style.userSelect = ''
+    }
+  }, [isResizing])
+
   return (
-    <div className={`sidebar-right ${isOpen ? 'open' : ''}`}>
+    <div
+      ref={sidebarRef}
+      className={`sidebar-right ${isOpen ? 'open' : ''}`}
+      style={{ width: isOpen ? sidebarWidth : undefined }}
+    >
+      <div
+        className="sidebar-resize-handle"
+        onMouseDown={handleMouseDown}
+      />
       <div className="chat-header flex justify-between items-center p-3">
         {showClothingTab && (
           <div className="flex gap-1 p-1 bg-neutral-100 rounded-lg mb-3">

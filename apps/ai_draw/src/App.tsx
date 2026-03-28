@@ -10,7 +10,7 @@ import { useCanvasStore } from './canvas/store'
 import './ai-combination/built-in-types'
 
 const App: React.FC = () => {
-  const [isChatOpen, setIsChatOpen] = useState(false)
+  const [isChatOpen, setIsChatOpen] = useState(true)
   const { addShape, activeTool, viewport, setActiveTool, setSelectedIds, shapes, selectedIds } = useCanvasStore()
 
   const selectedClothing = shapes.find(
