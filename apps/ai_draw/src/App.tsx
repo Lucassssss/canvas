@@ -73,9 +73,10 @@ const App: React.FC = () => {
 
   return (
     <div className="w-full h-full">
-      <a className="logo block w-16 flex items-center justify-center" href="https://joii.cc" target="_blank">
+      <a className="logo block w-8 flex items-center justify-center" href="https://joii.cc" target="_blank">
         {/* <div className="border py-0.5 px-2 border-2 border-black bg-black text-white">joii.cc</div> */}
-        <img src="/joii_logo.svg" alt="Joii.cc" />
+        {/* <img src="/joii_logo.svg" alt="Joii.cc" /> */}
+        <img src="/joii_logo_fa.svg" alt="Joii.cc" />
       </a>
 
       <button

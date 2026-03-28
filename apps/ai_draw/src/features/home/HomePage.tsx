@@ -21,7 +21,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onEnterCanvas }) => {
       
       <main className="w-full">
         <div className="w-full px-8">
-          <div className="max-w-4xl mx-auto min-h-[300px] flex flex-col justify-center ">
+          <div className="max-w-4xl mx-auto min-h-[200px] pt-[150px] flex flex-col justify-center ">
             <Hero />
             
             <div className="mt-8 space-y-4">

@@ -21,12 +21,13 @@ export const Header: React.FC<HeaderProps> = ({ onEnterCanvas }) => {
   const [currentLang, setCurrentLang] = useState(languages[0])
 
   return (
-    <header className="w-full sticky top-0 z-50">
+    <header className="w-full sticky top-0 z-50 bg-gray-50">
       <div className="w-full px-8 h-14 flex items-center justify-between">
         <div className="flex items-center gap-8">
-          <button onClick={onEnterCanvas} className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-            <img src="/joii_logo.svg" alt="joii" className="h-8" />
-          </button>
+          <a href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+            {/* <img src="/joii_logo.svg" alt="joii" className="h-10" /> */}
+            <img src="/joii_logo_fa.svg" alt="joii" className="h-8" />
+          </a>
         </div>
 
         <div className="flex items-center gap-3">
