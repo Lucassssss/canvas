@@ -1,35 +1,37 @@
-import React, { useState, useEffect } from 'react'
-import { Send, Plus, ChevronDown, MessageSquare, ArrowRightFromLine, MessageSquarePlus, Shirt } from 'lucide-react'
+import React, { useEffect, useRef } from 'react'
+import { Plus, ChevronDown, MessageSquare, ArrowRightFromLine, MessageSquarePlus, Shirt } from 'lucide-react'
 import { useCanvasStore } from '../store'
 import { ClothingPanel } from './ClothingPanel'
+import { ChatMessage } from '../../features/chat/components/ChatMessage'
+import { ChatInput } from '../../features/chat/components/ChatInput'
+import { useChat } from '../../features/chat/hooks/useChat'
 
 interface RightSidebarProps {
   isOpen: boolean
   onClose: () => void
 }
 
-interface ChatMessage {
-  id: string
-  role: 'user' | 'assistant'
-  content: string
-  timestamp: Date
-}
-
-interface ChatThread {
-  id: string
-  title: string
-  messages: ChatMessage[]
-}
-
 type TabType = 'chat' | 'clothing'
 
 export const RightSidebar: React.FC<RightSidebarProps> = ({ isOpen, onClose }) => {
-  const [input, setInput] = useState('')
-  const [showHistory, setShowHistory] = useState(false)
-  const [currentThreadId, setCurrentThreadId] = useState('thread-1')
-  const [activeTab, setActiveTab] = useState<TabType>('chat')
+  const [showHistory, setShowHistory] = React.useState(false)
+  const [activeTab, setActiveTab] = React.useState<TabType>('chat')
 
   const { shapes, selectedIds } = useCanvasStore()
+  const {
+    messages,
+    threads,
+    currentThread,
+    currentThreadId,
+    isLoading,
+    input,
+    setInput,
+    sendMessage,
+    addThread,
+    selectThread,
+  } = useChat()
+
+  const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const selectedClothing = shapes.find(
     (s) => s.type === 'clothing' && selectedIds.includes(s.id)
@@ -43,76 +45,22 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({ isOpen, onClose }) =
     }
   }, [selectedClothing, activeTab])
 
-  const [threads, setThreads] = useState<ChatThread[]>([
-    {
-      id: 'thread-1',
-      title: '新对话',
-      messages: []
-    },
-    {
-      id: 'thread-2',
-      title: '设计配色方案',
-      messages: [
-        { id: '1', role: 'user', content: '推荐一个适合电商的设计配色', timestamp: new Date() },
-        { id: '2', role: 'assistant', content: '电商设计推荐使用蓝色系配色方案...', timestamp: new Date() }
-      ]
-    },
-    {
-      id: 'thread-3',
-      title: '首页布局优化',
-      messages: []
-    }
-  ])
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages])
 
-  const currentThread = threads.find(t => t.id === currentThreadId) || threads[0]
-
-  const handleSend = () => {
-    if (!input.trim()) return
-
-    const newMessage: ChatMessage = {
-      id: Date.now().toString(),
-      role: 'user',
-      content: input,
-      timestamp: new Date()
-    }
-
-    setThreads(threads.map(t => {
-      if (t.id === currentThreadId) {
-        return { ...t, messages: [...t.messages, newMessage] }
-      }
-      return t
-    }))
-    setInput('')
-
-    setTimeout(() => {
-      const response: ChatMessage = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: '我来帮你设计！这个功能正在开发中...',
-        timestamp: new Date()
-      }
-      setThreads(threads.map(t => {
-        if (t.id === currentThreadId) {
-          return { ...t, messages: [...t.messages, response] }
-        }
-        return t
-      }))
-    }, 1000)
+  const handleSend = async () => {
+    if (!input.trim() || isLoading) return
+    await sendMessage(input)
   }
 
   const handleNewChat = () => {
-    const newThread: ChatThread = {
-      id: `thread-${Date.now()}`,
-      title: '新对话',
-      messages: []
-    }
-    setThreads([newThread, ...threads])
-    setCurrentThreadId(newThread.id)
+    addThread()
     setShowHistory(false)
   }
 
   const handleSelectThread = (threadId: string) => {
-    setCurrentThreadId(threadId)
+    selectThread(threadId)
     setShowHistory(false)
   }
 
@@ -120,16 +68,16 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({ isOpen, onClose }) =
     <div className={`sidebar-right ${isOpen ? 'open' : ''}`}>
       <div className="chat-header flex justify-between items-center p-3">
         {showClothingTab && (
-          <div className="flex gap-1 p-1 bg-gray-100 rounded-lg mb-3">
+          <div className="flex gap-1 p-1 bg-neutral-100 rounded-lg mb-3">
             <button
-              className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-all ${activeTab === 'chat' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+              className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-all ${activeTab === 'chat' ? 'bg-white text-black shadow-sm' : 'text-neutral-500 hover:text-neutral-700'}`}
               onClick={() => setActiveTab('chat')}
             >
               <MessageSquare size={14} />
               助手
             </button>
             <button
-              className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-all ${activeTab === 'clothing' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+              className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-all ${activeTab === 'clothing' ? 'bg-white text-black shadow-sm' : 'text-neutral-500 hover:text-neutral-700'}`}
               onClick={() => setActiveTab('clothing')}
             >
               <Shirt size={14} />
@@ -140,13 +88,15 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({ isOpen, onClose }) =
 
         {activeTab === 'chat' && !showClothingTab && (
           <div className="relative">
-            <div className='flex items-center'>
+            <div className="flex items-center">
               <button
                 onClick={() => setShowHistory(!showHistory)}
                 className="chat-header-btn"
                 style={{ width: 'auto', paddingLeft: 8, paddingRight: 8, gap: 4, display: 'flex' }}
               >
-                <span className="chat-header-title" style={{ maxWidth: 160 }}>{currentThread.title}</span>
+                <span className="chat-header-title" style={{ maxWidth: 160 }}>
+                  {currentThread?.title || '新对话'}
+                </span>
                 <ChevronDown size={18} />
               </button>
               <button
@@ -168,7 +118,7 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({ isOpen, onClose }) =
                   <span>新建对话</span>
                   <Plus size={14} />
                 </div>
-                {threads.map(thread => (
+                {threads.map((thread) => (
                   <div
                     key={thread.id}
                     className="chat-history-item"
@@ -203,49 +153,44 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({ isOpen, onClose }) =
         <ClothingPanel />
       ) : (
         <>
-          <div className="chat-messages bg-[#f4f4f5]">
-            {currentThread.messages.length === 0 ? (
-              <div className="h-full flex flex-col items-center justify-center text-gray-400 text-sm gap-2">
-                <MessageSquare size={32} strokeWidth={1.5} />
-                <p>你可以问我任何关于设计的问题</p>
+          <div className="chat-messages bg-white overflow-y-auto flex-1">
+            {messages.length === 0 ? (
+              <div className="h-full flex flex-col items-center justify-center text-neutral-400 text-sm gap-3 px-4">
+                <div className="w-16 h-16 rounded-2xl bg-neutral-100 flex items-center justify-center">
+                  <MessageSquare size={28} strokeWidth={1.5} />
+                </div>
+                <p className="text-center">你好，我是 AI 助手</p>
+                <p className="text-center text-xs text-neutral-300">你可以问我任何关于设计的问题</p>
               </div>
             ) : (
-              currentThread.messages.map((msg) => (
-                <div
-                  key={msg.id}
-                  className={`mb-4 p-3 rounded-lg ${
-                    msg.role === 'user'
-                      ? 'bg-blue-50 ml-8'
-                      : 'bg-gray-100 mr-8'
-                  }`}
-                >
-                  <p className="text-sm">{msg.content}</p>
-                </div>
-              ))
+              <div className="p-3 space-y-4">
+                {messages.map((msg) => (
+                  <ChatMessage
+                    key={msg.id}
+                    message={msg}
+                    isStreaming={isLoading && msg.id === messages[messages.length - 1].id && msg.role === 'assistant'}
+                  />
+                ))}
+                {isLoading && messages[messages.length - 1]?.role === 'user' && (
+                  <div className="flex justify-start">
+                    <div className="bg-white border border-neutral-200 px-4 py-3" style={{ borderRadius: '16px' }}>
+                      <p className="text-sm text-neutral-500">思考中...</p>
+                    </div>
+                  </div>
+                )}
+                <div ref={messagesEndRef} />
+              </div>
             )}
           </div>
 
-          <div className="chat-input-container bg-[#f4f4f5]">
-            <div className="relative">
-              <textarea
-                className="chat-input pr-10"
-                placeholder="输入消息..."
+          <div className="chat-input-container bg-white border-t border-neutral-200">
+            <div className="p-3">
+              <ChatInput
                 value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault()
-                    handleSend()
-                  }
-                }}
-                rows={1}
+                onChange={setInput}
+                onSend={handleSend}
+                isLoading={isLoading}
               />
-              <button
-                className="absolute right-2 bottom-2 p-1 text-primary hover:bg-blue-50 rounded"
-                onClick={handleSend}
-              >
-                <Send size={18} />
-              </button>
             </div>
           </div>
         </>

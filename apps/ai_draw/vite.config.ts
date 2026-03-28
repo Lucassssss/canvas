@@ -17,4 +17,7 @@ export default defineConfig({
     outDir: 'dist',
     sourcemap: false,
   },
+  optimizeDeps: {
+    include: ['react', 'react-dom', 'zustand'],
+  },
 })
