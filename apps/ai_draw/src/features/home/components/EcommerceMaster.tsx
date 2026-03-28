@@ -96,61 +96,80 @@ const tryonModes: TryonMode[] = [
   },
 ]
 
-const IMAGE_WIDTH = 100
-const IMAGE_HEIGHT = 133
+const IMAGE_WIDTH = 80
+const IMAGE_HEIGHT = 106
 
 interface ImageStackProps {
   images: { src: string; label: string }[]
   showLabel: boolean
+  targetWidth?: number // 目标宽度，用于智能填充
 }
 
-const ImageStack: React.FC<ImageStackProps> = ({ images, showLabel }) => {
+const ImageStack: React.FC<ImageStackProps> = ({ images, showLabel, targetWidth }) => {
   const [hoveredIndex, setHoveredIndex] = React.useState<number | null>(null)
   const totalImages = images.length
 
-  const getOverlap = () => {
-    if (totalImages <= 1) return 0
-    if (totalImages === 2) return 50
-    if (totalImages === 3) return 60
-    if (totalImages === 4) return 70
-    return 75
+  // 智能计算叠加宽度
+  const calculateLayout = () => {
+    if (totalImages === 1) {
+      return { totalWidth: IMAGE_WIDTH, visibleWidth: 0 }
+    }
+
+    // 如果指定了目标宽度，计算最佳叠加
+    if (targetWidth && targetWidth > IMAGE_WIDTH) {
+      // 计算每张图片应该露出多少宽度才能填满目标宽度
+      const visibleWidth = Math.max(
+        20, // 最小露出宽度
+        Math.min(
+          IMAGE_WIDTH * 0.4, // 最大露出宽度（图片宽度的40%）
+          (targetWidth - IMAGE_WIDTH) / (totalImages - 1)
+        )
+      )
+      const totalWidth = IMAGE_WIDTH + (totalImages - 1) * visibleWidth
+      return { totalWidth, visibleWidth }
+    }
+
+    // 默认叠加策略
+    const visibleWidth = totalImages <= 2 ? 32 : totalImages <= 3 ? 28 : 24
+    const totalWidth = IMAGE_WIDTH + (totalImages - 1) * visibleWidth
+    return { totalWidth, visibleWidth }
   }
 
-  const overlap = getOverlap()
-  const singleWidth = IMAGE_WIDTH - overlap
-  const totalWidth = singleWidth + (totalImages - 1) * (IMAGE_WIDTH - overlap) + overlap
+  const { totalWidth, visibleWidth } = calculateLayout()
 
   return (
     <div 
       className="relative"
       style={{ 
-        height: IMAGE_HEIGHT + (showLabel ? 28 : 0),
-        width: totalWidth
+        height: IMAGE_HEIGHT,
+        width: totalWidth,
+        minWidth: totalWidth,
       }}
     >
       {images.map((img, idx) => {
-        const zIndex = hoveredIndex === idx ? totalImages + 1 : totalImages - idx
-        const scale = hoveredIndex === idx ? 1.25 : 1
-        const left = idx * (IMAGE_WIDTH - overlap)
+        const isHovered = hoveredIndex === idx
+        const zIndex = isHovered ? totalImages + 10 : totalImages - idx
+        const scale = isHovered ? 1.15 : 1
+        const left = idx * visibleWidth
 
         return (
           <div
             key={idx}
-            className="absolute cursor-pointer transition-all duration-300"
+            className="absolute cursor-pointer transition-all duration-200 ease-out"
             style={{
               left,
-              top: showLabel ? 28 : 0,
+              top: 0,
               width: IMAGE_WIDTH,
               height: IMAGE_HEIGHT,
               zIndex,
               transform: `scale(${scale})`,
-              transformOrigin: 'center center',
+              transformOrigin: 'left center',
             }}
             onMouseEnter={() => setHoveredIndex(idx)}
             onMouseLeave={() => setHoveredIndex(null)}
           >
             <div 
-              className="w-full h-full rounded-lg overflow-hidden border-2 border-white shadow-md"
+              className="w-full h-full rounded-lg overflow-hidden border-2 border-white shadow-lg bg-white"
             >
               <img 
                 src={img.src} 
@@ -159,11 +178,12 @@ const ImageStack: React.FC<ImageStackProps> = ({ images, showLabel }) => {
               />
             </div>
             
-            {showLabel && hoveredIndex === idx && (
+            {showLabel && isHovered && (
               <div 
-                className="absolute -top-7 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-neutral-800 text-white text-xs rounded whitespace-nowrap"
+                className="absolute -top-8 left-1/2 -translate-x-1/2 px-3 py-1 bg-neutral-900 text-white text-xs rounded-md whitespace-nowrap shadow-lg z-50"
               >
                 {img.label}
+                <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-neutral-900 rotate-45" />
               </div>
             )}
           </div>
@@ -185,66 +205,68 @@ export const EcommerceMaster: React.FC = () => {
         <p className="text-sm text-neutral-500 mt-1">智能搭配场景与模特，丝滑获得服装套图</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         {tryonModes.map((mode) => {
           const Icon = mode.icon
           const inputImages = mode.inputs.map(i => ({ src: i.image || '', label: i.name }))
           const outputImages = mode.outputs[0].images?.map((src, i) => ({ 
             src, 
-            label: `${mode.outputs[0].name} ${i + 1}` 
+            label: mode.outputs[0].count > 1 ? `${mode.outputs[0].name} ${i + 1}` : mode.outputs[0].name
           })) || []
 
-          const inputOverlap = inputImages.length > 2 ? 70 : (inputImages.length === 2 ? 50 : 0)
-          const outputOverlap = outputImages.length > 2 ? 70 : (outputImages.length === 2 ? 50 : 0)
+          // 智能计算目标宽度：让多图的一边填满空间
+          const ARROW_WIDTH = 20
+          const CARD_CONTENT_WIDTH = 320 // 卡片内容区域的大概宽度
+          const availableWidth = CARD_CONTENT_WIDTH - ARROW_WIDTH
           
-          const inputWidth = inputImages.length === 1 
-            ? IMAGE_WIDTH 
-            : IMAGE_WIDTH - inputOverlap + (inputImages.length - 1) * (IMAGE_WIDTH - inputOverlap)
+          // 如果一边是单图，另一边是多图，让多图填满剩余空间
+          const inputTargetWidth = inputImages.length > 1 && outputImages.length === 1 
+            ? availableWidth - IMAGE_WIDTH - ARROW_WIDTH 
+            : undefined
           
-          const outputWidth = outputImages.length === 1 
-            ? IMAGE_WIDTH 
-            : IMAGE_WIDTH - outputOverlap + (outputImages.length - 1) * (IMAGE_WIDTH - outputOverlap)
+          const outputTargetWidth = outputImages.length > 1 && inputImages.length === 1 
+            ? availableWidth - IMAGE_WIDTH - ARROW_WIDTH 
+            : undefined
 
           return (
             <button
               key={mode.id}
               onClick={() => handleModeClick(mode.id)}
-              className="group bg-white rounded-xl p-5 border border-neutral-200 hover:border-neutral-300 hover:shadow-md transition-all duration-300 text-left"
+              className="group bg-white rounded-xl p-4 border border-neutral-200 hover:border-neutral-400 hover:shadow-lg transition-all duration-200 text-left"
             >
-              <div className="flex items-center gap-3 mb-1">
-                <div className="p-2 rounded-lg bg-neutral-900">
+              {/* 标题 */}
+              <div className="flex items-center gap-2 mb-4">
+                <div className="p-1.5 rounded-lg bg-neutral-900">
                   <Icon className="w-4 h-4 text-white" />
                 </div>
                 <span className="text-sm font-medium text-neutral-800">{mode.name}</span>
               </div>
 
-              <div className="flex items-center justify-center gap-3">
-                <div 
-                  className="flex items-center justify-end"
-                  style={{ minWidth: inputWidth }}
-                >
+              {/* 输入 → 输出 */}
+              <div className="flex items-center justify-center gap-2 mb-4">
+                <div className="flex-shrink-0">
                   <ImageStack 
                     images={inputImages} 
                     showLabel={true}
+                    targetWidth={inputTargetWidth}
                   />
                 </div>
                 
-                <div className="w-8 flex-shrink-0 flex items-center justify-center">
-                  <ArrowRight className="w-5 h-5 text-neutral-400" />
+                <div className="flex-shrink-0 px-1">
+                  <ArrowRight className="w-4 h-4 text-neutral-400" />
                 </div>
                 
-                <div 
-                  className="flex items-center justify-start"
-                  style={{ minWidth: outputWidth }}
-                >
+                <div className="flex-shrink-0">
                   <ImageStack 
                     images={outputImages} 
                     showLabel={true}
+                    targetWidth={outputTargetWidth}
                   />
                 </div>
               </div>
 
-              <p className="text-xs text-neutral-500 mt-6 pt-3 border-t border-neutral-100">
+              {/* 描述 */}
+              <p className="text-xs text-neutral-500 pt-3 border-t border-neutral-100">
                 {mode.description}
               </p>
             </button>
