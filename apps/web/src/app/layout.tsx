@@ -1,25 +1,19 @@
-import type { Metadata } from "next";
-import { Inter } from "next/font/google";
-import "./globals.css";
-import { ThemeProvider } from "@/components/theme-provider";
-
-const inter = Inter({ subsets: ["latin"] });
+import type { Metadata } from 'next'
+import './globals.css'
 
 export const metadata: Metadata = {
-  title: "Eclaw",
-  description: "A chat assistant with tool capabilities",
-};
+  title: 'AI Draw - 智能图片生成',
+  description: '使用 AI 技术快速生成高质量图片，支持多种换装模式',
+}
 
 export default function RootLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+}: {
+  children: React.ReactNode
+}) {
   return (
-    <html lang="zh-CN" suppressHydrationWarning>
-      <body className={`${inter.className} antialiased`}>
-        <ThemeProvider>{children}</ThemeProvider>
-      </body>
+    <html lang="zh-CN">
+      <body>{children}</body>
     </html>
-  );
+  )
 }
