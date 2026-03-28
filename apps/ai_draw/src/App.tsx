@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { MessageSquare } from 'lucide-react'
+import { HomePage } from './features/home/HomePage'
 import { LeftSidebar } from './canvas/components/LeftSidebar'
 import { RightSidebar } from './canvas/components/RightSidebar'
 import { ClothingSidebar } from './canvas/components/ClothingSidebar'
@@ -9,9 +10,16 @@ import { ZoomControls } from './canvas/components/ZoomControls'
 import { useCanvasStore } from './canvas/store'
 import './ai-combination/built-in-types'
 
+type ViewMode = 'home' | 'canvas'
+
 const App: React.FC = () => {
+  const [viewMode, setViewMode] = useState<ViewMode>('home')
   const [isChatOpen, setIsChatOpen] = useState(true)
   const { addShape, activeTool, viewport, setActiveTool, setSelectedIds, shapes, selectedIds } = useCanvasStore()
+
+  if (viewMode === 'home') {
+    return <HomePage onEnterCanvas={() => setViewMode('canvas')} />
+  }
 
   const selectedClothing = shapes.find(
     (s) => s.type === 'clothing' && selectedIds.includes(s.id)
