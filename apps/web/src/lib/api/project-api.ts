@@ -167,4 +167,16 @@ export const projectApi = {
     })
     return handleResponse(response)
   },
+
+  /**
+   * 获取会话的消息列表
+   */
+  async getConversationMessages(conversationId: string): Promise<any[]> {
+    console.log(`[Project API] Fetching messages for conversation: ${conversationId}`)
+    const response = await fetch(`${API_BASE_URL}/conversations/${conversationId}/messages`, {
+      cache: 'no-store',
+    })
+    const data = await handleResponse<{ conversationId: string; messages: any[] }>(response)
+    return data.messages
+  },
 }

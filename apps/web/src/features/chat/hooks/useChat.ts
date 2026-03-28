@@ -8,11 +8,15 @@ export function useChat() {
     isLoading,
     input,
     conversationId,
+    currentProjectId,
     setInput,
     sendMessage,
     clearMessages,
     addThread,
     selectThread,
+    setCurrentProjectId,
+    loadProjectConversations,
+    createProjectConversation,
   } = useChatStore()
 
   const currentThread = threads.find((t) => t.id === currentThreadId)
@@ -25,10 +29,14 @@ export function useChat() {
     isLoading,
     input,
     conversationId,
+    currentProjectId,
     setInput,
     sendMessage,
     clearMessages,
     addThread,
     selectThread,
+    setCurrentProjectId,
+    loadProjectConversations,
+    createProjectConversation,
   }
 }

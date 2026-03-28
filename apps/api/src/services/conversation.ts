@@ -1,10 +1,11 @@
 import { generateObject, generateText, ModelMessage } from "ai";
+import { nanoid } from "nanoid";
 import { z } from "zod";
 import db from "./database.js";
 import type { Conversation, Message } from "../types/index.js";
 
 function generateId(): string {
-  return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  return nanoid();
 }
 
 export function createConversation(title?: string, model?: string, mode?: string): Conversation {

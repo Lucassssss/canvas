@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState, useCallback } from 'react'
 import { Plus, ChevronDown, MessageSquare, ArrowRightFromLine, MessageSquarePlus, Shirt } from 'lucide-react'
+import { useSearchParams } from 'next/navigation'
 import { useCanvasStore } from '../store'
 import { ClothingPanel } from './ClothingPanel'
 import { ChatMessage } from '@/features/chat/components/ChatMessage'
@@ -21,9 +22,13 @@ const MAX_WIDTH = 600
 const DEFAULT_WIDTH = 360
 
 export const RightSidebar: React.FC<RightSidebarProps> = ({ isOpen, onClose }) => {
+  const searchParams = useSearchParams()
+  const projectId = searchParams.get('projectId')
+  
   const [showHistory, setShowHistory] = useState(false)
   const [activeTab, setActiveTab] = useState<TabType>('chat')
   const [sidebarWidth, setSidebarWidth] = useState(() => {
+    if (typeof window === 'undefined') return DEFAULT_WIDTH
     const stored = localStorage.getItem(STORAGE_KEY)
     return stored ? Number(stored) : DEFAULT_WIDTH
   })
@@ -40,10 +45,13 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({ isOpen, onClose }) =
     currentThreadId,
     isLoading,
     input,
+    currentProjectId,
     setInput,
     sendMessage,
     addThread,
     selectThread,
+    setCurrentProjectId,
+    loadProjectConversations,
   } = useChat()
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -53,6 +61,24 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({ isOpen, onClose }) =
   )
 
   const showClothingTab = selectedClothing !== undefined
+
+  // 当项目 ID 变化时，加载项目会话
+  useEffect(() => {
+    if (projectId) {
+      // 如果项目 ID 变化，重新加载会话
+      if (projectId !== currentProjectId) {
+        console.log('[RightSidebar] Project changed, loading conversations for:', projectId)
+        setCurrentProjectId(projectId)
+        loadProjectConversations(projectId)
+      }
+    } else {
+      // 如果没有项目 ID，清空项目相关状态
+      if (currentProjectId) {
+        console.log('[RightSidebar] No project, clearing project state')
+        setCurrentProjectId(null)
+      }
+    }
+  }, [projectId, currentProjectId, setCurrentProjectId, loadProjectConversations])
 
   useEffect(() => {
     if (selectedClothing && activeTab === 'chat') {

@@ -10,6 +10,7 @@
  * Frontend → API Routes → Project Service → Database
  */
 
+import { nanoid } from 'nanoid'
 import db from './database.js'
 import type { 
   Project, 
@@ -21,10 +22,10 @@ import type {
 
 /**
  * 生成唯一 ID
- * 格式: timestamp-randomString
+ * 使用 nanoid 生成短 ID
  */
 function generateId(): string {
-  return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+  return nanoid()
 }
 
 /**
