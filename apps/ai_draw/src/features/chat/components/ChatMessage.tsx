@@ -84,15 +84,15 @@ export const ChatMessage = memo(function ChatMessage({ message, isStreaming }: C
       >
         <div className={`flex flex-col min-w-0 flex-1 ${isUser ? 'items-end' : 'items-start'}`}>
           <div
-            className={`group relative min-w-0 max-w-full ${
+            className={`group relative min-w-0 max-w-full rounded ${
               isUser
-                ? 'bg-black text-white px-4 py-3'
-                : 'bg-white border border-neutral-200 px-4 py-3'
+                // ? 'bg-black text-white px-4 py-3'
+                ? ''
+                : 'bg-white'
             }`}
-            style={{ borderRadius: '16px' }}
           >
             {isUser ? (
-              <div className="whitespace-pre-wrap leading-relaxed break-words overflow-hidden">
+              <div className="whitespace-pre-wrap  break-words overflow-hidden bg-black text-white p-2 rounded">
                 {message.content}
               </div>
             ) : (
@@ -282,7 +282,7 @@ export const ChatMessage = memo(function ChatMessage({ message, isStreaming }: C
               </div>
             )}
 
-            <div className="flex items-center justify-between mt-2 pt-2 border-t border-neutral-100">
+            <div className="flex items-center justify-between mt-2 pt-2">
               <p className={`text-xs ${isUser ? 'text-neutral-400' : 'text-neutral-400'}`}>
                 {formatMessageTime(message.timestamp)}
                 {isStreaming && ' · 生成中...'}

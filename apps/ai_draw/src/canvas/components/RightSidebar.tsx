@@ -163,7 +163,7 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({ isOpen, onClose }) =
                 <p className="text-center text-xs text-neutral-300">你可以问我任何关于设计的问题</p>
               </div>
             ) : (
-              <div className="p-3 space-y-4">
+              <div className="space-y-4">
                 {messages.map((msg) => (
                   <ChatMessage
                     key={msg.id}
@@ -183,8 +183,8 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({ isOpen, onClose }) =
             )}
           </div>
 
-          <div className="chat-input-container bg-white border-t border-neutral-200">
-            <div className="p-3">
+          <div className="chat-input-container bg-white">
+            <div className="p-2">
               <ChatInput
                 value={input}
                 onChange={setInput}

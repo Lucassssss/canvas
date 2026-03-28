@@ -36,12 +36,12 @@ export const ChatInput: React.FC<ChatInputProps> = ({ value, onChange, onSend, i
         onKeyDown={handleKeyDown}
         placeholder="输入消息..."
         disabled={isLoading}
-        rows={1}
+        rows={4}
         className={`
-          w-full resize-none rounded-2xl border-2 border-neutral-300 bg-white px-4 py-3 pr-14
+          w-full resize-none rounded-xl border border-neutral-300 bg-white px-2 py-2 pr-14
           text-sm text-black placeholder-neutral-400
           transition-all
-          focus:border-black focus:ring-2 focus:ring-black/10 focus:outline-none
+          focus:border-gray-300 focus:ring-2 focus:ring-black/5 focus:outline-none
           ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}
         `}
         style={{
@@ -54,7 +54,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({ value, onChange, onSend, i
         onClick={onSend}
         disabled={isLoading || !value.trim()}
         className={`
-          absolute right-2 bottom-2 p-2 rounded-xl
+          absolute right-2 bottom-3 p-2 rounded-full
           transition-all
           ${value.trim() && !isLoading
             ? 'bg-black text-white hover:bg-neutral-800 cursor-pointer'
