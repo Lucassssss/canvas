@@ -1,45 +1,52 @@
 'use client'
 
-import Link from 'next/link'
-import { usePathname } from 'next/navigation'
-import { Plus, Home, Folder, User, HelpCircle } from 'lucide-react'
+import React, { useState } from 'react'
+import dynamic from 'next/dynamic'
+import { MessageSquare } from 'lucide-react'
+import { LeftSidebar } from '@/components/LeftSidebar'
+import { ClothingSidebar } from './components/ClothingSidebar'
+import { ZoomControls } from './components/ZoomControls'
+import { useCanvasStore } from './store'
+import './style.css'
 
-function LeftSidebar() {
-  const pathname = usePathname()
+const RightSidebar = dynamic(() => import('./components/RightSidebar').then(mod => ({ default: mod.RightSidebar })), { ssr: false })
+const Toolbar = dynamic(() => import('./components/Toolbar').then(mod => ({ default: mod.Toolbar })), { ssr: false })
+const Canvas = dynamic(() => import('./Canvas').then(mod => ({ default: mod.Canvas })), { ssr: false })
 
-  const isActive = (path: string) => pathname === path
+export const CanvasPage: React.FC = () => {
+  const [isChatOpen, setIsChatOpen] = useState(true)
+  const { shapes, selectedIds } = useCanvasStore()
 
-  return (
-    <div className="sidebar-left shadow-md">
-      <Link href="/canvas" className={`sidebar-left-btn ${isActive('/canvas') ? 'active' : ''}`} title="新建">
-        <Plus size={20} />
-      </Link>
-      <Link href="/" className={`sidebar-left-btn ${isActive('/') ? 'active' : ''}`} title="首页">
-        <Home size={20} />
-      </Link>
-      <Link href="/projects" className={`sidebar-left-btn ${isActive('/projects') ? 'active' : ''}`} title="项目">
-        <Folder size={20} />
-      </Link>
-      <Link href="/profile" className={`sidebar-left-btn ${isActive('/profile') ? 'active' : ''}`} title="个人">
-        <User size={20} />
-      </Link>
-      <Link href="/help" className="sidebar-left-btn" title="帮助">
-        <HelpCircle size={20} />
-      </Link>
-    </div>
+  const selectedClothing = shapes.find(
+    (s) => s.type === 'clothing' && selectedIds.includes(s.id)
   )
-}
 
-export default function CanvasPage() {
   return (
-    <div className="min-h-screen w-full bg-white">
-      <LeftSidebar />
-      <main className="w-full h-screen flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <h1 className="text-3xl font-bold text-neutral-900">Canvas 页面</h1>
-          <p className="text-neutral-500">画布编辑器开发中...</p>
+    <div className="w-full h-full">
+      <a className="logo block w-8 flex items-center justify-center" href="https://joii.cc" target="_blank">
+        <img src="/joii_logo_fa.svg" alt="Joii.cc" />
+      </a>
+
+      <button
+        className={`chat-toggle ${isChatOpen ? 'active' : ''}`}
+        onClick={() => setIsChatOpen(!isChatOpen)}
+        style={{ display: isChatOpen ? 'none' : 'flex' }}
+      >
+        <MessageSquare size={20} />
+      </button>
+
+      <div className="flex w-full h-full">
+        <LeftSidebar />
+        <div className="flex-1 relative">
+          <Canvas />
+          <Toolbar />
+          <ZoomControls />
         </div>
-      </main>
+        {selectedClothing && <ClothingSidebar />}
+        <RightSidebar isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
+      </div>
     </div>
   )
 }
+
+export default CanvasPage
