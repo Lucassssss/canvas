@@ -1,106 +1,24 @@
-import React, { useState } from 'react'
-import { MessageSquare } from 'lucide-react'
-import { HomePage } from './features/home/HomePage'
-import { LeftSidebar } from './canvas/components/LeftSidebar'
-import { RightSidebar } from './canvas/components/RightSidebar'
-import { ClothingSidebar } from './canvas/components/ClothingSidebar'
-import { Toolbar } from './canvas/components/Toolbar'
-import { Canvas } from './canvas/Canvas'
-import { ZoomControls } from './canvas/components/ZoomControls'
-import { useCanvasStore } from './canvas/store'
+import React from 'react'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { HomePage } from './pages/HomePage'
+import { CanvasPage } from './pages/CanvasPage'
+import { ProjectsPage } from './pages/ProjectsPage'
+import { ProfilePage } from './pages/ProfilePage'
+import { HelpPage } from './pages/HelpPage'
 import './ai-combination/built-in-types'
 
-type ViewMode = 'home' | 'canvas'
-
 const App: React.FC = () => {
-  const [viewMode, setViewMode] = useState<ViewMode>('home')
-  const [isChatOpen, setIsChatOpen] = useState(true)
-  const { addShape, activeTool, viewport, setActiveTool, setSelectedIds, shapes, selectedIds } = useCanvasStore()
-
-  if (viewMode === 'home') {
-    return <HomePage onEnterCanvas={() => setViewMode('canvas')} />
-  }
-
-  const selectedClothing = shapes.find(
-    (s) => s.type === 'clothing' && selectedIds.includes(s.id)
-  )
-
-  const handleCanvasClick = (e: React.MouseEvent) => {
-    if (activeTool === 'select' || activeTool === 'hand') return
-
-    const container = e.currentTarget as HTMLElement
-    const rect = container.getBoundingClientRect()
-    const x = (e.clientX - rect.left - viewport.x) / viewport.zoom
-    const y = (e.clientY - rect.top - viewport.y) / viewport.zoom
-
-    const defaultProps = {
-      x,
-      y,
-      width: 150,
-      height: 100,
-      rotation: 0,
-      fill: '#ffffff',
-      stroke: '#e4e4e7',
-      strokeWidth: 1,
-      opacity: 1,
-    }
-
-    let newShapeId: string | undefined
-
-    switch (activeTool) {
-      case 'text':
-        newShapeId = addShape({ ...defaultProps, type: 'text', text: '双击编辑' }).id
-        break
-      case 'note':
-        newShapeId = addShape({ ...defaultProps, type: 'note', fill: '#fef08a', text: '便签' }).id
-        break
-      case 'shape':
-        newShapeId = addShape({ ...defaultProps, type: 'rect' }).id
-        break
-      case 'arrow':
-        newShapeId = addShape({ ...defaultProps, type: 'arrow', width: 200, height: 2 }).id
-        break
-      case 'image':
-        newShapeId = addShape({ ...defaultProps, type: 'image', fill: '#f4f4f5' }).id
-        break
-    }
-
-    if (newShapeId) {
-      setSelectedIds([newShapeId])
-      setActiveTool('select')
-    }
-  }
-
   return (
-    <div className="w-full h-full">
-      <a className="logo block w-8 flex items-center justify-center" href="https://joii.cc" target="_blank">
-        {/* <div className="border py-0.5 px-2 border-2 border-black bg-black text-white">joii.cc</div> */}
-        {/* <img src="/joii_logo.svg" alt="Joii.cc" /> */}
-        <img src="/joii_logo_fa.svg" alt="Joii.cc" />
-      </a>
-
-      <button
-        className={`chat-toggle ${isChatOpen ? 'active' : ''}`}
-        onClick={() => setIsChatOpen(!isChatOpen)}
-        style={{ display: isChatOpen ? 'none' : 'flex' }}
-      >
-        <MessageSquare size={20} />
-      </button>
-
-      <div className="flex w-full h-full">
-        <LeftSidebar />
-        <div
-          className="flex-1 relative"
-          onClick={handleCanvasClick}
-        >
-          <Canvas />
-          <Toolbar />
-          <ZoomControls />
-        </div>
-        {selectedClothing && <ClothingSidebar />}
-        <RightSidebar isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
-      </div>
-    </div>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/canvas" element={<CanvasPage />} />
+        <Route path="/projects" element={<ProjectsPage />} />
+        <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/help" element={<HelpPage />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </BrowserRouter>
   )
 }
 

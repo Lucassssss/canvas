@@ -1,5 +1,5 @@
 import React from 'react'
-import { User, Shirt, Image, Scan, Copy, ArrowRight, Sparkles, Sparkle } from 'lucide-react'
+import { User, Shirt, Image, Scan, Copy, ArrowRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 interface TryonMode {

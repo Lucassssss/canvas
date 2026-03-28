@@ -15,8 +15,12 @@ import {
   generateTitle,
   convertToUIMessages,
 } from "../services/conversation.js";
+import projectRoutes from "./projects.js";
 
 const router = Router();
+
+// 挂载项目管理路由
+router.use('/api', projectRoutes);
 
 router.get("/health", (req, res) => {
   res.json({ status: "ok" });

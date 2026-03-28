@@ -42,6 +42,9 @@ export interface Message {
   createdAt: number;
 }
 
+// 导出项目相关类型
+export * from './project.js'
+
 export interface ModelConfig {
   model: string;
   temperature: number;

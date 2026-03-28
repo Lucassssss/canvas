@@ -1,4 +1,5 @@
 import React from 'react'
+import { useNavigate } from 'react-router-dom'
 import { ChevronRight } from 'lucide-react'
 import { ProjectCard } from './ProjectCard'
 
@@ -9,25 +10,15 @@ const recentProjects = [
   { id: '4', title: '网站 banner', lastModified: '上周' },
 ]
 
-interface RecentProjectsProps {
-  onEnterCanvas?: () => void
-}
+export const RecentProjects: React.FC = () => {
+  const navigate = useNavigate()
 
-export const RecentProjects: React.FC<RecentProjectsProps> = ({ onEnterCanvas }) => {
   const handleNewProject = () => {
-    if (onEnterCanvas) {
-      onEnterCanvas()
-    } else {
-      console.log('Create new project')
-    }
+    navigate('/canvas')
   }
 
-  const handleOpenProject = (projectId: string) => {
-    if (onEnterCanvas) {
-      onEnterCanvas()
-    } else {
-      console.log('Open project:', projectId)
-    }
+  const handleOpenProject = (_projectId: string) => {
+    navigate('/canvas')
   }
 
   return (

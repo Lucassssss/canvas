@@ -14,10 +14,9 @@ const languages = [
 ]
 
 interface HeaderProps {
-  onEnterCanvas?: () => void
 }
 
-export const Header: React.FC<HeaderProps> = ({ onEnterCanvas }) => {
+export const Header: React.FC<HeaderProps> = () => {
   const [currentLang, setCurrentLang] = useState(languages[0])
 
   return (

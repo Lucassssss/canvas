@@ -8,16 +8,12 @@ import { EcommerceMaster } from './components/EcommerceMaster'
 import { RecentProjects } from './components/RecentProjects'
 import { InspirationGallery } from './components/InspirationGallery'
 
-interface HomePageProps {
-  onEnterCanvas?: () => void
-}
-
-export const HomePage: React.FC<HomePageProps> = ({ onEnterCanvas }) => {
+export const HomePage: React.FC = () => {
   return (
     <div className="min-h-screen w-full bg-gray-50 text-neutral-900">
       <LeftSidebar />
       
-      <Header onEnterCanvas={onEnterCanvas} />
+      <Header />
       
       <main className="w-full">
         <div className="w-full px-8">
@@ -35,7 +31,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onEnterCanvas }) => {
           <EcommerceMaster />
           
           <div id="recent-projects" className="mt-10">
-            <RecentProjects onEnterCanvas={onEnterCanvas} />
+            <RecentProjects />
           </div>
 
           <div className="mt-10">
