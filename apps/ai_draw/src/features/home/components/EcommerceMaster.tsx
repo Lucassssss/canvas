@@ -212,7 +212,7 @@ export const EcommerceMaster: React.FC = () => {
               onClick={() => handleModeClick(mode.id)}
               className="group bg-white rounded-xl p-5 border border-neutral-200 hover:border-neutral-300 hover:shadow-md transition-all duration-300 text-left"
             >
-              <div className="flex items-center gap-3 mb-6">
+              <div className="flex items-center gap-3 mb-1">
                 <div className="p-2 rounded-lg bg-neutral-900">
                   <Icon className="w-4 h-4 text-white" />
                 </div>

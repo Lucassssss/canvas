@@ -3,20 +3,29 @@ import { Header } from './components/Header'
 import { Hero } from './components/Hero'
 import { SearchSection } from './components/SearchSection'
 import { QuickTags } from './components/QuickTags'
+import { LeftSidebar } from '../../components/LeftSidebar'
 import { EcommerceMaster } from './components/EcommerceMaster'
 import { RecentProjects } from './components/RecentProjects'
 import { InspirationGallery } from './components/InspirationGallery'
 import { FeaturesSection } from './components/FeaturesSection'
 import { StatsSection } from './components/StatsSection'
-import { Footer } from './components/Footer'
 
 interface HomePageProps {
   onEnterCanvas?: () => void
 }
 
 export const HomePage: React.FC<HomePageProps> = ({ onEnterCanvas }) => {
+  const scrollToSection = (sectionId: string) => {
+    const element = document.getElementById(sectionId)
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' })
+    }
+  }
+
   return (
     <div className="min-h-screen w-full bg-gray-50 text-neutral-900">
+      <LeftSidebar />
+      
       <Header onEnterCanvas={onEnterCanvas} />
       
       <main className="w-full">
@@ -34,7 +43,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onEnterCanvas }) => {
         <div className="w-full px-8 py-10 container mx-auto px-6">
           <EcommerceMaster />
           
-          <div className="mt-10">
+          <div id="recent-projects" className="mt-10">
             <RecentProjects onEnterCanvas={onEnterCanvas} />
           </div>
 
@@ -42,7 +51,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onEnterCanvas }) => {
             <InspirationGallery />
           </div>
 
-          <div className="mt-10">
+          <div id="features" className="mt-10">
             <FeaturesSection />
           </div>
 
@@ -51,8 +60,6 @@ export const HomePage: React.FC<HomePageProps> = ({ onEnterCanvas }) => {
           </div>
         </div>
       </main>
-
-      <Footer />
     </div>
   )
 }

@@ -6,8 +6,8 @@ export const Hero: React.FC = () => {
       {/* <h1 className="text-5xl font-medium tracking-tight text-neutral-900">
         joii
       </h1> */}
-      <p className="text-lg text-neutral-600 max-w-xl mx-auto">
-        释放创意，轻松绘画 · AI 智能画布助手
+      <p className="max-w-xl mx-auto text-3xl font-medium tracking-tight">
+        从一个想法，到全球爆单
       </p>
     </div>
   )

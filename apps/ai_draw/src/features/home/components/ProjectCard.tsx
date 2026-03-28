@@ -20,7 +20,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ project, isNew, onClic
       <button
         onClick={onClick}
         className="
-          group relative aspect-square rounded-lg border-2 border-dashed border-neutral-200
+          group relative aspect-[4/3] rounded-lg border-2 border-dashed border-neutral-200
           hover:border-neutral-400
           bg-neutral-50 hover:bg-white
           transition-all hover:scale-105 hover:shadow-md
@@ -43,7 +43,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ project, isNew, onClic
     <button
       onClick={onClick}
       className="
-        group relative aspect-square rounded-lg overflow-hidden
+        group relative aspect-[4/3] rounded-lg overflow-hidden
         border border-neutral-200 hover:border-neutral-400
         transition-all hover:scale-105 hover:shadow-md
         flex flex-col
@@ -59,7 +59,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ project, isNew, onClic
         )}
       </div>
       
-      <div className="p-2 bg-white border-t border-neutral-100">
+      <div className="p-2 bg-white border-t border-neutral-100 text-left">
         <h3 className="text-xs font-medium text-neutral-800 truncate group-hover:text-neutral-600">
           {project.title}
         </h3>
