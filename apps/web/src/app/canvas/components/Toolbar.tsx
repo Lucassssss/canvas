@@ -335,6 +335,12 @@ export const Toolbar: React.FC = () => {
         return
       }
 
+      if ((e.ctrlKey || e.metaKey) && e.key === 'd') {
+        e.preventDefault()
+        useCanvasStore.getState().duplicateSelectedShapes()
+        return
+      }
+
       const key = e.key.toLowerCase()
       const baseTool = baseTools.find((t) => t.shortcut.toLowerCase() === key)
       if (baseTool) {

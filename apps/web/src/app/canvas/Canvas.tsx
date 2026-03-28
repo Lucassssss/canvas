@@ -1126,6 +1126,12 @@ export const Canvas: React.FC = () => {
         return
       }
 
+      // Ctrl+S 保存 - 在 page.tsx 中处理，这里跳过
+      if ((e.metaKey || e.ctrlKey) && e.key === 's') {
+        // 不处理，让 page.tsx 处理
+        return
+      }
+
       if ((e.metaKey || e.ctrlKey) && e.key === 'd') {
         e.preventDefault()
         useCanvasStore.getState().duplicateSelectedShapes()

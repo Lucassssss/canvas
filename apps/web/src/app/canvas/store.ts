@@ -5,8 +5,13 @@ import { nanoid } from 'nanoid'
 import { localStorageManager } from '@/lib/storage/local'
 import { jsonExporter, jsonImporter } from '@/lib/import-export/json'
 import type { CanvasHistoryEntry, OperationType } from '@/types/canvas/mvp'
+import { projectApi } from '@/lib/api/project-api'
+import type { CanvasData } from '@/types/project'
 
 const isBrowser = typeof window !== 'undefined'
+
+// 自动保存配置
+const AUTO_SAVE_DELAY = 2000 // 2秒防抖
 
 const DECIMALS = 2
 
@@ -49,6 +54,9 @@ interface CanvasStore {
   projectName: string
   isDirty: boolean
   lastSavedAt: number | null
+  saveTrigger: number
+  autoSaveTimer: NodeJS.Timeout | null
+  isSaving: boolean
 
   setShapes: (shapes: ShapeProps[]) => void
   addShape: (shape: Omit<ShapeProps, 'id'>) => ShapeProps
@@ -96,11 +104,15 @@ interface CanvasStore {
   markSaved: () => void
   resetCanvas: () => void
   loadFromSnapshot: (snapshot: { shapes: ShapeProps[]; viewport: ViewportState }) => void
+  loadProject: (projectId: string) => Promise<void>
   exportProject: (name: string) => void
   importProject: (jsonString: string) => { success: boolean; error?: string }
   importFromFile: (file: File) => Promise<{ success: boolean; error?: string }>
   autoSave: () => void
   loadAutoSave: () => boolean
+  saveToServer: () => Promise<void>
+  scheduleAutoSave: () => void
+  cancelAutoSave: () => void
 }
 
 const initialState = {
@@ -125,6 +137,9 @@ const initialState = {
   projectName: 'Untitled Project',
   isDirty: false,
   lastSavedAt: null as number | null,
+  saveTrigger: 0,
+  autoSaveTimer: null as NodeJS.Timeout | null,
+  isSaving: false,
   dragData: null as { shapeId: string; imageUrl: string } | null,
 }
 
@@ -133,7 +148,10 @@ export const useCanvasStore = create<CanvasStore>()(
     (set, get) => ({
       ...initialState,
 
-      setShapes: (shapes) => set({ shapes, isDirty: true }),
+      setShapes: (shapes) => {
+        set({ shapes, isDirty: true })
+        get().scheduleAutoSave()
+      },
 
       addShape: (shape) => {
         const newShape: ShapeProps = {
@@ -142,6 +160,7 @@ export const useCanvasStore = create<CanvasStore>()(
         }
         set((state) => ({ shapes: [...state.shapes, newShape], isDirty: true }))
         get().saveHistory('create', `Create ${shape.type}`)
+        get().scheduleAutoSave()
         return newShape
       },
 
@@ -153,6 +172,7 @@ export const useCanvasStore = create<CanvasStore>()(
           ),
           isDirty: true
         }))
+        get().scheduleAutoSave()
       },
 
       deleteShape: (id) => {
@@ -162,6 +182,7 @@ export const useCanvasStore = create<CanvasStore>()(
           isDirty: true
         }))
         get().saveHistory('delete', 'Delete shape')
+        get().scheduleAutoSave()
       },
 
       deleteSelectedShapes: () => {
@@ -172,6 +193,7 @@ export const useCanvasStore = create<CanvasStore>()(
           isDirty: true
         }))
         get().saveHistory('batch', `Delete ${selectedIds.length} shapes`)
+        get().scheduleAutoSave()
       },
 
   setSelectedIds: (ids) => set({ selectedIds: ids }),
@@ -425,6 +447,7 @@ export const useCanvasStore = create<CanvasStore>()(
 
         set({ shapes: [...shapes, ...newShapes], isDirty: true })
         get().saveHistory('batch', `Paste ${newShapes.length} shapes`)
+        get().scheduleAutoSave()
         return newIds
       },
 
@@ -452,6 +475,7 @@ export const useCanvasStore = create<CanvasStore>()(
           isDirty: true,
         })
         get().saveHistory('batch', `Duplicate ${newShapes.length} shapes`)
+        get().scheduleAutoSave()
       },
 
       screenToCanvas: (screenX, screenY) => {
@@ -473,7 +497,7 @@ export const useCanvasStore = create<CanvasStore>()(
       setProjectId: (id) => set({ projectId: id }),
       setProjectName: (name) => set({ projectName: name, isDirty: true }),
       markDirty: () => set({ isDirty: true }),
-      markSaved: () => set({ isDirty: false, lastSavedAt: Date.now() }),
+      markSaved: () => set((state) => ({ isDirty: false, lastSavedAt: Date.now(), saveTrigger: state.saveTrigger + 1 })),
 
       resetCanvas: () => {
         const { projectId, projectName } = get()
@@ -493,6 +517,140 @@ export const useCanvasStore = create<CanvasStore>()(
           historyIndex: -1,
           isDirty: false,
         })
+      },
+
+      /**
+       * 加载项目数据
+       * 从服务器加载项目的画布数据
+       */
+      loadProject: async (projectId: string) => {
+        console.log(`[Canvas Store] Loading project: ${projectId}`)
+        
+        try {
+          const project = await projectApi.getProject(projectId)
+          
+          if (project && project.canvasData) {
+            console.log(`[Canvas Store] Project loaded: ${project.name}`)
+            
+            set({
+              projectId: project.id,
+              projectName: project.name,
+              shapes: project.canvasData.shapes || [],
+              viewport: project.canvasData.viewport || { x: 0, y: 0, zoom: 1 },
+              selectedIds: [], // 重置选中状态
+              history: [],
+              historyIndex: -1,
+              isDirty: false,
+              lastSavedAt: project.updatedAt,
+            })
+            
+            // 初始化历史记录
+            get().saveHistory('batch', 'Load project')
+          }
+        } catch (error) {
+          console.error('[Canvas Store] Failed to load project:', error)
+          
+          // 尝试从本地备份恢复
+          const backup = localStorage.getItem(`canvas-backup-${projectId}`)
+          if (backup) {
+            console.log('[Canvas Store] Restoring from local backup')
+            const data = JSON.parse(backup)
+            set({
+              projectId,
+              shapes: data.shapes || [],
+              viewport: data.viewport || { x: 0, y: 0, zoom: 1 },
+              selectedIds: [],
+            })
+          }
+          
+          throw error
+        }
+      },
+
+      /**
+       * 保存到服务器
+       * 将当前画布数据保存到后端
+       */
+      saveToServer: async () => {
+        const { projectId, shapes, viewport, isSaving } = get()
+        
+        // 没有项目ID或正在保存中，跳过
+        if (!projectId || isSaving) {
+          return
+        }
+        
+        console.log(`[Canvas Store] Saving to server: ${projectId}`)
+        set({ isSaving: true })
+        
+        try {
+          const canvasData: CanvasData = {
+            shapes,
+            viewport,
+            selectedIds: [], // 不保存选中状态
+          }
+          
+          await projectApi.saveCanvasData(projectId, canvasData)
+          
+          set((state) => ({
+            isDirty: false,
+            lastSavedAt: Date.now(),
+            saveTrigger: state.saveTrigger + 1
+          }))
+          
+          console.log('[Canvas Store] Saved successfully')
+          
+          // 清除本地备份
+          localStorage.removeItem(`canvas-backup-${projectId}`)
+        } catch (error) {
+          console.error('[Canvas Store] Save failed:', error)
+          
+          // 保存到本地作为备份
+          const { shapes, viewport } = get()
+          localStorage.setItem(
+            `canvas-backup-${projectId}`, 
+            JSON.stringify({ shapes, viewport, timestamp: Date.now() })
+          )
+          
+          console.log('[Canvas Store] Saved to local backup')
+        } finally {
+          set({ isSaving: false })
+        }
+      },
+
+      /**
+       * 调度自动保存
+       * 使用防抖机制，避免频繁保存
+       */
+      scheduleAutoSave: () => {
+        const { autoSaveTimer, projectId } = get()
+        
+        // 如果没有项目ID，不保存
+        if (!projectId) {
+          return
+        }
+        
+        // 清除之前的定时器
+        if (autoSaveTimer) {
+          clearTimeout(autoSaveTimer)
+        }
+        
+        // 设置新的定时器
+        const timer = setTimeout(() => {
+          get().saveToServer()
+        }, AUTO_SAVE_DELAY)
+        
+        set({ autoSaveTimer: timer, isDirty: true })
+      },
+
+      /**
+       * 取消自动保存
+       */
+      cancelAutoSave: () => {
+        const { autoSaveTimer } = get()
+        if (autoSaveTimer) {
+          clearTimeout(autoSaveTimer)
+          set({ autoSaveTimer: null })
+        }
       },
 
       exportProject: (name) => {
@@ -541,7 +699,7 @@ export const useCanvasStore = create<CanvasStore>()(
           updatedAt: Date.now(),
           version: '1.0',
         })
-        set({ isDirty: false, lastSavedAt: Date.now() })
+        set((state) => ({ isDirty: false, lastSavedAt: Date.now(), saveTrigger: state.saveTrigger + 1 }))
       },
 
       loadAutoSave: () => {
