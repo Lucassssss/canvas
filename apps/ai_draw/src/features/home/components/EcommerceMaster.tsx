@@ -98,7 +98,6 @@ const tryonModes: TryonMode[] = [
 
 const IMAGE_WIDTH = 100
 const IMAGE_HEIGHT = 133
-const IMAGE_GAP = 4
 
 interface ImageStackProps {
   images: { src: string; label: string }[]

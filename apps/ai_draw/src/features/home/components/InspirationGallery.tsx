@@ -125,9 +125,9 @@ export const InspirationGallery: React.FC = () => {
           <h2 className="text-base font-medium text-neutral-700">灵感发现</h2>
           <p className="text-sm text-neutral-500 mt-1">探索更多优秀设计作品</p>
         </div>
-        <button className="text-sm text-neutral-500 hover:text-neutral-800 transition-colors">
+        {/* <button className="text-sm text-neutral-500 hover:text-neutral-800 transition-colors">
           查看更多 →
-        </button>
+        </button> */}
       </div>
 
       <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 xl:columns-5 gap-4">
