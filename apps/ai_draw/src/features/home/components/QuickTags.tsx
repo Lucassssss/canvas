@@ -12,33 +12,26 @@ const quickTags = [
 
 export const QuickTags: React.FC = () => {
   return (
-    <div className="space-y-4">
-      <h2 className="text-base font-medium text-neutral-700">快捷功能</h2>
-      
-      <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
-        {quickTags.map((tag, index) => {
-          const Icon = tag.icon
-          return (
-            <button
-              key={index}
-              className="
-                group relative flex flex-col items-center gap-2 p-4
-                rounded-lg border border-neutral-200
-                bg-white hover:bg-neutral-50
-                transition-all hover:border-neutral-300 hover:shadow-sm
-              "
-            >
-              <div className="p-2.5 rounded-lg bg-neutral-900 group-hover:bg-neutral-800 transition-colors">
-                <Icon className="w-5 h-5 text-white" />
-              </div>
-              
-              <span className="text-xs font-medium text-neutral-600 group-hover:text-neutral-800">
-                {tag.label}
-              </span>
-            </button>
-          )
-        })}
-      </div>
+    <div className="flex flex-wrap items-center gap-2">
+      {quickTags.map((tag, index) => {
+        const Icon = tag.icon
+        return (
+          <button
+            key={index}
+            className="
+              inline-flex items-center gap-1.5 px-3 py-1.5
+              rounded-full border border-neutral-200
+              bg-white hover:bg-neutral-50 hover:border-neutral-300
+              transition-all
+            "
+          >
+            <Icon className="w-3.5 h-3.5 text-neutral-600" />
+            <span className="text-xs font-medium text-neutral-600">
+              {tag.label}
+            </span>
+          </button>
+        )
+      })}
     </div>
   )
 }

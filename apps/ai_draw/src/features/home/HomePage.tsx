@@ -24,18 +24,15 @@ export const HomePage: React.FC<HomePageProps> = ({ onEnterCanvas }) => {
           <div className="max-w-4xl mx-auto min-h-[300px] flex flex-col justify-center ">
             <Hero />
             
-            <div className="mt-8">
+            <div className="mt-8 space-y-4">
               <SearchSection />
+              <QuickTags />
             </div>
           </div>
         </div>
         
         <div className="w-full px-8 py-10 container mx-auto px-6">
-          <QuickTags />
-          
-          <div className="mt-10">
-            <EcommerceMaster />
-          </div>
+          <EcommerceMaster />
           
           <div className="mt-10">
             <RecentProjects onEnterCanvas={onEnterCanvas} />
