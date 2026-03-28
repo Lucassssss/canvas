@@ -19,7 +19,7 @@
   },
   "devDependencies": {
     "@langchain/langgraph-cli": "^1.1.15",
-    "turbo": "^2.0.0"
+    "turbo": "^2.8.21"
   },
   "engines": {
     "node": ">=18"

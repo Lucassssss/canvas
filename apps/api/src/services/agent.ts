@@ -1,4 +1,4 @@
-import { ToolLoopAgent } from "ai6";
+import { ToolLoopAgent } from "ai";
 import { tools } from "../tools";
 import Model from "./model";
 

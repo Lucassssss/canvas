@@ -1,4 +1,4 @@
-import { generateObject, generateText, CoreMessage } from "ai";
+import { generateObject, generateText, ModelMessage } from "ai";
 import { z } from "zod";
 import db from "./database.js";
 import type { Conversation, Message } from "../types/index.js";
@@ -113,27 +113,20 @@ export function clearMessages(conversationId: string): void {
 
 export async function generateTitle(userMessage: string): Promise<string> {
   const { text } = await generateText({
-    model: createTitleModel(),
+    model: "deepseek/deepseek-chat",
     messages: [
       {
         role: "user",
         content: `Generate a short title (max 30 characters) for this conversation based on the first message. Just return the title, nothing else.\n\nFirst message: ${userMessage}`
       }
     ],
-    maxTokens: 50,
+    maxOutputTokens: 50,
   });
 
   return text.trim().slice(0, 50);
 }
 
-function createTitleModel() {
-  return {
-    provider: "deepseek",
-    id: "deepseek-chat",
-  };
-}
-
-export function convertToUIMessages(messages: Message[]): CoreMessage[] {
+export function convertToUIMessages(messages: Message[]): ModelMessage[] {
   return messages.map((msg) => ({
     role: msg.role as "user" | "assistant" | "system",
     content: msg.content,

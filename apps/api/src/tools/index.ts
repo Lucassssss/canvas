@@ -1,7 +1,6 @@
-import { tool, ToolSet } from "ai6";
+import { tool, ToolSet } from "ai";
 import { z } from "zod";
 import type { ToolDefinition } from "../types/index.js";
-import { stagehandTool, navigateTool, extractTool, observeTool } from "./stagehand.js";
 import { bash } from "./bash.js";
 import { artifactTools } from "./artifact.js";
 import { sendEmailTool, checkEmailConfigTool } from "./mail.js";

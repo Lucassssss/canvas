@@ -25,7 +25,7 @@ export async function* streamChat(
     onEvent?: StreamHandler
   }
 ): AsyncGenerator<StreamEvent> {
-  const { conversationId, mode = 'agent', model = 'deepseek/deepseek-chat', onEvent } = options || {}
+  const { conversationId, mode = 'agent', model, onEvent } = options || {}
 
   const response = await fetch(`${API_URL}/api/chat`, {
     method: 'POST',

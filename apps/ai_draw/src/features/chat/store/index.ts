@@ -162,7 +162,8 @@ export const useChatStore = create<ChatStore>((set, get) => ({
       for await (const event of streamChat(uiMessages, {
         conversationId: conversationId || undefined,
         mode: 'agent',
-        model: 'deepseek/deepseek-chat',
+        // model: 'deepseek/deepseek-chat',
+        model: '',
       })) {
         if (event.type === 'conversation_created') {
           setConversationId(event.id as string)

@@ -1,12 +1,9 @@
-import { deepseek, DeepSeekLanguageModelOptions } from '@ai-sdk/deepseek';
-import { createMinimax } from 'vercel-minimax-ai-provider';
-import { ModelMessage, stepCountIs, streamText, ToolLoopAgent, ToolSet } from 'ai6';
+import { ModelMessage, stepCountIs, streamText, ToolLoopAgent, ToolSet } from 'ai';
 import { tools } from '../tools/index.js';
 import prompts from '../prompts/index.js';
 import "dotenv/config";
 import Model from './model.js';
 import Agent from './agent.js';
-// import { streamDeepAgentUpdates } from './deep-agent.js';
 
 export interface ArtifactEvent {
   type: 'artifact';

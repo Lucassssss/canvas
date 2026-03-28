@@ -96,13 +96,17 @@ router.post("/api/chat", async (req, res) => {
     res.setHeader("Content-Type", "text/event-stream");
     res.setHeader("Cache-Control", "no-cache");
     res.setHeader("Connection", "keep-alive");
+    
+    const defaultModel = process.env.DEFAULT_MODEL;
 
     const { 
       conversationId, 
       messages, 
       mode = "agent", 
-      model: modelName = "deepseek/deepseek-chat" 
+      model,
     } = req.body;
+
+    const modelName = model || defaultModel;
 
     let currentConversationId = conversationId;
 
