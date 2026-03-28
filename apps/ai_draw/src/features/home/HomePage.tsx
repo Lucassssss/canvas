@@ -7,8 +7,6 @@ import { LeftSidebar } from '../../components/LeftSidebar'
 import { EcommerceMaster } from './components/EcommerceMaster'
 import { RecentProjects } from './components/RecentProjects'
 import { InspirationGallery } from './components/InspirationGallery'
-import { FeaturesSection } from './components/FeaturesSection'
-import { StatsSection } from './components/StatsSection'
 
 interface HomePageProps {
   onEnterCanvas?: () => void
@@ -49,14 +47,6 @@ export const HomePage: React.FC<HomePageProps> = ({ onEnterCanvas }) => {
 
           <div className="mt-10">
             <InspirationGallery />
-          </div>
-
-          <div id="features" className="mt-10">
-            <FeaturesSection />
-          </div>
-
-          <div className="mt-10">
-            <StatsSection />
           </div>
         </div>
       </main>
