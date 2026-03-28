@@ -3,6 +3,7 @@ import { Header } from './components/Header'
 import { Hero } from './components/Hero'
 import { SearchSection } from './components/SearchSection'
 import { QuickTags } from './components/QuickTags'
+import { EcommerceMaster } from './components/EcommerceMaster'
 import { RecentProjects } from './components/RecentProjects'
 import { InspirationGallery } from './components/InspirationGallery'
 import { FeaturesSection } from './components/FeaturesSection'
@@ -20,7 +21,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onEnterCanvas }) => {
       
       <main className="w-full">
         <div className="w-full px-8">
-          <div className="max-w-4xl mx-auto min-h-[600px] flex flex-col justify-center ">
+          <div className="max-w-4xl mx-auto min-h-[300px] flex flex-col justify-center ">
             <Hero />
             
             <div className="mt-8">
@@ -31,6 +32,10 @@ export const HomePage: React.FC<HomePageProps> = ({ onEnterCanvas }) => {
         
         <div className="w-full px-8 py-10 container mx-auto px-6">
           <QuickTags />
+          
+          <div className="mt-10">
+            <EcommerceMaster />
+          </div>
           
           <div className="mt-10">
             <RecentProjects onEnterCanvas={onEnterCanvas} />
