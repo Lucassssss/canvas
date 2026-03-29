@@ -1,0 +1,72 @@
+generation_id,created_at,cost_total,cost_web_search,cost_cache,cost_file_processing,byok_usage_inference,tokens_prompt,tokens_completion,tokens_reasoning,tokens_cached,model_permaslug,provider_name,variant,cancelled,streamed,user,finish_reason_raw,finish_reason_normalized,generation_time_ms,time_to_first_token_ms,app_name,api_key_name
+gen-1774798611-30cS6yHxjhOU7L0vHHmn,2026-03-29 15:36:51.060,0.245164,,,0,0,1130,2242,242,0,google/gemini-3-pro-image-preview-20251120,Google,standard,false,true,,STOP,stop,58857,24571,,电商换装
+gen-1774798603-AOI2P95LPW21BW4091xk,2026-03-29 15:36:43.380,0.244304,,,0,0,574,2263,263,0,google/gemini-3-pro-image-preview-20251120,Google,standard,false,true,,STOP,stop,50052,20478,,电商换装
+gen-1774798423-venVJLDTYwdKdXO84By3,2026-03-29 15:33:43.566,0.13805,,,0,0,589,350,206,0,google/gemini-3-pro-image-preview-20251120,Google AI Studio,standard,false,true,,STOP,stop,31196,5971,,电商换装
+gen-1774798261-XoNLuyvn1YWdH0DQIXLh,2026-03-29 15:31:00.778,0.077581,,,0,0,588,2582,0,0,google/gemini-2.5-flash-image,Google,standard,false,true,,STOP,stop,23424,21634,,电商换装
+gen-1774798123-fqJLCD2tQqCo5Dmylt06,2026-03-29 15:28:43.580,0.194056,,,0,0,1848,6451,0,0,google/gemini-2.5-flash-image,Google,standard,false,true,,STOP,stop,45441,45392,,电商换装
+gen-1774797997-VHnh7F2wrfmnXYxGvxbR,2026-03-29 15:26:37.574,0,,,0,0,0,0,0,0,google/gemini-2.5-flash-image,Google,standard,false,true,,STOP,stop,22875,19511,,电商换装
+gen-1774797996-W6W0lBOXLAPwAQoPPbLx,2026-03-29 15:26:35.874,0.038876,,,0,0,588,1290,0,0,google/gemini-2.5-flash-image,Google,standard,false,true,,STOP,stop,14957,14957,,电商换装
+gen-1774797995-bvza0kpvvJ3GW6Wx8QAk,2026-03-29 15:26:35.394,0.000176,,,0,0,588,0,0,0,google/gemini-2.5-flash-image,Google,standard,false,true,,IMAGE_SAFETY,stop,8908,8774,,电商换装
+gen-1774797710-wfI3zpoSlDSp4OW3v16l,2026-03-29 15:21:49.632,0.152556,,,0,0,301,2922,0,0,google/gemini-3.1-flash-image-preview-20260226,Google AI Studio,standard,false,true,,STOP,stop,50846,49096,,电商换装
+gen-1774797486-mjwFoH8W7pFFCg2UE20v,2026-03-29 15:18:05.869,0.067761,,,0,0,1122,1120,0,0,google/gemini-3.1-flash-image-preview-20260226,Google,standard,false,true,,STOP,stop,17433,17191,,电商换装
+gen-1774796966-sCBhu4ybPnbZyDlyrelt,2026-03-29 15:09:26.414,0.069891,,,0,0,301,1967,0,0,google/gemini-3.1-flash-image-preview-20260226,Google AI Studio,standard,false,true,,STOP,stop,25027,2912,,电商换装
+gen-1774796964-Y019mS35UlgKQsyN3Qy5,2026-03-29 15:09:23.936,0.101924,,,0,0,2249,1680,0,0,google/gemini-3.1-flash-image-preview-20260226,Google,standard,false,true,,STOP,stop,44577,44035,,电商换装
+gen-1774796776-iAVKRwtIw6tpYvCBCHMJ,2026-03-29 15:06:16.683,0.04,,,0,0,1503,4175,0,0,bytedance-seed/seedream-4.5-20251203,Seed,standard,false,false,,,stop,21695,21695,,电商换装
+gen-1774796774-ktCKG3YGJdBZ0UdpttVw,2026-03-29 15:06:13.854,0.04,,,0,0,98,4175,0,0,bytedance-seed/seedream-4.5-20251203,Seed,standard,false,false,,,stop,9100,9097,,电商换装
+gen-1774796773-ncgVuvXZdZjEbfZ3giUo,2026-03-29 15:06:12.998,0.04,,,0,0,98,4175,0,0,bytedance-seed/seedream-4.5-20251203,Seed,standard,false,false,,,stop,12886,12875,,电商换装
+gen-1774796447-3zTJlu42wkwoUp5IPCpK,2026-03-29 15:00:47.482,0.1,,,0,0,0,0,0,0,black-forest-labs/flux.2-max,Black Forest Labs,standard,false,false,,,stop,35482,34020,,电商换装
+gen-1774796444-KdtOAinHuBDtbfDJvbZy,2026-03-29 15:00:44.491,0.19,,,0,0,0,0,0,0,black-forest-labs/flux.2-max,Black Forest Labs,standard,false,false,,,stop,44307,42840,,电商换装
+gen-1774796109-Hna8PfFGFG1ywuM0S0Hr,2026-03-29 14:55:09.162,0.15,,,0,0,2988,4175,0,0,sourceful/riverflow-v2-pro-20260130,Sourceful,standard,false,false,,,stop,158188,158049,,电商换装
+gen-1774795912-sHRnn2VuBZ82hPqemU6v,2026-03-29 14:51:51.603,0.15,,,0,0,1503,4175,0,0,sourceful/riverflow-v2-pro-20260130,Sourceful,standard,false,false,,,stop,166368,166275,,电商换装
+gen-1774795659-uvHHdGiM9nYKC30pLeNJ,2026-03-29 14:47:39.086,0.02,,,0,0,2988,4175,0,0,sourceful/riverflow-v2-fast-20260130,Sourceful,standard,false,false,,,stop,140164,140130,,电商换装
+gen-1774794985-ivHZ2YLRJJUneLNBmM6P,2026-03-29 14:36:25.597,0.02,,,0,0,1503,4175,0,0,sourceful/riverflow-v2-fast-20260130,Sourceful,standard,false,false,,,stop,113729,113724,,电商换装
+gen-1774794861-jQ6hvXSx2j6eSx6rEkZf,2026-03-29 14:34:20.965,0.015,,,0,0,0,0,0,0,black-forest-labs/flux.2-klein-4b,Black Forest Labs,standard,false,false,,,stop,10996,9032,,电商换装
+gen-1774794756-ktic3n3F4ELYtXNVhTMC,2026-03-29 14:32:36.279,0.017,,,0,0,0,0,0,0,black-forest-labs/flux.2-klein-4b,Black Forest Labs,standard,false,false,,,stop,14038,12418,,电商换装
+gen-1774794709-DcRfzIvo5wrSHhHDjDVA,2026-03-29 14:31:48.617,0.017,,,0,0,0,0,0,0,black-forest-labs/flux.2-klein-4b,Black Forest Labs,standard,false,false,,,stop,10089,8008,,电商换装
+gen-1774794337-aojYHDqbpqgagHnD92U3,2026-03-29 14:25:37.419,0.016,,,0,0,0,0,0,0,black-forest-labs/flux.2-klein-4b,Black Forest Labs,standard,false,false,,,stop,11400,9469,,电商换装
+gen-1774775849-AvZEBmGp7BChsOCnk422,2026-03-29 09:17:29.349,0.068772,,,0,0,301,1594,0,0,google/gemini-3.1-flash-image-preview-20260226,Google AI Studio,standard,false,true,,STOP,stop,18936,18732,,电商换装
+gen-1774770588-vw3ugfxKg8fWxmK7u64D,2026-03-29 07:49:48.591,0.068324,,,0,0,2249,1120,0,0,google/gemini-3.1-flash-image-preview-20260226,Google,standard,false,true,,STOP,stop,15727,15573,,电商换装
+gen-1774770227-aZ5FHCYLm7PlO4gesd0t,2026-03-29 07:43:47.238,0.068226,,,0,0,589,1364,0,0,google/gemini-3.1-flash-image-preview-20260226,Google AI Studio,standard,false,true,,STOP,stop,18097,17866,,电商换装
+gen-1774763433-FZc1IMODxqL3OkCD3rlg,2026-03-29 05:50:32.905,0.068433,,,0,0,589,1433,0,0,google/gemini-3.1-flash-image-preview-20260226,Google AI Studio,standard,false,true,,STOP,stop,19574,19274,,电商换装
+gen-1774723916-BcyJZyS7eUXy6vNvJmER,2026-03-28 18:51:56.122,0.068312,,,0,0,2225,1120,0,0,google/gemini-3.1-flash-image-preview-20260226,Google,standard,false,true,,STOP,stop,17376,17132,,电商换装
+gen-1774644534-iHoNb5zYy5BOzNmYYrVH,2026-03-27 20:48:54.138,0.068322,,,0,0,2244,1120,0,0,google/gemini-3.1-flash-image-preview-20260226,Google,standard,false,true,,STOP,stop,15294,15124,,电商换装
+gen-1774644283-OoWoWbpPkpiMcfFGQFxR,2026-03-27 20:44:43.365,0.068367,,,0,0,589,1411,0,0,google/gemini-3.1-flash-image-preview-20260226,Google AI Studio,standard,false,true,,STOP,stop,22755,22486,,电商换装
+gen-1774644156-crRTGQXuYb0ofArlIrJS,2026-03-27 20:42:36.044,0.068521,,,0,0,830,1422,0,0,google/gemini-3.1-flash-image-preview-20260226,Google AI Studio,standard,false,true,,STOP,stop,32355,32093,,电商换装
+gen-1774644053-HJVOaiiFIx3pu9XuFpKq,2026-03-27 20:40:52.850,0.068322,,,0,0,2244,1120,0,0,google/gemini-3.1-flash-image-preview-20260226,Google,standard,false,true,,STOP,stop,19031,18709,,电商换装
+gen-1774587314-bd0DFXX0CHQpbrJ3kgsG,2026-03-27 04:55:14.103,0.068715,,,0,0,589,1527,0,0,google/gemini-3.1-flash-image-preview-20260226,Google AI Studio,standard,false,true,,STOP,stop,18150,17896,,电商换装
+gen-1774554920-VsQKAtKHngtnn3MZhbnz,2026-03-26 19:55:20.451,0.06831,,,0,0,2221,1120,0,0,google/gemini-3.1-flash-image-preview-20260226,Google,standard,false,true,,STOP,stop,27640,27506,,电商换装
+gen-1774550661-B11mfhyWGgW7ghMGFciR,2026-03-26 18:44:21.194,0.06831,,,0,0,2221,1120,0,0,google/gemini-3.1-flash-image-preview-20260226,Google,standard,false,true,,STOP,stop,17742,17742,,电商换装
+gen-1774550242-zbsC9229RVmUpwuzB6yU,2026-03-26 18:37:22.087,0.067763,,,0,0,1127,1120,0,0,google/gemini-3.1-flash-image-preview-20260226,Google,standard,false,true,,STOP,stop,19112,18968,,电商换装
+gen-1774549545-N9928nVTxmSbVv2Ewfyi,2026-03-26 18:25:44.826,0.068331,,,0,0,2263,1120,0,0,google/gemini-3.1-flash-image-preview-20260226,Google,standard,false,true,,STOP,stop,16027,15693,,电商换装
+gen-1774549300-VtjAKrRZKxheOiqtSYsV,2026-03-26 18:21:39.886,0.06828,,,0,0,589,1382,0,0,google/gemini-3.1-flash-image-preview-20260226,Google AI Studio,standard,false,true,,STOP,stop,23585,23407,,电商换装
+gen-1774549111-3ldggCmJR297HTEFgdDg,2026-03-26 18:18:31.198,0.068331,,,0,0,2263,1120,0,0,google/gemini-3.1-flash-image-preview-20260226,Google,standard,false,true,,STOP,stop,14007,13910,,电商换装
+gen-1774549017-fk2xndVKR02f8rnMJ6sZ,2026-03-26 18:16:57.232,0.068331,,,0,0,2263,1120,0,0,google/gemini-3.1-flash-image-preview-20260226,Google,standard,false,true,,STOP,stop,14020,14020,,电商换装
+gen-1774548841-Phzh5w94oR91Am1zn2R3,2026-03-26 18:14:01.281,0.068466,,,0,0,589,1444,0,0,google/gemini-3.1-flash-image-preview-20260226,Google AI Studio,standard,false,true,,STOP,stop,24992,22938,,电商换装
+gen-1774548753-cAEAhlXzk9Fjs7EKEUyK,2026-03-26 18:12:33.284,0.068331,,,0,0,2263,1120,0,0,google/gemini-3.1-flash-image-preview-20260226,Google,standard,false,true,,STOP,stop,14144,14144,,电商换装
+gen-1774548678-IHW7FHL0KH6GJ1hfmlyV,2026-03-26 18:11:18.440,0.068331,,,0,0,2263,1120,0,0,google/gemini-3.1-flash-image-preview-20260226,Google,standard,false,true,,STOP,stop,16773,16747,,电商换装
+gen-1774523191-eZ7aAl0dkAt9di8appTR,2026-03-26 11:06:31.448,0.015923,,-0.087746,,0,51505,55,17,48748,google/gemini-3.1-pro-preview-20260219,Google AI Studio,standard,false,true,,STOP,tool_calls,5882,4881,,traecn
+gen-1774523184-vMplkZBq2y0ygDJW6Akl,2026-03-26 11:06:24.127,0.015324,,-0.087757,,0,51037,84,38,48754,google/gemini-3.1-pro-preview-20260219,Google AI Studio,standard,false,true,,STOP,tool_calls,4184,3326,,traecn
+gen-1774523176-jHUskDJgavLx3huhUmBa,2026-03-26 11:06:16.797,0.015324,,-0.087757,,0,51037,84,38,48754,google/gemini-3.1-pro-preview-20260219,Google AI Studio,standard,false,true,,STOP,tool_calls,5963,5411,,traecn
+gen-1774523164-heNILsbwaorDcOYwgP6b,2026-03-26 11:06:03.940,0.014764,,-0.087768,,0,50558,118,63,48760,google/gemini-3.1-pro-preview-20260219,Google AI Studio,standard,false,true,,STOP,tool_calls,4184,4182,,traecn
+gen-1774523121-9YbSUsaDP9uvf1qRe0cR,2026-03-26 11:05:21.195,0.102532,,,,0,50558,118,63,0,google/gemini-3.1-pro-preview-20260219,Google AI Studio,standard,false,true,,STOP,tool_calls,5491,5335,,traecn
+gen-1774523104-Dzm9CIVEp72z3RJVuRQp,2026-03-26 11:05:04.384,0.014013,,-0.08778,,0,50261,106,11,48767,google/gemini-3.1-pro-preview-20260219,Google AI Studio,standard,false,true,,STOP,tool_calls,4576,3985,,traecn
+gen-1774523096-MuQADDx8mpr1giHvV4gT,2026-03-26 11:04:56.471,0.014013,,-0.08778,,0,50261,106,11,48767,google/gemini-3.1-pro-preview-20260219,Google AI Studio,standard,false,true,,STOP,tool_calls,4847,4676,,traecn
+gen-1774523088-DNTFT8XPNC1j76JlCey3,2026-03-26 11:04:48.511,0.013665,,-0.087796,,0,50083,108,43,48776,google/gemini-3.1-pro-preview-20260219,Google AI Studio,standard,false,true,,STOP,tool_calls,6442,5933,,traecn
+gen-1774523082-BdOrS3Q2IToxYAvZKias,2026-03-26 11:04:42.792,0.020682,,-0.080479,,0,50083,83,30,44711,google/gemini-3.1-pro-preview-20260219,Google AI Studio,standard,false,true,,STOP,tool_calls,4747,4129,,traecn
+gen-1774523062-orAXTpjQGqIPY5SXd1K8,2026-03-26 11:04:22.227,0.03361,,-0.080465,,0,47666,1562,14,44703,google/gemini-3.1-pro-preview-20260219,Google AI Studio,standard,false,true,,STOP,tool_calls,17169,16666,,traecn
+gen-1774523045-4hcmheRbgbfm7mRrYrOd,2026-03-26 11:04:05.796,0.03361,,-0.080465,,0,47666,1562,14,44703,google/gemini-3.1-pro-preview-20260219,Google AI Studio,standard,false,true,,STOP,tool_calls,15451,14782,,traecn
+gen-1774523029-uANLlplrIC9QNuugn4gF,2026-03-26 11:03:49.059,0.021877,,-0.080456,,0,45743,904,13,44698,google/gemini-3.1-pro-preview-20260219,Google AI Studio,standard,false,true,,STOP,tool_calls,13202,12618,,traecn
+gen-1774523017-Q6N0MZrUnfK8C5hbNoPv,2026-03-26 11:03:37.403,0.042921,,-0.058512,,0,45743,829,13,32507,google/gemini-3.1-pro-preview-20260219,Google AI Studio,standard,false,true,,STOP,tool_calls,10503,10138,,traecn
+gen-1774522919-g7oTXisGOG5xTm2GTorh,2026-03-26 11:01:59.040,0.143247,,-0.051093,,0,35244,10321,10202,28385,google/gemini-3.1-pro-preview-20260219,Google AI Studio,standard,false,true,,STOP,tool_calls,96673,6199,,traecn
+gen-1774522913-tZL8tSGlFt8fHfGHroul,2026-03-26 11:01:52.973,0.013382,,-0.051053,,0,31798,70,22,28363,google/gemini-3.1-pro-preview-20260219,Google AI Studio,standard,false,true,,STOP,tool_calls,4615,3671,,traecn
+gen-1774522907-Rb3VRFNs70RNBdW2HEoI,2026-03-26 11:01:47.604,0.013382,,-0.051053,,0,31798,70,22,28363,google/gemini-3.1-pro-preview-20260219,Google AI Studio,standard,false,true,,STOP,tool_calls,4509,4044,,traecn
+gen-1774522900-S9wEWLwg3GvT5v4InAYJ,2026-03-26 11:01:40.685,0.011168,,-0.051051,,0,30756,59,15,28362,google/gemini-3.1-pro-preview-20260219,Google AI Studio,standard,false,true,,STOP,tool_calls,5098,4634,,traecn
+gen-1774522893-etlTpqQ0T3dUfz0dtJO3,2026-03-26 11:01:33.329,0.011168,,-0.051051,,0,30756,59,15,28362,google/gemini-3.1-pro-preview-20260219,Google AI Studio,standard,false,true,,STOP,tool_calls,6395,5702,,traecn
+gen-1774522886-7X7HQHFR5GOXinytZxmL,2026-03-26 11:01:25.842,0.010425,,-0.051064,,0,30541,34,16,28369,google/gemini-3.1-pro-preview-20260219,Google AI Studio,standard,false,true,,STOP,tool_calls,6109,5564,,traecn
+gen-1774522879-oL9sQa8p2d5n7BZd0Uab,2026-03-26 11:01:19.150,0.010449,,-0.051064,,0,30541,36,18,28369,google/gemini-3.1-pro-preview-20260219,Google AI Studio,standard,false,true,,STOP,tool_calls,5799,5316,,traecn
+gen-1774522868-cgLA1UC4V9mL9BqITCQx,2026-03-26 11:01:08.357,0.011153,,-0.051076,,0,30353,127,110,28376,google/gemini-3.1-pro-preview-20260219,Google AI Studio,standard,false,true,,STOP,tool_calls,8584,8160,,traecn
+gen-1774522860-E4g3ZtSOJG2sAGTPYv4r,2026-03-26 11:01:00.114,0.01008,,-0.051091,,0,30196,65,21,28384,google/gemini-3.1-pro-preview-20260219,Google AI Studio,standard,false,true,,STOP,tool_calls,6592,5777,,traecn
+gen-1774522854-eyJa3Bcf0rcUFPZbeGi0,2026-03-26 11:00:54.331,0.017379,,-0.043792,,0,30196,65,21,24329,google/gemini-3.1-pro-preview-20260219,Google AI Studio,standard,false,true,,STOP,tool_calls,3337,2828,,traecn
+gen-1774522818-BWzWrryaZIfelHPgNKmz,2026-03-26 11:00:18.277,0.247652,,,,0,31186,15440,15358,0,google/gemini-3.1-pro-preview-20260219,Google AI Studio,standard,false,true,,STOP,tool_calls,137863,5494,,traecn
+gen-1774522783-RhmojF4kG4SVUVqZj7W2,2026-03-26 10:59:43.465,0.09419,,,,0,26719,3396,3345,0,google/gemini-3.1-pro-preview-20260219,Google AI Studio,standard,false,true,,STOP,tool_calls,32182,4046,,traecn
+gen-1774522760-isdY0Qv1Gi3pr1DZDBXv,2026-03-26 10:59:20.435,0.109246,,,,0,22631,5332,2507,0,google/gemini-3.1-pro-preview-20260219,Google,standard,false,true,,STOP,stop,56478,8844,,traecn

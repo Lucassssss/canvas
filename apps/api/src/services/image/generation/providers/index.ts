@@ -22,7 +22,7 @@ export function getProvider(providerId: string): GenerationProvider | null {
   const provider = createProvider();
   providerInstances.set(providerId, provider);
 
-  console.log(`[服务商注册表] 获取服务商: ${provider.name}`);
+  console.log(`[服务商注册表] 获取服务商: ${provider.name} (模型: ${provider.model})`);
   return provider;
 }
 

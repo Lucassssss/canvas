@@ -98,10 +98,10 @@ const DEFAULT_MODEL = "google/gemini-3.1-flash-image-preview";
  */
 export class OpenRouterProvider extends BaseProvider {
   /** 服务商唯一标识 */
-  readonly id = "openrouter-gemini";
+  readonly id = "openrouter";
 
   /** 服务商名称 */
-  readonly name = "OpenRouter Gemini";
+  readonly name = "OpenRouter";
 
   /** 当前使用模型 */
   readonly model = DEFAULT_MODEL;
