@@ -21,7 +21,76 @@ import { s3UploadService } from "../../../s3.js";
  * OpenRouter 服务商配置
  */
 const OPENROUTER_API_URL = "https://openrouter.ai/api/v1";
+
+const image_size = '1k'
+// const image_size = '2k'
+// const image_size = '4k'
+// ----------------------------------------------------------
+
+
+/** 
+ * 单图 8分，多图8分，4K图超强
+ * 价格：￥0.48-￥1.06(2k-4k)
+ * 生成图：https://d-assets-cn.joii.cc/ai-generated/90a4b220-b382-4c2d-ad70-acf74cb1e851.png,https://d-assets-cn.joii.cc/ai-generated/b0c07b7e-e9d7-4d55-8dee-988ffe1c9b26.png
+ * 生成图：https://d-assets-cn.joii.cc/ai-generated/e6f5c6a5-8de8-48ec-999d-708408e44ef7.png
+ * 4k: https://d-assets-cn.joii.cc/ai-generated/bcbbb83d-2493-499c-8c3a-24f5917947ef.png
+**/
 const DEFAULT_MODEL = "google/gemini-3.1-flash-image-preview";
+
+/** 
+ * 单图 6分，多图未遵循关键词，只给了单图，不支持4k
+ * 价格：￥0.0012-￥0.54-￥1.34(2k)
+ * 生成图：https://d-assets-cn.joii.cc/ai-generated/11c14d69-d010-44f5-848d-1bc8228c3d53.png
+**/
+// const DEFAULT_MODEL = "google/gemini-2.5-flash-image";
+
+/** 
+ * 单图 9分，多图9分，完美
+ * 价格：￥0.95-￥1.69(2k-4k)
+ * 单图2k：https://d-assets-cn.joii.cc/ai-generated/51a0d894-a696-4af9-9cb6-2ce62ed9deb3.png
+ * 多图4k: https://d-assets-cn.joii.cc/ai-generated/b4b9b57d-6596-452e-b17d-8fa283bbd5fa.png
+ * 单图4k: https://d-assets-cn.joii.cc/ai-generated/7001aabd-18b2-4765-aecd-57cac68e498a.png
+**/
+// const DEFAULT_MODEL = "google/gemini-3-pro-image-preview";
+
+
+/** 多图性能一般，不支持4k, 单图发虚
+ * 价格：￥0.14
+ * 生成图：https://d-assets-cn.joii.cc/ai-generated/8fcfd2bf-96a2-4ad1-99fa-3dd2f5d0252d.png
+**/
+// const DEFAULT_MODEL = "sourceful/riverflow-v2-fast";
+
+/** 多图性能尚可，支持4k
+ * 价格：￥1.04(2k)
+ * 生成图：https://d-assets-cn.joii.cc/ai-generated/50b95b63-ba9b-4523-91e3-0d1f666d714e.png
+**/
+// const DEFAULT_MODEL = "sourceful/riverflow-v2-pro";
+
+
+/** 单图换装可能出现服装没换成功问题，多图变形3条腿。
+* 价格：￥0.10
+* 生成图：https://d-assets-cn.joii.cc/ai-generated/912489d7-0dee-49ae-86ce-51fc65928ce4.png
+**/
+// const DEFAULT_MODEL = "black-forest-labs/flux.2-klein-4b";
+
+/** 多图、单图性能优秀，多图提示词5张给了3张
+ * 价格：￥0.69-￥1.31(2k)
+ * 生成图：https://d-assets-cn.joii.cc/ai-generated/71ed7136-20b7-4b1b-a247-5ec55bfed5df.png
+ * 生成图：https://d-assets-cn.joii.cc/ai-generated/847cad0e-1105-424d-abb7-9f0fa08efd4d.png
+ * 
+**/
+// const DEFAULT_MODEL = "black-forest-labs/flux.2-max";
+
+/** 
+ * 单图完全不听提示词，多图7分
+ * 价格：￥0.28(2k)
+ * 生成图：https://d-assets-cn.joii.cc/ai-generated/71ed7136-20b7-4b1b-a247-5ec55bfed5df.png
+ * 生成图：https://d-assets-cn.joii.cc/ai-generated/847cad0e-1105-424d-abb7-9f0fa08efd4d.png
+ * 
+**/
+// const DEFAULT_MODEL = "bytedance-seed/seedream-4.5";
+
+// ----------------------------------------------------------
 
 /**
  * OpenRouter 图片生成服务商
@@ -33,6 +102,9 @@ export class OpenRouterProvider extends BaseProvider {
 
   /** 服务商名称 */
   readonly name = "OpenRouter Gemini";
+
+  /** 当前使用模型 */
+  readonly model = DEFAULT_MODEL;
 
   /** 支持的生成模式 */
   readonly supportedModes: GenerationMode[] = [
@@ -138,8 +210,13 @@ export class OpenRouterProvider extends BaseProvider {
           ],
         },
       ],
-      modalities: ["image", "text"] as const,
-      max_tokens: 4096,
+      // modalities: ["image", "text"] as const,
+      modalities: ["image"] as const,
+      // max_tokens: 4096,
+      image_config: {
+        aspect_ratio: '9:16',
+        image_size: image_size,
+      }
     };
 
     console.log(`[OpenRouter服务商] 发送请求到 OpenRouter，图片数量: ${imageParts.length}`);
@@ -205,8 +282,13 @@ export class OpenRouterProvider extends BaseProvider {
           ],
         },
       ],
-      modalities: ["image", "text"] as const,
-      max_tokens: 4096,
+      image_config: {
+        aspect_ratio: '9:16',
+        image_size: image_size,
+      },
+      // modalities: ["image", "text"] as const,
+      modalities: ["image"] as const,
+      // max_tokens: 4096,
     };
 
     const response = await fetch(OPENROUTER_API_URL + "/chat/completions", {
