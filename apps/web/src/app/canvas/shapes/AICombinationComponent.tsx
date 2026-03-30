@@ -4,7 +4,7 @@ import React, { useState, useCallback, useEffect } from 'react'
 import { useCanvasStore } from '../store'
 import { combinationRegistry } from '@/ai-combination/registry'
 import { aiCombinationService } from '@/ai-combination/service'
-import { Upload, Play, X, Loader2, User, Shirt, Image as ImageIcon, Plus, Equal } from 'lucide-react'
+import { Upload, Play, X, Loader2, User, Shirt, Image as ImageIcon, Plus, Equal, Trash2 } from 'lucide-react'
 import type { SlotDefinition, SlotContent } from '@/ai-combination/types'
 
 interface AICombinationComponentProps {
@@ -93,8 +93,8 @@ const ImageSlotRenderer: React.FC<ImageSlotRendererProps> = ({
 
   return (
     <div
-      className={`relative bg-white border-2 rounded-lg overflow-hidden transition-colors cursor-pointer ${
-        isDragOver ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-gray-300'
+      className={`group relative bg-gray-200 border-3 rounded-lg overflow-hidden shadow-md transition-colors cursor-pointer ${
+        isDragOver ? 'border-blue-500 bg-blue-50' : 'border-white hover:border-white'
       }`}
       style={{ width: SLOT_WIDTH, height: SLOT_HEIGHT }}
       onDragOver={handleDragOver}
@@ -116,12 +116,12 @@ const ImageSlotRenderer: React.FC<ImageSlotRendererProps> = ({
       {content.imageUrl ? (
         <div className="relative w-full h-full">
           {!imageLoaded && !imageError && (
-            <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
+            <div className="absolute inset-0 flex items-center justify-center bg-gray-200">
               <Loader2 size={20} className="animate-spin text-gray-400" />
             </div>
           )}
           {imageError && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-100 text-gray-400 gap-1">
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-200 text-gray-400 gap-1">
               <ImageIcon size={20} />
               <span className="text-xs">加载失败</span>
             </div>
@@ -134,7 +134,7 @@ const ImageSlotRenderer: React.FC<ImageSlotRendererProps> = ({
             onError={() => setImageError(true)}
           />
           <button
-            className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors shadow"
+            className="absolute top-2 right-2 p-1.5 bg-gray-500 text-white rounded-full hover:bg-gray-600 transition-all shadow opacity-0 group-hover:opacity-100"
             onClick={(e) => {
               e.stopPropagation()
               setImageLoaded(false)
@@ -142,7 +142,7 @@ const ImageSlotRenderer: React.FC<ImageSlotRendererProps> = ({
               onClear(slot.id)
             }}
           >
-            <X size={12} />
+            <Trash2 size={12} />
           </button>
         </div>
       ) : (
@@ -173,7 +173,7 @@ const TextSlotRenderer: React.FC<TextSlotRendererProps> = ({
 
   return (
     <div
-      className="relative bg-white border-2 border-gray-200 rounded-lg overflow-hidden hover:border-gray-300 transition-colors"
+      className="relative bg-white border-3 border-white rounded-lg overflow-hidden shadow-md hover:border-gray-300 transition-colors shadow"
       style={{ width: SLOT_WIDTH, height: SLOT_HEIGHT }}
     >
       {isEditing ? (
@@ -195,7 +195,7 @@ const TextSlotRenderer: React.FC<TextSlotRendererProps> = ({
       )}
       {textValue && !isEditing && (
         <button
-          className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors shadow"
+          className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-gray-600 transition-colors shadow"
           onClick={(e) => {
             e.stopPropagation()
             onClear(slot.id)
@@ -215,25 +215,32 @@ interface OutputSlotContentProps {
 
 const OutputSlotContent: React.FC<OutputSlotContentProps> = ({ slot, resultImage }) => {
   const [imageLoaded, setImageLoaded] = React.useState(false)
-  const placeholderImage = `https://picsum.photos/${SLOT_WIDTH}/${SLOT_HEIGHT}?random=${slot.id}`
 
   return (
     <div
-      className="relative bg-gray-100 border-2 border-gray-200 rounded-lg overflow-hidden"
+      className="relative bg-gray-200 border-3 border-white rounded-lg overflow-hidden shadow-md"
       style={{ width: SLOT_WIDTH, height: SLOT_HEIGHT }}
     >
-      {!imageLoaded && (
-        <div className="absolute inset-0 flex items-center justify-center">
-          <Loader2 size={20} className="animate-spin text-gray-400" />
+      {resultImage ? (
+        <>
+          {!imageLoaded && (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <Loader2 size={20} className="animate-spin text-gray-400" />
+            </div>
+          )}
+          <img
+            src={resultImage}
+            alt={slot.name}
+            className={`w-full h-full object-contain transition-opacity ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
+            onLoad={() => setImageLoaded(true)}
+            onError={() => setImageLoaded(true)}
+          />
+        </>
+      ) : (
+        <div className="w-full h-full flex items-center justify-center text-gray-400">
+          <ImageIcon size={24} />
         </div>
       )}
-      <img
-        src={resultImage || placeholderImage}
-        alt={slot.name}
-        className={`w-full h-full object-contain transition-opacity ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
-        onLoad={() => setImageLoaded(true)}
-        onError={() => setImageLoaded(true)}
-      />
     </div>
   )
 }
@@ -436,7 +443,7 @@ export const AICombinationComponent: React.FC<AICombinationComponentProps> = ({ 
       ))}
 
       {shape.combinationStatus === 'error' && shape.combinationError && (
-        <div className="absolute -bottom-8 left-0 right-0 p-2 text-red-600 text-xs bg-red-50 rounded">
+        <div className="absolute -bottom-8 left-0 right-0 p-2 text-gray-600 text-xs bg-gray-50 rounded">
           {shape.combinationError}
         </div>
       )}
