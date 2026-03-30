@@ -22,9 +22,9 @@ import { s3UploadService } from "../../../s3.js";
  */
 const OPENROUTER_API_URL = "https://openrouter.ai/api/v1";
 
-const image_size = '1k'
+// const image_size = '1k'
 // const image_size = '2k'
-// const image_size = '4k'
+const image_size = '4k'
 // ----------------------------------------------------------
 
 
@@ -35,7 +35,7 @@ const image_size = '1k'
  * 生成图：https://d-assets-cn.joii.cc/ai-generated/e6f5c6a5-8de8-48ec-999d-708408e44ef7.png
  * 4k: https://d-assets-cn.joii.cc/ai-generated/bcbbb83d-2493-499c-8c3a-24f5917947ef.png
 **/
-const DEFAULT_MODEL = "google/gemini-3.1-flash-image-preview";
+// const DEFAULT_MODEL = "google/gemini-3.1-flash-image-preview";
 
 /** 
  * 单图 6分，多图未遵循关键词，只给了单图，不支持4k
@@ -51,7 +51,7 @@ const DEFAULT_MODEL = "google/gemini-3.1-flash-image-preview";
  * 多图4k: https://d-assets-cn.joii.cc/ai-generated/b4b9b57d-6596-452e-b17d-8fa283bbd5fa.png
  * 单图4k: https://d-assets-cn.joii.cc/ai-generated/7001aabd-18b2-4765-aecd-57cac68e498a.png
 **/
-// const DEFAULT_MODEL = "google/gemini-3-pro-image-preview";
+const DEFAULT_MODEL = "google/gemini-3-pro-image-preview";
 
 
 /** 多图性能一般，不支持4k, 单图发虚

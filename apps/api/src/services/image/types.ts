@@ -23,6 +23,7 @@ export enum ProviderId {
   FLUX_2_PRO = "flux-2-pro",
   FLUX_2_MAX = "flux-2-max",
   SEEDREAM_5 = "seedream-5",
+  APIMART_GEMINI = "apimart-gemini",
 }
 
 export enum GenerationStatus {
