@@ -51,7 +51,7 @@ interface ShapeSize {
 const SHAPE_SIZES: Record<string, ShapeSize> = {
   text: { width: 200, height: 50 },
   note: { width: 200, height: 150 },
-  image: { width: 300, height: 300 },
+  image: { width: 150, height: 150 },
   shape: { width: 200, height: 200 },
   arrow: { width: 200, height: 50 },
   pen: { width: 200, height: 200 },

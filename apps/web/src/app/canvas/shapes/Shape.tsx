@@ -176,7 +176,7 @@ export const Shape: React.FC<ShapeComponentProps> = ({ shape }) => {
         ) : (
           <div className="w-full h-full flex items-center justify-center">
             <label className="px-3 py-1.5 bg-blue-500 text-white text-xs rounded-md cursor-pointer hover:bg-blue-600 transition-colors">
-              点击上传图片
+              上传图片
               <input
                 type="file"
                 accept="image/*"
@@ -310,8 +310,8 @@ export const Shape: React.FC<ShapeComponentProps> = ({ shape }) => {
     height: shape.height,
     ...transformStyle,
     opacity: shape.opacity,
-    backgroundColor: !isCustomComponent ? shape.fill : undefined,
-    border: !isCustomComponent ? `${shape.strokeWidth}px solid ${shape.stroke}` : undefined,
+    backgroundColor: !isCustomComponent && shape.type !== 'image' ? shape.fill : undefined,
+    border: !isCustomComponent && shape.type !== 'image' ? `${shape.strokeWidth}px solid ${shape.stroke}` : undefined,
     borderRadius: shape.type === 'circle' ? '50%' : shape.type === 'note' ? '4px' : undefined,
     overflow: shape.type === 'ai-combination' ? 'visible' : undefined,
   }
@@ -319,7 +319,7 @@ export const Shape: React.FC<ShapeComponentProps> = ({ shape }) => {
   return (
     <div
       ref={elementRef}
-      className={`canvas-shape ${isMouseDragging ? 'dragging' : ''} ${shape.type === 'ai-combination' ? 'pointer-events-auto' : ''}`}
+      className={`canvas-shape ${isMouseDragging ? 'dragging' : ''} ${shape.type === 'ai-combination' ? 'pointer-events-auto' : ''} ${shape.type === 'image' && shape.imageUrl ? 'has-image' : ''}`}
       data-type={shape.type}
       data-shape-id={shape.id}
       style={style}
