@@ -42,12 +42,16 @@
 }
 
 .canvas-shape:not(.selected) {
-  cursor: move;
+  cursor: default;
 }
 
 .canvas-shape.selected {
   outline: 1px solid var(--canvas-primary);
   outline-offset: 0px;
+  cursor: default;
+}
+
+.canvas-shape.dragging {
   cursor: move;
 }
 

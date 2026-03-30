@@ -319,7 +319,7 @@ export const Shape: React.FC<ShapeComponentProps> = ({ shape }) => {
   return (
     <div
       ref={elementRef}
-      className={`canvas-shape ${shape.type === 'ai-combination' ? 'pointer-events-auto' : ''}`}
+      className={`canvas-shape ${isMouseDragging ? 'dragging' : ''} ${shape.type === 'ai-combination' ? 'pointer-events-auto' : ''}`}
       data-type={shape.type}
       data-shape-id={shape.id}
       style={style}
