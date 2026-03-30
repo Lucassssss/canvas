@@ -5,12 +5,14 @@ import { OpenRouterProvider } from "./openrouter.js";
 import { APIMartProvider } from "./apimart.js";
 
 const DEFAULT_IMAGE_PROVIDER_ID = process.env.DEFAULT_IMAGE_PROVIDER_ID;
+import { LocalGeminiProvider } from "./local-gemini.js";
 
 const providerInstances: Map<string, GenerationProvider> = new Map();
 
 const registry: Record<string, () => GenerationProvider> = {
   [ProviderId.OPENROUTER_GEMINI]: () => new OpenRouterProvider(),
   [ProviderId.APIMART_GEMINI]: () => new APIMartProvider(),
+  [ProviderId.LOCAL_GEMINI]: () => new LocalGeminiProvider(),
 };
 
 export function getProvider(providerId: string): GenerationProvider | null {

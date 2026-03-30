@@ -17,6 +17,7 @@ export enum GenerationMode {
 
 export enum ProviderId {
   OPENROUTER_GEMINI = "openrouter-gemini",
+  LOCAL_GEMINI = "local-gemini",
   NANO_BANANA_2 = "nano-banana-2",
   NANO_BANANA_PRO = "nano-banana-pro",
   GPT_IMAGE_1_5 = "gpt-image-1.5",
