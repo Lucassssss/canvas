@@ -1,0 +1,753 @@
+{
+    "data": [
+        {
+            "id": "google/gemini-3.1-flash-image-preview",
+            "canonical_slug": "google/gemini-3.1-flash-image-preview-20260226",
+            "hugging_face_id": "",
+            "name": "Google: Nano Banana 2 (Gemini 3.1 Flash Image Preview)",
+            "created": 1772119558,
+            "description": "Gemini 3.1 Flash Image Preview, a.k.a. \"Nano Banana 2,\" is Google’s latest state of the art image generation and editing model, delivering Pro-level visual quality at Flash speed. It combines advanced contextual understanding with fast, cost-efficient inference, making complex image generation and iterative edits significantly more accessible. Aspect ratios can be controlled with the [image_config API Parameter](https://openrouter.ai/docs/features/multimodal/image-generation#image-aspect-ratio-configuration)",
+            "context_length": 65536,
+            "architecture": {
+                "modality": "text+image->text+image",
+                "input_modalities": [
+                    "image",
+                    "text"
+                ],
+                "output_modalities": [
+                    "image",
+                    "text"
+                ],
+                "tokenizer": "Gemini",
+                "instruct_type": null
+            },
+            "pricing": {
+                "prompt": "0.0000005",
+                "completion": "0.000003"
+            },
+            "top_provider": {
+                "context_length": 65536,
+                "max_completion_tokens": 65536,
+                "is_moderated": false
+            },
+            "per_request_limits": null,
+            "supported_parameters": [
+                "include_reasoning",
+                "max_tokens",
+                "reasoning",
+                "response_format",
+                "seed",
+                "stop",
+                "structured_outputs",
+                "temperature",
+                "top_p"
+            ],
+            "default_parameters": {
+                "temperature": null,
+                "top_p": null,
+                "top_k": null,
+                "frequency_penalty": null,
+                "presence_penalty": null,
+                "repetition_penalty": null
+            },
+            "knowledge_cutoff": null,
+            "expiration_date": null
+        },
+        {
+            "id": "sourceful/riverflow-v2-pro",
+            "canonical_slug": "sourceful/riverflow-v2-pro-20260130",
+            "hugging_face_id": "",
+            "name": "Sourceful: Riverflow V2 Pro",
+            "created": 1770051427,
+            "description": "Riverflow V2 Pro is the most powerful variant of Sourceful's Riverflow 2.0 lineup, best for top-tier control and perfect text rendering.\n\nThe Riverflow 2.0 series represents SOTA performance on image generation and editing tasks, using an integrated reasoning model to boost reliability and tackle complex challenges.\n\nPricing is $0.15 per 1K/2K output image and $0.33 per 4K output image.\n\nAdditional features:\n- Custom font rendering via font_inputs ($0.03/font, max 2)\n- Image enhancement via super_resolution_references ($0.20/reference, max 4)\n\nSee the image generation docs for details: https://openrouter.ai/docs/features/multimodal/image-generation\n\nNote: Sourceful imposes a 4.5MB request size limit, therefore it is highly recommended to pass image URLs instead of Base64 data.",
+            "context_length": 8192,
+            "architecture": {
+                "modality": "text+image->image",
+                "input_modalities": [
+                    "text",
+                    "image"
+                ],
+                "output_modalities": [
+                    "image"
+                ],
+                "tokenizer": "Other",
+                "instruct_type": null
+            },
+            "pricing": {
+                "prompt": "0",
+                "completion": "0"
+            },
+            "top_provider": {
+                "context_length": 8192,
+                "max_completion_tokens": null,
+                "is_moderated": false
+            },
+            "per_request_limits": null,
+            "supported_parameters": [],
+            "default_parameters": {
+                "temperature": null,
+                "top_p": null,
+                "frequency_penalty": null
+            },
+            "knowledge_cutoff": null,
+            "expiration_date": null
+        },
+        {
+            "id": "sourceful/riverflow-v2-fast",
+            "canonical_slug": "sourceful/riverflow-v2-fast-20260130",
+            "hugging_face_id": "",
+            "name": "Sourceful: Riverflow V2 Fast",
+            "created": 1770051423,
+            "description": "Riverflow V2 Fast is the fastest variant of Sourceful's Riverflow 2.0 lineup, best for production deployments and latency-critical workflows.\n\nThe Riverflow 2.0 series represents SOTA performance on image generation and editing tasks, using an integrated reasoning model to boost reliability and tackle complex challenges.\n\nPricing is $0.02 per 1K output image and $0.04 per 2K output image. Does not support 4K image output.\n\nAdditional features:\n- Custom font rendering via font_inputs ($0.03/font, max 2)\n- Image enhancement via super_resolution_references ($0.20/reference, max 4)\n\nSee the image generation docs for details: https://openrouter.ai/docs/features/multimodal/image-generation\n\nNote: Sourceful imposes a 4.5MB request size limit, therefore it is highly recommended to pass image URLs instead of Base64 data.",
+            "context_length": 8192,
+            "architecture": {
+                "modality": "text+image->image",
+                "input_modalities": [
+                    "text",
+                    "image"
+                ],
+                "output_modalities": [
+                    "image"
+                ],
+                "tokenizer": "Other",
+                "instruct_type": null
+            },
+            "pricing": {
+                "prompt": "0",
+                "completion": "0"
+            },
+            "top_provider": {
+                "context_length": 8192,
+                "max_completion_tokens": null,
+                "is_moderated": false
+            },
+            "per_request_limits": null,
+            "supported_parameters": [],
+            "default_parameters": {
+                "temperature": null,
+                "top_p": null,
+                "frequency_penalty": null
+            },
+            "knowledge_cutoff": null,
+            "expiration_date": null
+        },
+        {
+            "id": "black-forest-labs/flux.2-klein-4b",
+            "canonical_slug": "black-forest-labs/flux.2-klein-4b",
+            "hugging_face_id": "",
+            "name": "Black Forest Labs: FLUX.2 Klein 4B",
+            "created": 1768429228,
+            "description": "FLUX.2 [klein] 4B is the fastest and most cost-effective model in the FLUX.2 family, optimized for high-throughput use cases while maintaining excellent image quality.\n\nPricing is based on the output image. The first generated megapixel is charged $0.014. Each subsequent megapixel is charged $0.001.",
+            "context_length": 40960,
+            "architecture": {
+                "modality": "text+image->image",
+                "input_modalities": [
+                    "text",
+                    "image"
+                ],
+                "output_modalities": [
+                    "image"
+                ],
+                "tokenizer": "Other",
+                "instruct_type": null
+            },
+            "pricing": {
+                "prompt": "0",
+                "completion": "0"
+            },
+            "top_provider": {
+                "context_length": 40960,
+                "max_completion_tokens": null,
+                "is_moderated": false
+            },
+            "per_request_limits": null,
+            "supported_parameters": [
+                "seed"
+            ],
+            "default_parameters": {
+                "temperature": null,
+                "top_p": null,
+                "frequency_penalty": null
+            },
+            "knowledge_cutoff": null,
+            "expiration_date": null
+        },
+        {
+            "id": "bytedance-seed/seedream-4.5",
+            "canonical_slug": "bytedance-seed/seedream-4.5-20251203",
+            "hugging_face_id": "",
+            "name": "ByteDance Seed: Seedream 4.5",
+            "created": 1766519506,
+            "description": "Seedream 4.5 is the latest in-house image generation model developed by ByteDance. Compared with Seedream 4.0, it delivers comprehensive improvements, especially in editing consistency, including better preservation of subject details, lighting, and color tone. It also enhances portrait refinement and small-text rendering. The model’s multi-image composition capabilities have been significantly strengthened, and both reasoning performance and visual aesthetics continue to advance, enabling more accurate and artistically expressive image generation.\n\nPricing is $0.04 per output image, regardless of size.",
+            "context_length": 4096,
+            "architecture": {
+                "modality": "text+image->image",
+                "input_modalities": [
+                    "image",
+                    "text"
+                ],
+                "output_modalities": [
+                    "image"
+                ],
+                "tokenizer": "Other",
+                "instruct_type": null
+            },
+            "pricing": {
+                "prompt": "0",
+                "completion": "0"
+            },
+            "top_provider": {
+                "context_length": 4096,
+                "max_completion_tokens": null,
+                "is_moderated": false
+            },
+            "per_request_limits": null,
+            "supported_parameters": [
+                "frequency_penalty",
+                "max_tokens",
+                "temperature",
+                "top_p"
+            ],
+            "default_parameters": {
+                "temperature": null,
+                "top_p": null,
+                "frequency_penalty": null
+            },
+            "knowledge_cutoff": null,
+            "expiration_date": null
+        },
+        {
+            "id": "black-forest-labs/flux.2-max",
+            "canonical_slug": "black-forest-labs/flux.2-max",
+            "hugging_face_id": "",
+            "name": "Black Forest Labs: FLUX.2 Max",
+            "created": 1765857570,
+            "description": "FLUX.2 [max] is the new top-tier image model from Black Forest Labs, pushing image quality, prompt understanding, and editing consistency to the highest level yet.\n\nPricing is as follows, [per the docs](https://bfl.ai/pricing?category=flux.2):\nInput: We charge $0.03 for each megapixel on the input (i.e. reference images for editing)\nOutput: The first generated megapixel is charged $0.07. Each subsequent megapixel is charged $0.03.",
+            "context_length": 46864,
+            "architecture": {
+                "modality": "text+image->image",
+                "input_modalities": [
+                    "text",
+                    "image"
+                ],
+                "output_modalities": [
+                    "image"
+                ],
+                "tokenizer": "Other",
+                "instruct_type": null
+            },
+            "pricing": {
+                "prompt": "0",
+                "completion": "0"
+            },
+            "top_provider": {
+                "context_length": 46864,
+                "max_completion_tokens": null,
+                "is_moderated": false
+            },
+            "per_request_limits": null,
+            "supported_parameters": [
+                "seed"
+            ],
+            "default_parameters": {
+                "temperature": null,
+                "top_p": null,
+                "frequency_penalty": null
+            },
+            "knowledge_cutoff": null,
+            "expiration_date": null
+        },
+        {
+            "id": "sourceful/riverflow-v2-max-preview",
+            "canonical_slug": "sourceful/riverflow-v2-max-preview",
+            "hugging_face_id": "",
+            "name": "Sourceful: Riverflow V2 Max Preview",
+            "created": 1765237849,
+            "description": "Riverflow V2 Max Preview is the most powerful variant of Sourceful's Riverflow V2 preview lineup. This preview version exceeds the performance of Riverflow 1 Family and is Sourceful's first unified text-to-image and image-to-image model family.\n\nPricing is $0.075 per output image, regardless of size.\n\nSourceful imposes a 4.5MB request size limit, therefore it is highly recommended to pass image URLs instead of Base64 data.",
+            "context_length": 8192,
+            "architecture": {
+                "modality": "text+image->image",
+                "input_modalities": [
+                    "text",
+                    "image"
+                ],
+                "output_modalities": [
+                    "image"
+                ],
+                "tokenizer": "Other",
+                "instruct_type": null
+            },
+            "pricing": {
+                "prompt": "0",
+                "completion": "0"
+            },
+            "top_provider": {
+                "context_length": 8192,
+                "max_completion_tokens": null,
+                "is_moderated": false
+            },
+            "per_request_limits": null,
+            "supported_parameters": [],
+            "default_parameters": {
+                "temperature": null,
+                "top_p": null,
+                "frequency_penalty": null
+            },
+            "knowledge_cutoff": null,
+            "expiration_date": null
+        },
+        {
+            "id": "sourceful/riverflow-v2-standard-preview",
+            "canonical_slug": "sourceful/riverflow-v2-standard-preview",
+            "hugging_face_id": "",
+            "name": "Sourceful: Riverflow V2 Standard Preview",
+            "created": 1765237836,
+            "description": "Riverflow V2 Standard Preview is the standard variant of Sourceful's Riverflow V2 preview lineup. This preview version exceeds the performance of Riverflow 1 Family and is Sourceful's first unified text-to-image and image-to-image model family.\n\nPricing is $0.035 per output image, regardless of size.\n\nSourceful imposes a 4.5MB request size limit, therefore it is highly recommended to pass image URLs instead of Base64 data.",
+            "context_length": 8192,
+            "architecture": {
+                "modality": "text+image->image",
+                "input_modalities": [
+                    "text",
+                    "image"
+                ],
+                "output_modalities": [
+                    "image"
+                ],
+                "tokenizer": "Other",
+                "instruct_type": null
+            },
+            "pricing": {
+                "prompt": "0",
+                "completion": "0"
+            },
+            "top_provider": {
+                "context_length": 8192,
+                "max_completion_tokens": null,
+                "is_moderated": false
+            },
+            "per_request_limits": null,
+            "supported_parameters": [],
+            "default_parameters": {
+                "temperature": null,
+                "top_p": null,
+                "frequency_penalty": null
+            },
+            "knowledge_cutoff": null,
+            "expiration_date": null
+        },
+        {
+            "id": "sourceful/riverflow-v2-fast-preview",
+            "canonical_slug": "sourceful/riverflow-v2-fast-preview",
+            "hugging_face_id": "",
+            "name": "Sourceful: Riverflow V2 Fast Preview",
+            "created": 1765237820,
+            "description": "Riverflow V2 Fast Preview is the fastest variant of Sourceful's Riverflow V2 preview lineup. This preview version exceeds the performance of Riverflow 1 Family and is Sourceful's first unified text-to-image and image-to-image model family.\n\nPricing is $0.03 per output image, regardless of size.\n\nSourceful imposes a 4.5MB request size limit, therefore it is highly recommended to pass image URLs instead of Base64 data.",
+            "context_length": 8192,
+            "architecture": {
+                "modality": "text+image->image",
+                "input_modalities": [
+                    "text",
+                    "image"
+                ],
+                "output_modalities": [
+                    "image"
+                ],
+                "tokenizer": "Other",
+                "instruct_type": null
+            },
+            "pricing": {
+                "prompt": "0",
+                "completion": "0"
+            },
+            "top_provider": {
+                "context_length": 8192,
+                "max_completion_tokens": null,
+                "is_moderated": false
+            },
+            "per_request_limits": null,
+            "supported_parameters": [],
+            "default_parameters": {
+                "temperature": null,
+                "top_p": null,
+                "frequency_penalty": null
+            },
+            "knowledge_cutoff": null,
+            "expiration_date": null
+        },
+        {
+            "id": "black-forest-labs/flux.2-flex",
+            "canonical_slug": "black-forest-labs/flux.2-flex",
+            "hugging_face_id": "",
+            "name": "Black Forest Labs: FLUX.2 Flex",
+            "created": 1764045987,
+            "description": "FLUX.2 [flex] excels at rendering complex text, typography, and fine details, and supports multi-reference editing in the same unified architecture.\n\nPricing is as follows, [per the docs](https://bfl.ai/pricing?category=flux.2):\nWe charge $0.06 for each megapixel on both input and output side.",
+            "context_length": 67344,
+            "architecture": {
+                "modality": "text+image->image",
+                "input_modalities": [
+                    "text",
+                    "image"
+                ],
+                "output_modalities": [
+                    "image"
+                ],
+                "tokenizer": "Other",
+                "instruct_type": null
+            },
+            "pricing": {
+                "prompt": "0",
+                "completion": "0"
+            },
+            "top_provider": {
+                "context_length": 67344,
+                "max_completion_tokens": null,
+                "is_moderated": false
+            },
+            "per_request_limits": null,
+            "supported_parameters": [
+                "seed"
+            ],
+            "default_parameters": {
+                "temperature": null,
+                "top_p": null,
+                "frequency_penalty": null
+            },
+            "knowledge_cutoff": null,
+            "expiration_date": null
+        },
+        {
+            "id": "black-forest-labs/flux.2-pro",
+            "canonical_slug": "black-forest-labs/flux.2-pro",
+            "hugging_face_id": "",
+            "name": "Black Forest Labs: FLUX.2 Pro",
+            "created": 1764030274,
+            "description": "A high-end image generation and editing model focused on frontier-level visual quality and reliability. It delivers strong prompt adherence, stable lighting, sharp textures, and consistent character/style reproduction across multi-reference inputs. Designed for production workloads, it balances speed and quality while supporting text-to-image and image editing up to 4 MP resolution.\n\nPricing is as follows, [per the docs](https://bfl.ai/pricing?category=flux.2):\nInput: We charge $0.015 for each megapixel on the input (i.e. reference images for editing)\nOutput: The first megapixel is charged $0.03 and then each subsequent MP will be charged $0.015. ",
+            "context_length": 46864,
+            "architecture": {
+                "modality": "text+image->image",
+                "input_modalities": [
+                    "text",
+                    "image"
+                ],
+                "output_modalities": [
+                    "image"
+                ],
+                "tokenizer": "Other",
+                "instruct_type": null
+            },
+            "pricing": {
+                "prompt": "0",
+                "completion": "0"
+            },
+            "top_provider": {
+                "context_length": 46864,
+                "max_completion_tokens": null,
+                "is_moderated": false
+            },
+            "per_request_limits": null,
+            "supported_parameters": [
+                "seed"
+            ],
+            "default_parameters": {
+                "temperature": null,
+                "top_p": null,
+                "frequency_penalty": null
+            },
+            "knowledge_cutoff": null,
+            "expiration_date": null
+        },
+        {
+            "id": "google/gemini-3-pro-image-preview",
+            "canonical_slug": "google/gemini-3-pro-image-preview-20251120",
+            "hugging_face_id": "",
+            "name": "Google: Nano Banana Pro (Gemini 3 Pro Image Preview)",
+            "created": 1763653797,
+            "description": "Nano Banana Pro is Google’s most advanced image-generation and editing model, built on Gemini 3 Pro. It extends the original Nano Banana with significantly improved multimodal reasoning, real-world grounding, and high-fidelity visual synthesis. The model generates context-rich graphics, from infographics and diagrams to cinematic composites, and can incorporate real-time information via Search grounding.\n\nIt offers industry-leading text rendering in images (including long passages and multilingual layouts), consistent multi-image blending, and accurate identity preservation across up to five subjects. Nano Banana Pro adds fine-grained creative controls such as localized edits, lighting and focus adjustments, camera transformations, and support for 2K/4K outputs and flexible aspect ratios. It is designed for professional-grade design, product visualization, storyboarding, and complex multi-element compositions while remaining efficient for general image creation workflows.",
+            "context_length": 65536,
+            "architecture": {
+                "modality": "text+image->text+image",
+                "input_modalities": [
+                    "image",
+                    "text"
+                ],
+                "output_modalities": [
+                    "image",
+                    "text"
+                ],
+                "tokenizer": "Gemini",
+                "instruct_type": null
+            },
+            "pricing": {
+                "prompt": "0.000002",
+                "completion": "0.000012",
+                "image": "0.000002",
+                "audio": "0.000002",
+                "internal_reasoning": "0.000012",
+                "input_cache_read": "0.0000002",
+                "input_cache_write": "0.000000375"
+            },
+            "top_provider": {
+                "context_length": 65536,
+                "max_completion_tokens": 32768,
+                "is_moderated": false
+            },
+            "per_request_limits": null,
+            "supported_parameters": [
+                "include_reasoning",
+                "max_tokens",
+                "reasoning",
+                "response_format",
+                "seed",
+                "stop",
+                "structured_outputs",
+                "temperature",
+                "top_p"
+            ],
+            "default_parameters": {
+                "temperature": null,
+                "top_p": null,
+                "frequency_penalty": null
+            },
+            "knowledge_cutoff": null,
+            "expiration_date": null
+        },
+        {
+            "id": "openai/gpt-5-image-mini",
+            "canonical_slug": "openai/gpt-5-image-mini",
+            "hugging_face_id": "",
+            "name": "OpenAI: GPT-5 Image Mini",
+            "created": 1760624583,
+            "description": "GPT-5 Image Mini combines OpenAI's advanced language capabilities, powered by [GPT-5 Mini](https://openrouter.ai/openai/gpt-5-mini), with GPT Image 1 Mini for efficient image generation. This natively multimodal model features superior instruction following, text rendering, and detailed image editing with reduced latency and cost. It excels at high-quality visual creation while maintaining strong text understanding, making it ideal for applications that require both efficient image generation and text processing at scale.",
+            "context_length": 400000,
+            "architecture": {
+                "modality": "text+image+file->text+image",
+                "input_modalities": [
+                    "file",
+                    "image",
+                    "text"
+                ],
+                "output_modalities": [
+                    "image",
+                    "text"
+                ],
+                "tokenizer": "GPT",
+                "instruct_type": null
+            },
+            "pricing": {
+                "prompt": "0.0000025",
+                "completion": "0.000002",
+                "web_search": "0.01",
+                "input_cache_read": "0.00000025"
+            },
+            "top_provider": {
+                "context_length": 400000,
+                "max_completion_tokens": 128000,
+                "is_moderated": true
+            },
+            "per_request_limits": null,
+            "supported_parameters": [
+                "frequency_penalty",
+                "include_reasoning",
+                "logit_bias",
+                "logprobs",
+                "max_tokens",
+                "presence_penalty",
+                "reasoning",
+                "response_format",
+                "seed",
+                "stop",
+                "structured_outputs",
+                "temperature",
+                "tool_choice",
+                "tools",
+                "top_logprobs",
+                "top_p"
+            ],
+            "default_parameters": {
+                "temperature": null,
+                "top_p": null,
+                "frequency_penalty": null
+            },
+            "knowledge_cutoff": null,
+            "expiration_date": null
+        },
+        {
+            "id": "openai/gpt-5-image",
+            "canonical_slug": "openai/gpt-5-image",
+            "hugging_face_id": "",
+            "name": "OpenAI: GPT-5 Image",
+            "created": 1760447986,
+            "description": "[GPT-5](https://openrouter.ai/openai/gpt-5) Image combines OpenAI's GPT-5 model with state-of-the-art image generation capabilities. It offers major improvements in reasoning, code quality, and user experience while incorporating GPT Image 1's superior instruction following, text rendering, and detailed image editing.",
+            "context_length": 400000,
+            "architecture": {
+                "modality": "text+image+file->text+image",
+                "input_modalities": [
+                    "image",
+                    "text",
+                    "file"
+                ],
+                "output_modalities": [
+                    "image",
+                    "text"
+                ],
+                "tokenizer": "GPT",
+                "instruct_type": null
+            },
+            "pricing": {
+                "prompt": "0.00001",
+                "completion": "0.00001",
+                "web_search": "0.01",
+                "input_cache_read": "0.00000125"
+            },
+            "top_provider": {
+                "context_length": 400000,
+                "max_completion_tokens": 128000,
+                "is_moderated": true
+            },
+            "per_request_limits": null,
+            "supported_parameters": [
+                "frequency_penalty",
+                "include_reasoning",
+                "logit_bias",
+                "logprobs",
+                "max_tokens",
+                "presence_penalty",
+                "reasoning",
+                "response_format",
+                "seed",
+                "stop",
+                "structured_outputs",
+                "temperature",
+                "tool_choice",
+                "tools",
+                "top_logprobs",
+                "top_p"
+            ],
+            "default_parameters": {
+                "temperature": null,
+                "top_p": null,
+                "frequency_penalty": null
+            },
+            "knowledge_cutoff": null,
+            "expiration_date": null
+        },
+        {
+            "id": "google/gemini-2.5-flash-image",
+            "canonical_slug": "google/gemini-2.5-flash-image",
+            "hugging_face_id": "",
+            "name": "Google: Nano Banana (Gemini 2.5 Flash Image)",
+            "created": 1759870431,
+            "description": "Gemini 2.5 Flash Image, a.k.a. \"Nano Banana,\" is now generally available. It is a state of the art image generation model with contextual understanding. It is capable of image generation, edits, and multi-turn conversations. Aspect ratios can be controlled with the [image_config API Parameter](https://openrouter.ai/docs/features/multimodal/image-generation#image-aspect-ratio-configuration)",
+            "context_length": 32768,
+            "architecture": {
+                "modality": "text+image->text+image",
+                "input_modalities": [
+                    "image",
+                    "text"
+                ],
+                "output_modalities": [
+                    "image",
+                    "text"
+                ],
+                "tokenizer": "Gemini",
+                "instruct_type": null
+            },
+            "pricing": {
+                "prompt": "0.0000003",
+                "completion": "0.0000025",
+                "image": "0.0000003",
+                "audio": "0.000001",
+                "internal_reasoning": "0.0000025",
+                "input_cache_read": "0.00000003",
+                "input_cache_write": "0.00000008333333333333334"
+            },
+            "top_provider": {
+                "context_length": 32768,
+                "max_completion_tokens": 32768,
+                "is_moderated": false
+            },
+            "per_request_limits": null,
+            "supported_parameters": [
+                "max_tokens",
+                "response_format",
+                "seed",
+                "stop",
+                "structured_outputs",
+                "temperature",
+                "top_p"
+            ],
+            "default_parameters": {
+                "temperature": null,
+                "top_p": null,
+                "frequency_penalty": null
+            },
+            "knowledge_cutoff": "2025-01-31",
+            "expiration_date": null
+        },
+        {
+            "id": "openrouter/auto",
+            "canonical_slug": "openrouter/auto",
+            "hugging_face_id": null,
+            "name": "Auto Router",
+            "created": 1699401600,
+            "description": "Your prompt will be processed by a meta-model and routed to one of dozens of models (see below), optimizing for the best possible output.\n\nTo see which model was used, visit [Activity](/activity), or read the `model` attribute of the response. Your response will be priced at the same rate as the routed model.\n\nLearn more, including how to customize the models for routing, in our [docs](/docs/guides/routing/routers/auto-router).\n\nRequests will be routed to the following models:\n- [anthropic/claude-haiku-4.5](/anthropic/claude-haiku-4.5)\n- [anthropic/claude-opus-4.6](/anthropic/claude-opus-4.6)\n- [anthropic/claude-sonnet-4.5](/anthropic/claude-sonnet-4.5)\n- [anthropic/claude-sonnet-4.6](/anthropic/claude-sonnet-4.6)\n- [deepseek/deepseek-r1](/deepseek/deepseek-r1)\n- [google/gemini-2.5-flash-lite](/google/gemini-2.5-flash-lite)\n- [google/gemini-3-flash-preview](/google/gemini-3-flash-preview)\n- [google/gemini-3-pro-preview](/google/gemini-3-pro-preview)\n- [google/gemini-3.1-pro-preview](/google/gemini-3.1-pro-preview)\n- [meta-llama/llama-3.3-70b-instruct](/meta-llama/llama-3.3-70b-instruct)\n- [minimax/minimax-m2.5](/minimax/minimax-m2.5)\n- [mistralai/codestral-2508](/mistralai/codestral-2508)\n- [mistralai/mistral-7b-instruct-v0.1](/mistralai/mistral-7b-instruct-v0.1)\n- [mistralai/mistral-large](/mistralai/mistral-large)\n- [mistralai/mistral-medium-3.1](/mistralai/mistral-medium-3.1)\n- [mistralai/mistral-small-3.2-24b-instruct-2506](/mistralai/mistral-small-3.2-24b-instruct-2506)\n- [moonshotai/kimi-k2-thinking](/moonshotai/kimi-k2-thinking)\n- [moonshotai/kimi-k2.5](/moonshotai/kimi-k2.5)\n- [openai/gpt-5](/openai/gpt-5)\n- [openai/gpt-5-mini](/openai/gpt-5-mini)\n- [openai/gpt-5-nano](/openai/gpt-5-nano)\n- [openai/gpt-5.1](/openai/gpt-5.1)\n- [openai/gpt-5.2](/openai/gpt-5.2)\n- [openai/gpt-5.2-pro](/openai/gpt-5.2-pro)\n- [openai/gpt-5.3-chat](/openai/gpt-5.3-chat)\n- [openai/gpt-oss-120b](/openai/gpt-oss-120b)\n- [perplexity/sonar](/perplexity/sonar)\n- [qwen/qwen3-235b-a22b](/qwen/qwen3-235b-a22b)\n- [x-ai/grok-3](/x-ai/grok-3)\n- [x-ai/grok-3-mini](/x-ai/grok-3-mini)\n- [x-ai/grok-4](/x-ai/grok-4)\n- [x-ai/grok-4.1-fast](/x-ai/grok-4.1-fast)\n- [z-ai/glm-5](/z-ai/glm-5)",
+            "context_length": 2000000,
+            "architecture": {
+                "modality": "text+image+file+audio+video->text+image",
+                "input_modalities": [
+                    "text",
+                    "image",
+                    "audio",
+                    "file",
+                    "video"
+                ],
+                "output_modalities": [
+                    "text",
+                    "image"
+                ],
+                "tokenizer": "Router",
+                "instruct_type": null
+            },
+            "pricing": {
+                "prompt": "-1",
+                "completion": "-1"
+            },
+            "top_provider": {
+                "context_length": null,
+                "max_completion_tokens": null,
+                "is_moderated": false
+            },
+            "per_request_limits": null,
+            "supported_parameters": [
+                "frequency_penalty",
+                "include_reasoning",
+                "logit_bias",
+                "logprobs",
+                "max_tokens",
+                "min_p",
+                "presence_penalty",
+                "reasoning",
+                "reasoning_effort",
+                "repetition_penalty",
+                "response_format",
+                "seed",
+                "stop",
+                "structured_outputs",
+                "temperature",
+                "tool_choice",
+                "tools",
+                "top_k",
+                "top_logprobs",
+                "top_p",
+                "web_search_options"
+            ],
+            "default_parameters": {
+                "temperature": null,
+                "top_p": null,
+                "frequency_penalty": null
+            },
+            "knowledge_cutoff": null,
+            "expiration_date": null
+        }
+    ]
+}

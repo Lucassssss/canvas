@@ -76,6 +76,7 @@ export type ValidationResult = {
 export type GenerationProvider = {
   readonly id: string;
   readonly name: string;
+  readonly model: string;
   readonly supportedModes: GenerationMode[];
   generate(options: GenerationOptions): Promise<GenerationResult>;
   validateInput(input: ImageGenerateInput): ValidationResult;

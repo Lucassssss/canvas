@@ -4,6 +4,7 @@ import type { GenerationProvider, GenerationOptions, GenerationResult, ImageGene
 export abstract class BaseProvider implements GenerationProvider {
   abstract readonly id: string;
   abstract readonly name: string;
+  abstract readonly model: string;
   abstract readonly supportedModes: GenerationMode[];
 
   abstract generate(options: GenerationOptions): Promise<GenerationResult>;
