@@ -6,8 +6,16 @@ import { ShapeProps } from './types'
 import { ClothingComponent } from './ClothingComponent'
 import { AICombinationComponent } from './AICombinationComponent'
 import { aiCombinationService } from '@/ai-combination/service'
-import { Loader2 } from 'lucide-react'
+import { Loader2, Copy, Clipboard, Trash2, BringToFront, SendToBack, CopyPlus, Download } from 'lucide-react'
 import { TransformMatrix } from '@/lib/canvas/transform'
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuSeparator,
+  ContextMenuShortcut,
+  ContextMenuTrigger,
+} from '@/components/ui/context-menu'
 
 interface ShapeComponentProps {
   shape: ShapeProps
@@ -31,6 +39,12 @@ export const Shape: React.FC<ShapeComponentProps> = ({ shape }) => {
     setIsDragging,
     viewport,
     setDragData,
+    deleteShape,
+    copySelectedShapes,
+    pasteShapes,
+    duplicateSelectedShapes,
+    bringToFront,
+    sendToBack,
   } = useCanvasStore()
 
   const dragStartRef = useRef<{ x: number; y: number; shapePositions: Map<string, { x: number; y: number }> } | null>(null)
@@ -316,17 +330,83 @@ export const Shape: React.FC<ShapeComponentProps> = ({ shape }) => {
     overflow: shape.type === 'ai-combination' ? 'visible' : undefined,
   }
 
+  const canExport = shape.type === 'image' && shape.imageUrl
+
+  const handleExportImage = useCallback(async () => {
+    if (shape.type === 'image' && shape.imageUrl) {
+      try {
+        const response = await fetch(shape.imageUrl)
+        const blob = await response.blob()
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = `image-${shape.id.slice(0, 8)}.png`
+        document.body.appendChild(a)
+        a.click()
+        document.body.removeChild(a)
+        URL.revokeObjectURL(url)
+      } catch (error) {
+        console.error('Failed to export image:', error)
+      }
+    }
+  }, [shape])
+
   return (
-    <div
-      ref={elementRef}
-      className={`canvas-shape ${isMouseDragging ? 'dragging' : ''} ${shape.type === 'ai-combination' ? 'pointer-events-auto' : ''} ${shape.type === 'image' && shape.imageUrl ? 'has-image' : ''}`}
-      data-type={shape.type}
-      data-shape-id={shape.id}
-      style={style}
-      onMouseDown={handleMouseDown}
-      onDoubleClick={handleDoubleClick}
-    >
-      {renderContent()}
-    </div>
+    <ContextMenu>
+      <ContextMenuTrigger asChild>
+        <div
+          ref={elementRef}
+          className={`canvas-shape ${isMouseDragging ? 'dragging' : ''} ${shape.type === 'ai-combination' ? 'pointer-events-auto' : ''} ${shape.type === 'image' && shape.imageUrl ? 'has-image' : ''}`}
+          data-type={shape.type}
+          data-shape-id={shape.id}
+          style={style}
+          onMouseDown={handleMouseDown}
+          onDoubleClick={handleDoubleClick}
+        >
+          {renderContent()}
+        </div>
+      </ContextMenuTrigger>
+      <ContextMenuContent>
+        <ContextMenuItem onClick={() => copySelectedShapes()}>
+          <Copy size={14} className="mr-2" />
+          复制
+          <ContextMenuShortcut>⌘C</ContextMenuShortcut>
+        </ContextMenuItem>
+        <ContextMenuItem onClick={() => pasteShapes()}>
+          <Clipboard size={14} className="mr-2" />
+          粘贴
+          <ContextMenuShortcut>⌘V</ContextMenuShortcut>
+        </ContextMenuItem>
+        <ContextMenuItem onClick={() => duplicateSelectedShapes()}>
+          <CopyPlus size={14} className="mr-2" />
+          复制一份
+          <ContextMenuShortcut>⌘D</ContextMenuShortcut>
+        </ContextMenuItem>
+        <ContextMenuSeparator />
+        <ContextMenuItem onClick={() => bringToFront()}>
+          <BringToFront size={14} className="mr-2" />
+          置顶
+        </ContextMenuItem>
+        <ContextMenuItem onClick={() => sendToBack()}>
+          <SendToBack size={14} className="mr-2" />
+          置底
+        </ContextMenuItem>
+        {canExport && (
+          <>
+            <ContextMenuSeparator />
+            <ContextMenuItem onClick={handleExportImage}>
+              <Download size={14} className="mr-2" />
+              导出图片
+            </ContextMenuItem>
+          </>
+        )}
+        <ContextMenuSeparator />
+        <ContextMenuItem variant="destructive" onClick={() => deleteShape(shape.id)}>
+          <Trash2 size={14} className="mr-2" />
+          删除
+          <ContextMenuShortcut>Del</ContextMenuShortcut>
+        </ContextMenuItem>
+      </ContextMenuContent>
+    </ContextMenu>
   )
 }

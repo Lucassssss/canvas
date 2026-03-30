@@ -94,6 +94,8 @@ interface CanvasStore {
   copySelectedShapes: () => void
   pasteShapes: () => string[]
   duplicateSelectedShapes: () => void
+  bringToFront: () => void
+  sendToBack: () => void
 
   screenToCanvas: (screenX: number, screenY: number) => { x: number; y: number }
   canvasToScreen: (canvasX: number, canvasY: number) => { x: number; y: number }
@@ -475,6 +477,32 @@ export const useCanvasStore = create<CanvasStore>()(
           isDirty: true,
         })
         get().saveHistory('batch', `Duplicate ${newShapes.length} shapes`)
+        get().scheduleAutoSave()
+      },
+
+      bringToFront: () => {
+        const { shapes, selectedIds } = get()
+        if (selectedIds.length === 0) return
+
+        const selectedShapes = shapes.filter((s) => selectedIds.includes(s.id))
+        const remainingShapes = shapes.filter((s) => !selectedIds.includes(s.id))
+        const newShapes = [...remainingShapes, ...selectedShapes]
+
+        set({ shapes: newShapes, isDirty: true })
+        get().saveHistory('batch', 'Bring to front')
+        get().scheduleAutoSave()
+      },
+
+      sendToBack: () => {
+        const { shapes, selectedIds } = get()
+        if (selectedIds.length === 0) return
+
+        const selectedShapes = shapes.filter((s) => selectedIds.includes(s.id))
+        const remainingShapes = shapes.filter((s) => !selectedIds.includes(s.id))
+        const newShapes = [...selectedShapes, ...remainingShapes]
+
+        set({ shapes: newShapes, isDirty: true })
+        get().saveHistory('batch', 'Send to back')
         get().scheduleAutoSave()
       },
 
