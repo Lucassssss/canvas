@@ -45,7 +45,7 @@
   cursor: default;
 }
 
-.canvas-shape.selected {
+.canvas-shape.selected:not([data-type="custom-combination"]) {
   outline: 1px solid var(--canvas-primary);
   outline-offset: 0px;
   cursor: default;

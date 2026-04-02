@@ -1,6 +1,17 @@
 import type { SlotContent } from '@/ai-combination/types'
 
-export type ShapeType = 'rect' | 'circle' | 'text' | 'note' | 'image' | 'arrow' | 'draw' | 'clothing' | 'ai-combination'
+export type ShapeType = 
+  | 'rect' 
+  | 'circle' 
+  | 'text' 
+  | 'note' 
+  | 'image' 
+  | 'arrow' 
+  | 'draw' 
+  | 'clothing' 
+  | 'ai-combination' 
+  | 'image-slot' 
+  | 'custom-combination'
 
 export const SHAPE_MIN_SIZE: Record<ShapeType, { minWidth: number; minHeight: number }> = {
   rect: { minWidth: 20, minHeight: 20 },
@@ -12,6 +23,8 @@ export const SHAPE_MIN_SIZE: Record<ShapeType, { minWidth: number; minHeight: nu
   draw: { minWidth: 1, minHeight: 1 },
   clothing: { minWidth: 100, minHeight: 100 },
   'ai-combination': { minWidth: 400, minHeight: 200 },
+  'image-slot': { minWidth: 100, minHeight: 100 },
+  'custom-combination': { minWidth: 200, minHeight: 300 },
 }
 
 export type ClothingView = 'front' | 'back' | 'side'
@@ -29,6 +42,18 @@ export interface LogoArea {
   y: number
   width: number
   height: number
+}
+
+export interface CustomCombinationSlot {
+  id: string
+  label: string
+  imageUrl?: string
+}
+
+export interface CustomCombinationConfig {
+  model: string
+  resolution: { width: number; height: number }
+  prompt: string
 }
 
 export interface ShapeProps {
@@ -64,6 +89,13 @@ export interface ShapeProps {
   combinationError?: string
   resizable?: boolean
   rotatable?: boolean
+  customInputSlots?: CustomCombinationSlot[]
+  customOutputSlots?: CustomCombinationSlot[]
+  customConfig?: CustomCombinationConfig
+  customStatus?: 'idle' | 'generating' | 'completed' | 'error'
+  customError?: string
+  slotLabel?: string
+  slotVariant?: 'input' | 'output' | 'standalone'
 }
 
 export interface ViewportState {

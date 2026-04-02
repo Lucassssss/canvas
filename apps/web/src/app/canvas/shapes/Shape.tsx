@@ -5,6 +5,7 @@ import { useCanvasStore } from '../store'
 import { ShapeProps } from './types'
 import { ClothingComponent } from './ClothingComponent'
 import { AICombinationComponent } from './AICombinationComponent'
+import { CustomCombination } from './CustomCombination'
 import { aiCombinationService } from '@/ai-combination/service'
 import { Loader2, Copy, Clipboard, Trash2, BringToFront, SendToBack, CopyPlus, Download } from 'lucide-react'
 import { TransformMatrix } from '@/lib/canvas/transform'
@@ -292,12 +293,15 @@ export const Shape: React.FC<ShapeComponentProps> = ({ shape }) => {
       case 'ai-combination':
         return <AICombinationComponent shape={shape as ShapeProps & { type: 'ai-combination' }} />
 
+      case 'custom-combination':
+        return <CustomCombination shape={shape} />
+
       default:
         return null
     }
   }
 
-  const isCustomComponent = shape.type === 'draw' || shape.type === 'arrow' || shape.type === 'clothing' || shape.type === 'ai-combination'
+  const isCustomComponent = shape.type === 'draw' || shape.type === 'arrow' || shape.type === 'clothing' || shape.type === 'ai-combination' || shape.type === 'custom-combination'
 
   const transformStyle = useMemo(() => {
     const cx = shape.x + shape.width / 2

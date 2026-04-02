@@ -17,6 +17,7 @@ import {
   Check,
   Undo2,
   Redo2,
+  Plus,
 } from 'lucide-react'
 import { useCanvasStore } from '../store'
 import { ToolType } from '../shapes/types'
@@ -27,6 +28,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 
@@ -283,6 +285,51 @@ function createAICombinationShape(categoryId: string): void {
   focusOnArea(pos.x, pos.y, totalWidth, totalHeight)
 }
 
+function createCustomCombination(): void {
+  const { addShape, setSelectedIds, focusOnArea } = useCanvasStore.getState()
+
+  const slotWidth = 140
+  const slotHeight = 180
+  const gap = 12
+  const addButtonSize = 32
+  const padding = 24
+
+  const inputSlots = [{ id: `input-${Date.now()}`, label: '输入1', imageUrl: undefined }]
+  const outputSlots = [{ id: `output-${Date.now()}`, label: '输出', imageUrl: undefined }]
+
+  const inputWidth = slotWidth + gap + addButtonSize
+  const totalWidth = padding * 2 + inputWidth
+  const totalHeight = slotHeight + 100 + 200
+
+  const pos = getNextPosition(totalWidth, totalHeight)
+
+  const newId = addShape({
+    type: 'custom-combination',
+    x: pos.x,
+    y: pos.y,
+    width: totalWidth,
+    height: totalHeight,
+    rotation: 0,
+    fill: 'transparent',
+    stroke: 'transparent',
+    strokeWidth: 0,
+    opacity: 1,
+    customInputSlots: inputSlots,
+    customOutputSlots: outputSlots,
+    customConfig: {
+      model: 'flux-pro',
+      resolution: { width: 1024, height: 1024 },
+      prompt: '',
+    },
+    customStatus: 'idle',
+    resizable: false,
+    rotatable: false,
+  })
+
+  setSelectedIds([newId.id])
+  focusOnArea(pos.x, pos.y, totalWidth, totalHeight)
+}
+
 export const Toolbar: React.FC = () => {
   const { activeTool, setActiveTool, activeAICategory, setActiveAICategory, undo, redo, historyIndex, history } = useCanvasStore()
   const [aiTypes, setAITypes] = useState<CombinationType[]>([])
@@ -411,6 +458,17 @@ export const Toolbar: React.FC = () => {
                   {activeAICategory === type.id && <Check size={14} />}
                 </DropdownMenuItem>
               ))}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onSelect={() => {
+                  setDropdownOpen(false)
+                  createCustomCombination()
+                }}
+                className="flex items-center gap-2 text-blue-600"
+              >
+                <Plus size={14} />
+                <span>创建自定义组合</span>
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </>
