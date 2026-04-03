@@ -66,18 +66,23 @@ const COL_GAP = 50
 const START_X = 100
 const START_Y = 100
 
-function getNextPosition(width: number, height: number): { x: number; y: number } {
-  const shapes = useCanvasStore.getState().shapes
+let lastCreatedPosition = { x: START_X, y: START_Y }
+let lastCreatedSize = { width: 200, height: 50 }
 
-  if (shapes.length === 0) {
-    return { x: START_X, y: START_Y }
+function getNextPosition(width: number, height: number): { x: number; y: number } {
+  const screenWidth = window.innerWidth
+
+  const potentialX = lastCreatedPosition.x + lastCreatedSize.width + COL_GAP
+
+  if (potentialX + width <= screenWidth - START_X) {
+    lastCreatedPosition = { x: potentialX, y: lastCreatedPosition.y }
+  } else {
+    const newY = lastCreatedPosition.y + lastCreatedSize.height + ROW_GAP
+    lastCreatedPosition = { x: START_X, y: newY }
   }
 
-  const maxShapeBottom = Math.max(...shapes.map((s) => s.y + s.height))
-  const lastRowShapes = shapes.filter((s) => s.y + s.height >= maxShapeBottom - 10)
-  const lastRowRightmost = Math.max(...lastRowShapes.map((s) => s.x + s.width))
-
-  return { x: lastRowRightmost + COL_GAP, y: lastRowShapes[0]?.y ?? START_Y }
+  lastCreatedSize = { width, height }
+  return { ...lastCreatedPosition }
 }
 
 function createShape(type: ToolType): void {

@@ -1021,21 +1021,16 @@ export const Canvas: React.FC = () => {
         const newZoom = Math.max(0.1, Math.min(10, viewport.zoom * delta))
 
         const rect = container.getBoundingClientRect()
-        // 鼠标在容器内的屏幕坐标
-        const screenMouseX = e.clientX - rect.left
-        const screenMouseY = e.clientY - rect.top
+        const mouseX = e.clientX - rect.left
+        const mouseY = e.clientY - rect.top
 
-        // 鼠标在画布上的坐标（使用当前缩放和偏移）
-        const canvasX = (screenMouseX - viewport.x) / viewport.zoom
-        const canvasY = (screenMouseY - viewport.y) / viewport.zoom
+        const canvasX = (mouseX - viewport.x) / viewport.zoom
+        const canvasY = (mouseY - viewport.y) / viewport.zoom
 
-        // 计算新的视口偏移，使鼠标位置在新缩放下保持不变
-        // 公式：screenMouse = canvasPoint * newZoom + newViewportOffset
-        // 所以：newViewportOffset = screenMouse - canvasPoint * newZoom
         setViewport({
           zoom: newZoom,
-          x: screenMouseX - canvasX * newZoom,
-          y: screenMouseY - canvasY * newZoom,
+          x: mouseX - canvasX * newZoom,
+          y: mouseY - canvasY * newZoom,
         })
       } else {
         setViewport({
