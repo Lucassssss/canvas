@@ -1,0 +1,258 @@
+{
+    "id": "aef029c1-4ebc-45b5-a364-92611935dc62",
+    "user_id": "656031f2-5d8e-4b02-8d77-b3d99299f4bc",
+    "type": "AI_WRITE",
+    "status": "success",
+    "payload": {
+        "imageType": "detail",
+        "ai_request": {
+            "model": "gemini-3-flash-preview",
+            "contents": [
+                {
+                    "role": "user",
+                    "parts": [
+                        {
+                            "text": "你是电商产品详情图组的提示词生成助手。\n用户会提供产品图片 + 简单文字描述。\n\n重要规则：\n1. 只识别和分析**产品本身**，完全忽略用户上传图片里的背景、场景、灯光、构图、模特、环境风格。\n2. 不要被原图的场景影响，只根据产品属性和用户描述提炼信息。\n3. 输出内容用于生成一组**风格统一、视觉连贯**的产品详情图。\n4. 一次性生成 **3 套完整方案**（A/B/C），供用户三选一。产品客观事实一致，**场景设定、卖点表达、视觉风格、色彩方向**跟随各自风格统一调整。三套色彩必须有明显区分，且基于产品本身颜色材质，不可冲突。\n5. 信息不足时写\"未明确\"，不编造。\n6. **平台识别：** 如果用户输入中提及了目标平台（如\"亚马逊\"\"淘宝\"等），在输出中填写\"目标平台\"字段；未提及则填\"未明确\"。\n7. **用户需求原文处理：** 用户输入中能被结构化字段吸收的部分（如产品名称、平台、卖点等），正常提炼放进对应字段；无法被已有字段覆盖的部分（如特殊要求、额外说明、个性化描述等），原样保留写入\"用户需求原文\"。如果用户输入已全部被结构化字段覆盖，则\"用户需求原文\"填\"无\"。\n8. 输出语言使用中文。\n\n输出 options 数组，每个元素只有 prompt_text 一个字段，所有信息以 Markdown 格式写在其中（输出3个）：\n\n{\n  \"options\": [\n    {\n      \"prompt_text\": \"**目标平台：** [平台名称 或 未明确]\\n\\n**风格名称：** [名称]\\n\\n## 视觉风格\\n[风格描述一句话]\\n\\n## 整组图统一场景\\n[整组详情图共用的场景（例如：运动，户外等）确保多张图视觉连贯]\\n\\n## 产品信息\\n**产品名称：** [名称]\\n\\n**核心卖点：** [该风格调性的核心卖点]\\n\\n**适用人群：** [人群]\\n\\n## 产品参数\\n[材质、尺寸、颜色、功能等客观信息]\\n\\n## 设计风格\\n[视觉风格标签：简约/高级/清新/科技/国风/ins/日系/韩系/电商质感等]\\n\\n## 主题配色\\n- **主色调：** [色彩名称] [#XXXXXX]（用于背景/大面积色块）\\n- **辅助色：** [色彩名称] [#XXXXXX]（用于文字/装饰/图标）\\n- **点缀色：** [色彩名称] [#XXXXXX]（用于高光/强调元素）\\n\\n## 用户需求原文\\n[将用户的原始输入文字原样保留，不做任何修改、总结或省略]\"\n    }\n  ]\n}\n\n主题配色选色规则：\n- 主色调：该方案的主色调，用于背景/大面积色块\n- 辅助色：辅助色，用于文字/装饰/图标\n- 点缀色：点缀色，用于高光/强调元素\n- 色值必须具体精确（如 #2F4F4F），禁止模糊描述\n- 三个色之间须有层次对比，形成可用的配色方案\n- 三套方案色彩必须有明显区分，且基于产品本身颜色材质，不可冲突\n\n只输出纯 JSON，禁止 Markdown 代码块标签和任何前后解释文字。\n"
+                        },
+                        {
+                            "text": "This is the product image:"
+                        },
+                        {
+                            "inlineData": {
+                                "data": "https://cdn.picsetai.com/temp/656031f2-5d8e-4b02-8d77-b3d99299f4bc/1775241621930_product_0.png",
+                                "mimeType": "image/png"
+                            }
+                        }
+                    ]
+                }
+            ],
+            "provider": "google_direct",
+            "generationConfig": {
+                "temperature": 0.4,
+                "maxOutputTokens": 8192,
+                "responseMimeType": "application/json"
+            }
+        },
+        "uiLanguage": "zh",
+        "productImage": "temp/656031f2-5d8e-4b02-8d77-b3d99299f4bc/1775241621930_product_0.png",
+        "productImages": [
+            "temp/656031f2-5d8e-4b02-8d77-b3d99299f4bc/1775241621930_product_0.png"
+        ],
+        "promptConfigKey": "batch_detail_ai_write_prompt_zh"
+    },
+    "result_data": {
+        "_timing": {
+            "total_ms": 14250,
+            "queue_wait_ms": 0,
+            "ai_call_total_ms": 14109,
+            "config_refresh_ms": 6
+        },
+        "options": [
+            {
+                "prompt_text": "**目标平台：** 未明确\n\n**风格名称：** 极简艺术高定风\n\n## 视觉风格\n采用大面积留白与柔和的建筑感光影，强调3D花卉的立体艺术感与面料的高级垂感。\n\n## 整组图统一场景\n纯净的现代艺术画廊空间，带有极简的几何立柱与自然采光，营造静谧的高级感。\n\n## 产品信息\n**产品名称：** 3D立体蓝玫瑰印花高腰A字半身长裙\n\n**核心卖点：** 浮雕感3D玫瑰视觉冲击，艺术气息浓厚，修身A字版型。\n\n**适用人群：** 追求独特审美、喜爱艺术风格的都市女性。\n\n## 产品参数\n**材质：** 优质混纺面料（具微光泽感）\n**尺寸：** 未明确\n**颜色：** 纯白底色配克莱因蓝玫瑰\n**功能：** 高腰显瘦，3D立体印花工艺\n\n## 设计风格\n高级/简约/艺术感/电商质感\n\n## 主题配色\n- **主色调：** 纯净白 #FFFFFF（用于背景与空间主色）\n- **辅助色：** 宝石蓝 #003399（呼应产品花卉，用于文字标题）\n- **点缀色：** 冷银色 #C0C0C0（用于金属装饰元素或高光）\n\n## 用户需求原文\n无"
+            },
+            {
+                "prompt_text": "**目标平台：** 未明确\n\n**风格名称：** 浪漫法式庄园风\n\n## 视觉风格\n柔和的午后自然光，通过花影斑驳的视觉效果营造浪漫、灵动的度假氛围。\n\n## 整组图统一场景\n欧式复古庄园的户外露台或繁花盛开的后花园，背景带有模糊的绿植与石材纹理。\n\n## 产品信息\n**产品名称：** 3D立体蓝玫瑰印花高腰A字半身长裙\n\n**核心卖点：** 唯美浪漫花卉，飘逸大摆裙身，适合度假约会拍照出片。\n\n**适用人群：** 喜爱法式浪漫、名媛风、有度假出行需求的女性。\n\n## 产品参数\n**材质：** 亲肤透气面料\n**尺寸：** 未明确\n**颜色：** 奶白色底色配深蓝色玫瑰\n**功能：** 飘逸大摆，浪漫视觉设计\n\n## 设计风格\n浪漫/清新/法式/ins风\n\n## 主题配色\n- **主色调：** 奶油色 #FFFDD0（营造温馨浪漫底色）\n- **辅助色：** 雾霾蓝 #778899（用于装饰线条与次级信息）\n- **点缀色：** 香槟金 #F7E7CE（用于图标与重点卖点标注）\n\n## 用户需求原文\n无"
+            },
+            {
+                "prompt_text": "**目标平台：** 未明确\n\n**风格名称：** 都市冷淡科技风\n\n## 视觉风格\n高冷色调与强对比光影，突出产品色彩的纯净度与立体图案的结构感。\n\n## 整组图统一场景\n冷灰色调的都市建筑天台或极简主义摄影棚，利用线性灯光增加科技时尚感。\n\n## 产品信息\n**产品名称：** 3D立体蓝玫瑰印花高腰A字半身长裙\n\n**核心卖点：** 撞色视觉张力，硬挺有型的廓形设计，摩登都市感。\n\n**适用人群：** 职场时尚达人，喜爱冷淡风、先锋设计的女性。\n\n## 产品参数\n**材质：** 挺括型面料\n**尺寸：** 未明确\n**颜色：** 亮白色底色配克莱因蓝玫瑰\n**功能：** 廓形遮肉，高对比度视觉\n\n## 设计风格\n科技/冷淡/摩登/干练\n\n## 主题配色\n- **主色调：** 浅灰色 #E5E5E5（用于背景，突出产品白蓝对比）\n- **辅助色：** 克莱因蓝 #002FA7（极致纯粹的蓝色，用于品牌视觉）\n- **点缀色：** 碳黑色 #1A1A1A（用于强力视觉分割与文字）\n\n## 用户需求原文\n无"
+            }
+        ]
+    },
+    "result_url": null,
+    "error_message": null,
+    "is_refunded": false,
+    "cost_amount": 0,
+    "created_at": "2026-04-03T18:40:23.055435+00:00",
+    "updated_at": "2026-04-03T18:40:37.317216+00:00",
+    "trace_id": null,
+    "client_job_id": null,
+    "fe_attempt": 1,
+    "be_retry": 0,
+    "duration_ms": 14250,
+    "error_code": null,
+    "gen_model": "basic",
+    "gen_resolution": "1k",
+    "is_turbo": false,
+    "gen_family": "nano_banana",
+    "clothing_mode": null,
+    "workflow_mode": null,
+    "speed_mode": "normal",
+    "worker_id": "picsetai-prod-worker-1",
+    "provider_meta": {
+        "model": "gemini-3-flash-preview",
+        "usage": {
+            "total_tokens": 3960,
+            "prompt_tokens": 1868,
+            "completion_tokens": 1137
+        },
+        "source": "google_direct",
+        "image_count": 6,
+        "target_language": "en"
+    },
+    "project_id": null
+}
+
+
+
+{
+    "id": "62085c04-58d9-4bcb-a0d8-c670f5c08811",
+    "user_id": "656031f2-5d8e-4b02-8d77-b3d99299f4bc",
+    "type": "ANALYSIS",
+    "status": "success",
+    "payload": {
+        "trace_id": "3ddca1f3-24d1-4dc3-94f5-8fe2140054e3",
+        "imageType": "detail",
+        "ai_request": {
+            "model": "gemini-3-flash-preview",
+            "contents": [
+                {
+                    "role": "user",
+                    "parts": [
+                        {
+                            "text": "你是一位资深电商视觉策划专家，精通多品类产品的视觉设计规范制定。请务必为 **正好 1 张** 图片制定独立且互不重复的设计计划。\n\n  你的任务是：\n  1. 分析用户提供的产品图片。\n  2. 判断产品是否为复杂品类。\n  3. 结合用户的需求描述（特别注意用户是否要求\"无文字/纯净版\"设计）。\n  4. 制定整体设计规范（design_specs）。\n  5. 为每张图片制定详细的设计计划。\n\n  ---\n 复杂结构判断：产品符合以下任一条件即判定为 true：\n  （1）含可折叠/伸缩/旋转的机械关节或活动部件\n  （2）由多个独立零件组合，零件数量、位置、比例有明确物理约束\n  （3）存在精密结构（螺纹、卡扣、铰链、导轨、齿轮等）\n\n  若判定为 true，执行以下约束：\n\n  1. 参考图视角分析：规划每张图前，先分析参考图中实际存在的拍摄角度，为每张图选定一个具体视角（正面、侧面、45度斜角、俯视或局部特写等），写入该图 design_content 的 **选用视角**字段。只能选用参考图中实际存在的角度；允许在已有视角基础上做局部特写放大，但不得改变拍摄方向。严禁：第一人称视角、使用者主观视角、透过产品任何部件的内视角、参考图中不存在的纵深透视构图。\n  2. 产品形态锁定：形态、外形、颜色、材质、零件数量、连接关系、机械结构必须与参考图完全一致，不得改变。\n  3. 创意边界：仅限场景选择、光影设计、背景氛围、装饰道具。\n\n  若判定为 false：不执行上述任何约束，保持正常创意自由度。\n\n  判断结果写入：① JSON 顶层字段 is_complex_product（布尔值，不加引号）；② 每张图 design_content 第一行 **产品复杂结构判定** 字段。  当is_complex_product 为 true 时，在 design_content 第二行写入 **选用视角**：[从参考图视角分析得出的视角]。\n  ---\n  其他逻辑规则：\n  - 文案区分原则：区分\"设计文案\"（后期排版加入的标题/卖点）与\"产品文字\"（产品瓶身/包装上固有的 Logo、成分、标签）。\n  - 无文案处理逻辑：若用户需求为\"无文案\"设计，则 文字内容 下的所有字段填入 \"None\"，并在 展示重点中强调\"通过纯视觉、构图和光影展现产品，不添加任何排版文案\"。design_specs 中的 ## 字体系统 部分必须输出为：\"无(纯视觉设计，不涉及排版文案)\"，不提供具体的字体推荐。\n\n  ---\n  输出必须是严格的 JSON 格式，包含以下结构：\n\n  {\n    \"is_complex_product\":布尔值，根据复杂结构判断规则动态填写，true 或 false，不加引号,\n    \"design_specs\": \"（使用中文编写）# 整体设计规范\\n\\n> 所有图片必须遵循以下统一规范，确保视觉连贯性\\n\\n## 色彩系统\\n-**主色调**：[根据产品分析确定]（所有图片的文字 and 装饰主色）\\n- **辅助色**：[根据产品分析确定]（点缀和高光使用）\\n-**背景色**：[根据产品分析确定]\\n\\n## 字体系统\\n- **标题字体**：[推荐字体类型]\\n- **正文字体**：[推荐字体类型]\\n-**字号层级**：大标题:副标题:正文 = 3:1.8:1\\n\\n## 视觉语言\\n- **装饰元素**：[根据产品类型推荐]\\n- **图标风格**：[推荐风格]\\n-**留白原则**：[具体说明]\\n\\n## 摄影风格\\n- **光线**：[具体说明]\\n- **景深**：[具体说明]\\n- **相机参数参考**：[具体参数]\\n\\n## 品质要求\\n-分辨率：4K/高清\\n- 风格：专业产品摄影/商业广告级\\n- 真实感：超写实/照片级\",\n    \"images\": [\n      {\n        \"title\": \"[中文标题，简洁有力，4-8个字]\",\n        \"description\": \"[中文描述，说明这张图的设计目标和定位，1-2句话]\",\n        \"design_content\": \"**产品复杂结构判定**：[true/false]\\n**选用视角**：[true 时填写从参考图分析选定的具体视角，如\\\"正侧面45度\\\"；false时删除此行]\\n\\n##图[N]：[图片类型]\\n\\n**设计目标**：[具体目标]\\n\\n**产品出现**：[是/否]\\n\\n**图中图元素**：\\n-[如有，详细说明每个图中图的类型、形状、位置、尺寸、内容]\\n\\n**构图方案**：\\n- 产品占比：[百分比]\\n- 布局方式：[详细说明]\\n-文字区域：[具体位置，若无文案则填写\\\"无文案区域\\\"]\\n\\n**内容要素**：\\n- 展示重点：[具体说明]\\n- 突出卖点：[具体卖点]\\n- 背景元素：[详细描述]\\n-装饰元素：[详细描述]\\n\\n**文字内容**（使用 无文字(纯视觉)）：\\n- 主标题：[具体文字 / 若用户要求无文案则填 None]\\n- 副标题：[具体文字 /若用户要求无文案则填 None]\\n- 说明文字：[具体文字 / 若用户要求无文案则填 None]\\n\\n**氛围营造**：\\n- 情绪关键词：[3-5个关键词]\\n-光影效果：[详细说明]\"\n      }\n    ]\n  }\n\n  重要规则：\n  1. images 数组必须包含用户指定数量的元素。\n  2. 每张图的设计内容必须独特，覆盖不同角度和场景。\n  3. 设计规范必须基于产品图片的实际特征。\n  4. design_content 中的文字内容必须使用目标输出语言：无文字(纯视觉)。\n  5. 核心指令：整体设计规范 (design_specs)、图片计划中的 title 和 description 必须使用中文编写；只有 design_content中的\"文字内容\"部分必须根据目标输出语言 (无文字(纯视觉)) 编写。\n  6. 输出限制：只输出纯 JSON 字符串，禁止包含任何 Markdown 代码块标签（如 ```json）、禁止包含任何前导或后置的解释性文字。确保 JSON 格式合法。\n  7. is_complex_product 与每张图 design_content 第一行的 **产品复杂结构判定** 必须保持一致，均根据判断结果动态输出，不得写死。\n\n用户需求描述：注意所有图片不要有设计文案**目标平台：** 未明确\n\n**风格名称：** 极简艺术高定风\n\n## 视觉风格\n采用大面积留白与柔和的建筑感光影，强调3D花卉的立体艺术感与面料的高级垂感。\n\n## 整组图统一场景\n纯净的现代艺术画廊空间，带有极简的几何立柱与自然采光，营造静谧的高级感。\n\n## 产品信息\n**产品名称：** 3D立体蓝玫瑰印花高腰A字半身长裙\n\n**核心卖点：** 浮雕感3D玫瑰视觉冲击，艺术气息浓厚，修身A字版型。\n\n**适用人群：** 追求独特审美、喜爱艺术风格的都市女性。\n\n## 产品参数\n**材质：** 优质混纺面料（具微光泽感）\n**尺寸：** 未明确\n**颜色：** 纯白底色配克莱因蓝玫瑰\n**功能：** 高腰显瘦，3D立体印花工艺\n\n## 设计风格\n高级/简约/艺术感/电商质感\n\n## 主题配色\n- **主色调：** 纯净白 #FFFFFF（用于背景与空间主色）\n- **辅助色：** 宝石蓝 #003399（呼应产品花卉，用于文字标题）\n- **点缀色：** 冷银色 #C0C0C0（用于金属装饰元素或高光）\n\n## 用户需求原文\n无"
+                        },
+                        {
+                            "text": "This is the product image:"
+                        },
+                        {
+                            "inlineData": {
+                                "data": "https://cdn.picsetai.com/temp/656031f2-5d8e-4b02-8d77-b3d99299f4bc/1775242018933_product_0.png",
+                                "mimeType": "image/png"
+                            }
+                        }
+                    ]
+                }
+            ],
+            "provider": "google_direct",
+            "generationConfig": {
+                "temperature": 0.4,
+                "maxOutputTokens": 8192,
+                "responseMimeType": "application/json"
+            }
+        },
+        "imageCount": 1,
+        "project_id": "3ef8fd63-191a-401a-9672-5a22b08f6b0d",
+        "uiLanguage": "zh-CN",
+        "productImage": "temp/656031f2-5d8e-4b02-8d77-b3d99299f4bc/1775242018933_product_0.png",
+        "requirements": "注意所有图片不要有设计文案**目标平台：** 未明确\n\n**风格名称：** 极简艺术高定风\n\n## 视觉风格\n采用大面积留白与柔和的建筑感光影，强调3D花卉的立体艺术感与面料的高级垂感。\n\n## 整组图统一场景\n纯净的现代艺术画廊空间，带有极简的几何立柱与自然采光，营造静谧的高级感。\n\n## 产品信息\n**产品名称：** 3D立体蓝玫瑰印花高腰A字半身长裙\n\n**核心卖点：** 浮雕感3D玫瑰视觉冲击，艺术气息浓厚，修身A字版型。\n\n**适用人群：** 追求独特审美、喜爱艺术风格的都市女性。\n\n## 产品参数\n**材质：** 优质混纺面料（具微光泽感）\n**尺寸：** 未明确\n**颜色：** 纯白底色配克莱因蓝玫瑰\n**功能：** 高腰显瘦，3D立体印花工艺\n\n## 设计风格\n高级/简约/艺术感/电商质感\n\n## 主题配色\n- **主色调：** 纯净白 #FFFFFF（用于背景与空间主色）\n- **辅助色：** 宝石蓝 #003399（呼应产品花卉，用于文字标题）\n- **点缀色：** 冷银色 #C0C0C0（用于金属装饰元素或高光）\n\n## 用户需求原文\n无",
+        "productImages": [
+            "temp/656031f2-5d8e-4b02-8d77-b3d99299f4bc/1775242018933_product_0.png"
+        ],
+        "targetLanguage": "none",
+        "promptConfigKey": "batch_analysis_prompt_zh",
+        "_ef_preprocess_ms": 52
+    },
+    "result_data": {
+        "images": [
+            {
+                "title": "艺术画廊·光影全景",
+                "description": "在极简现代艺术空间中展示长裙全貌，通过自然光影强调3D玫瑰的立体艺术感与面料的垂坠质感。",
+                "design_content": "**产品复杂结构判定**：false\n\n##图1：主视觉展示图\n\n**设计目标**：通过纯净的艺术场景烘托产品的高定质感，建立品牌的高级审美调性。\n\n**产品出现**：是\n\n**图中图元素**：\n-无\n\n**构图方案**：\n- 产品占比：65%\n- 布局方式：黄金分割构图，长裙主体位于画面中心略偏右，左侧保留大面积画廊墙面与几何立柱阴影。\n-文字区域：无文案区域\n\n**内容要素**：\n- 展示重点：通过纯视觉、构图和光影展现产品，不添加任何排版文案。重点突出3D玫瑰的浮雕细节与裙摆的A字廓形。\n- 突出卖点：3D立体印花工艺、高腰显瘦版型、艺术化审美。\n- 背景元素：纯净的白色艺术画廊，带有细腻纹理的墙面，远处可见极简的几何立柱。\n-装饰元素：地面上投射的窗格光影，增加画面的层次感与静谧感。\n\n**文字内容**（使用 无文字(纯视觉)）：\n- 主标题：None\n- 副标题：None\n- 说明文字：None\n\n**氛围营造**：\n- 情绪关键词：静谧、高级、艺术、纯净、立体\n-光影效果：柔和的自然光从斜上方45度角射入，在3D玫瑰花瓣边缘形成细腻的高光与阴影，增强立体感。"
+            }
+        ],
+        "_timing": {
+            "total_ms": 11655,
+            "queue_wait_ms": 0,
+            "ai_call_total_ms": 11520,
+            "ef_preprocess_ms": 52,
+            "config_refresh_ms": 7
+        },
+        "design_specs": "# 整体设计规范\n\n> 所有图片必须遵循以下统一规范，确保视觉连贯性\n\n## 色彩系统\n-**主色调**：纯净白 #FFFFFF（用于背景与空间主色，营造极简基调）\n- **辅助色**：宝石蓝 #003399（呼应产品3D玫瑰，作为视觉视觉焦点引导）\n-**背景色**：极简灰白 #F5F5F5（模拟画廊墙面质感）\n\n## 字体系统\n- **标题字体**：无(纯视觉设计，不涉及排版文案)\n- **正文字体**：无(纯视觉设计，不涉及排版文案)\n-**字号层级**：无(纯视觉设计，不涉及排版文案)\n\n## 视觉语言\n- **装饰元素**：现代艺术画廊的几何立柱、极简线条、柔和的建筑阴影\n- **图标风格**：无\n-**留白原则**：大面积留白，产品周围保持呼吸感，确保视觉重心集中于3D花卉\n\n## 摄影风格\n- **光线**：自然采光，模拟从高窗洒下的柔和侧逆光，增强3D玫瑰的浮雕阴影感\n- **景深**：中等景深，背景画廊元素略微虚化，保持空间感但不夺主\n- **相机参数参考**：f/4.0, 1/125s, ISO 100, 50mm定焦镜头\n\n## 品质要求\n-分辨率：4K/高清\n- 风格：专业产品摄影/商业广告级\n- 真实感：超写实/照片级",
+        "is_complex_product": false
+    },
+    "result_url": null,
+    "error_message": null,
+    "is_refunded": false,
+    "cost_amount": 0,
+    "created_at": "2026-04-03T18:46:59.912243+00:00",
+    "updated_at": "2026-04-03T18:47:11.580004+00:00",
+    "trace_id": "3ddca1f3-24d1-4dc3-94f5-8fe2140054e3",
+    "client_job_id": null,
+    "fe_attempt": 1,
+    "be_retry": 0,
+    "duration_ms": 11655,
+    "error_code": null,
+    "gen_model": "basic",
+    "gen_resolution": "1k",
+    "is_turbo": false,
+    "gen_family": "nano_banana",
+    "clothing_mode": null,
+    "workflow_mode": null,
+    "speed_mode": "normal",
+    "worker_id": "picsetai-prod-worker-1",
+    "provider_meta": {
+        "model": "gemini-3-flash-preview",
+        "usage": {
+            "total_tokens": 4812,
+            "prompt_tokens": 2992,
+            "completion_tokens": 887
+        },
+        "source": "google_direct",
+        "image_count": 1,
+        "target_language": "none"
+    },
+    "project_id": "3ef8fd63-191a-401a-9672-5a22b08f6b0d"
+}
+
+
+
+
+{
+    "productImage": "temp/656031f2-5d8e-4b02-8d77-b3d99299f4bc/1775242018933_product_0.png",
+    "productImages": [
+        "temp/656031f2-5d8e-4b02-8d77-b3d99299f4bc/1775242018933_product_0.png"
+    ],
+    "prompt": "Subject: The subject in this image must be strictly consistent with the A-line dress with 3D rose embroidery in the reference image. The shape, form, color, material, number of parts, connection relationships, and mechanical structure of the product must be completely consistent with the reference image, without any changes. Strictly restore all colors of the product in the reference image without any modification. The color of the product body, components, surfaces, and textures must be completely consistent with the reference image. Composition: The product occupies approximately 65% of the frame, positioned according to the golden ratio slightly to the right of the center. The left side features a spacious, airy expanse of gallery wall with soft geometric pillar shadows. The camera is positioned at eye level to capture the full silhouette of the A-line dress. Background: A multi-layered minimalist art gallery setting. The mid-ground features the product against a white wall with a subtle, fine-grained texture (#F5F5F5). The background recedes into a series of minimalist geometric pillars and soft architectural shadows, creating a deep sense of spatial dimension and tranquility. Lighting: Sophisticated multi-source lighting setup. The primary light is a soft, natural side-backlight entering from a 45-degree high angle, simulating light from a large gallery window. This creates delicate highlights and soft shadows on the edges of the 3D rose petals, enhancing their sculptural relief. Color Scheme: A refined palette dominated by Pure White (#FFFFFF) for the background and spatial elements. The focal point is the Royal Blue (#003399) of the 3D roses, providing a striking visual contrast. Minimalist Gray-White (#F5F5F5) is used for the gallery walls. Material Details: The dress features high-quality fabric with a smooth, matte finish. The 3D rose embroidery is rendered with exquisite detail, showing the intricate layering of petals and the tactile quality of the thread. Atmosphere: The atmosphere is serene, high-end, and profoundly artistic, evoking quiet luxury and pure aesthetic focus. Style: Professional commercial product photography with a high-fashion editorial direction, focusing on the interplay of light and form. Quality: Ultra-high definition 4K resolution, 50mm prime lens, f/4.0. Color fidelity is paramount. Structural fidelity is strictly maintained, replicating the precise physical structure and component count of the original garment. Every element is geometrically precise and physically achievable.",
+    "model": "nano-banana-pro",
+    "aspectRatio": "3:4",
+    "imageSize": "2K",
+    "imageCount": 1,
+    "turboEnabled": false,
+    "speedMode": "normal",
+    "imageType": "detail",
+    "trace_id": "3ddca1f3-24d1-4dc3-94f5-8fe2140054e3",
+    "project_id": "3ef8fd63-191a-401a-9672-5a22b08f6b0d",
+    "client_job_id": "3ddca1f3-24d1-4dc3-94f5-8fe2140054e3-0",
+    "fe_attempt": 1,
+    "metadata": {
+        "is_batch": true,
+        "batch_index": 0,
+        "image_size": "2K",
+        "product_images": [
+            "temp/656031f2-5d8e-4b02-8d77-b3d99299f4bc/1775242018933_product_0.png"
+        ]
+    }
+}
+
+
+{
+    "analysisJson": {
+        "images": [
+            {
+                "title": "3D视觉摩登首图",
+                "description": "作为首页图，通过极致的高对比度背景突出产品的3D立体感和电光蓝花卉的视觉冲击力。",
+                "design_content": "**产品复杂结构判定**：false\n\n##图1：首页图 hero\n\n**设计目标**：瞬间抓住时尚博主与潮流达人的注意力，建立高端前卫的品牌第一印象。\n\n**产品出现**：是\n\n**图中图元素**：\n-无\n\n**构图方案**：\n- 产品占比：70%\n- 布局方式：产品垂直居中，裙摆自然散开呈A字型，占据画面中下部。\n- 文字区域：画面顶部中央放置主标题，两侧分布少量装饰性英文字符。\n\n**内容要素**：\n- 展示重点：电光蓝3D花卉的立体层次感与廓形裙摆。\n- 突出卖点：突破传统的3D视觉设计。\n- 痛点场景：N/A\n- 背景元素：纯黑色背景，后方斜向穿插几条闪耀银（#C0C0C0）的极细发光线条。\n- 装饰元素：产品周围散落少量微小的电光蓝（#0000FF）发光粒子。\n\n**文字内容**（使用 中文(简体)）：\n- 主标题：3D视觉摩登大摆裙\n- 副标题：突破传统的时尚单品\n- 说明文字：电光蓝撞色 / 廓形塑形\n\n**氛围营造**：\n- 情绪关键词：前卫、冷峻、高级感、冲击力\n- 光影效果：强烈的侧光，使白色裙面的3D花瓣产生明显的明暗交界线，增强立体感。"
+            },
+            {
+                "title": "告别平庸上镜图",
+                "description": "针对用户“拍照不上镜”的痛点，展示产品在镜头下的张力，强调其自带气场的特质。",
+                "design_content": "**产品复杂结构判定**：false\n\n##图2：痛点图 pain_point\n\n**设计目标**：解决用户“衣服在镜头下显得平庸”的痛点，通过视觉对比暗示产品的高出片率。\n\n**产品出现**：是\n\n**图中图元素**：\n- [左侧对比框，圆形，位于画面左中位置，尺寸较小，展示普通裙装在镜头下的灰暗平庸感]\n\n**构图方案**：\n- 产品占比：65%\n- 布局方式：产品位于画面右侧，向左侧微倾，左侧留出空间展示痛点对比与文案。\n- 文字区域：左上角及左侧中部。\n\n**内容要素**：\n- 展示重点：裙摆的硬挺塑形感与色彩饱和度。\n- 突出卖点：自带气场，拍照极度出片。\n- 痛点场景：用户痛点：拍照不上镜，衣服显得平庸。解决方案：3D立体设计与电光蓝撞色，无需滤镜即可成片。\n- 背景元素：黑色背景，带有银色渐变的光晕效果。\n- 装饰元素：电光蓝色的“Focus”对焦框装饰线条，模拟相机取景器界面。\n\n**文字内容**（使用 中文(简体)）：\n- 主标题：拒绝上镜平庸感\n- 副标题：自带3D气场 每一张都是大片\n- 说明文字：定制硬挺塑形面料 / 极具视觉张力\n\n**氛围营造**：\n- 情绪关键词：自信、焦点、独特、专业\n- 光影效果：聚光灯效果，光束集中在裙摆的3D花卉上，强调其作为视觉焦点的地位。"
+            }
+        ],
+        "_timing": {
+            "total_ms": 15357,
+            "queue_wait_ms": 0,
+            "ai_call_total_ms": 15214,
+            "ef_preprocess_ms": 55,
+            "config_refresh_ms": 12
+        },
+        "design_specs": "# 整体设计规范\n\n> 所有主图必须遵循以下统一规范，确保视觉连贯性\n\n## 视觉风格\n- **风格定位**：摩登前卫视觉风。高对比度的色彩碰撞，结合现代几何线条背景，突出产品的3D视觉冲击力与时尚张力。\n\n## 色彩系统\n- **主色调**：#000000（纯黑色背景，营造深邃的时尚空间感）\n- **辅助色**：#0000FF（电光蓝，用于核心卖点文字与装饰线条，呼应产品花卉色）\n- **点缀色**：#C0C0C0（闪耀银，用于高光勾勒、金属感装饰元素及副标题）\n- **背景色**：纯黑色背景结合银色几何发光线条。\n\n## 字体系统\n- **标题字体**：现代粗体无衬线字（如：思源黑体 Bold 或 几何体）\n- **正文字体**：细体无衬线字（如：思源黑体 Light）\n- **字号层级**：大标题:副标题:正文 = 3:1.8:1\n\n## 视觉语言\n- **装饰元素**：3D折线、悬浮的几何方块、电光蓝发光条。\n- **图标风格**：极简线性图标，带有银色金属质感。\n- **留白原则**：四周保持10%的呼吸空间，确保视觉中心集中在产品上。\n\n## 摄影风格\n- **光线**：硬调商业光，侧逆光勾勒产品3D轮廓，形成锐利阴影。\n- **景深**：全深景，确保3D花卉细节从前到后清晰可见。\n- **相机参数参考**：f/8.0, 1/125s, ISO 100\n\n## 品质要求\n- 分辨率：4K/高清\n- 风格：专业产品摄影/商业广告级\n- 真实感：超写实/照片级",
+        "is_complex_product": false
+    },
+    "targetLanguage": "zh",
+    "imageType": "main",
+    "stream": true,
+    "trace_id": "ac8ae450-e81e-4164-9c5c-405ea9c4ddf8",
+    "project_id": "84ad0fdc-a425-43e0-b5e1-7c4a2cacf908"
+}
