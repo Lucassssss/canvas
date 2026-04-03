@@ -250,22 +250,38 @@ export const useCanvasStore = create<CanvasStore>()(
     const contentWidth = maxX - minX + padding * 2
     const contentHeight = maxY - minY + padding * 2
 
-    const viewportWidth = window.innerWidth - 64 - 320
-    const viewportHeight = window.innerHeight - 56 - 80
+    // 计算可用的视口尺寸（考虑侧边栏和顶部/底部偏移）
+    const sidebarWidth = 64 + 320 // 左侧工具栏 + 右侧面板
+    const topOffset = 56
+    const bottomOffset = 80
+    const viewportWidth = window.innerWidth - sidebarWidth
+    const viewportHeight = window.innerHeight - topOffset - bottomOffset
 
+    // 计算缩放比例，不超过 1（避免放大）
     const zoom = Math.min(
       viewportWidth / contentWidth,
       viewportHeight / contentHeight,
       1
     )
 
-    const centerX = (minX + maxX) / 2
-    const centerY = (minY + maxY) / 2
+    // 计算内容的中心点
+    const contentCenterX = (minX + maxX) / 2
+    const contentCenterY = (minY + maxY) / 2
+
+    // 计算视口中心在屏幕上的位置
+    const screenCenterX = viewportWidth / 2
+    const screenCenterY = (viewportHeight / 2) + topOffset
+
+    // 计算视口偏移：使内容中心对齐到屏幕中心
+    // 公式：screenCenter = canvasCenter * zoom + viewportOffset
+    // 所以：viewportOffset = screenCenter - canvasCenter * zoom
+    const x = screenCenterX - contentCenterX * zoom
+    const y = screenCenterY - contentCenterY * zoom
 
     set({
       viewport: {
-        x: viewportWidth / 2 / zoom - centerX,
-        y: viewportHeight / 2 / zoom - centerY,
+        x,
+        y,
         zoom,
       },
     })
@@ -280,7 +296,7 @@ export const useCanvasStore = create<CanvasStore>()(
   zoomToArea: (x, y, width, height) => {
     const { viewport } = get()
     const padding = 20
-    const sidebarWidth = 320
+    const sidebarWidth = 64 + 320
     const topOffset = 56
     const bottomOffset = 80
 
@@ -294,9 +310,12 @@ export const useCanvasStore = create<CanvasStore>()(
     const centerX = x + width / 2
     const centerY = y + height / 2
 
+    const screenCenterX = containerWidth / 2
+    const screenCenterY = (containerHeight / 2) + topOffset
+
     const newViewport = {
-      x: containerWidth / 2 - centerX * zoom,
-      y: containerHeight / 2 - centerY * zoom + topOffset,
+      x: screenCenterX - centerX * zoom,
+      y: screenCenterY - centerY * zoom,
       zoom,
     }
 
@@ -314,7 +333,7 @@ export const useCanvasStore = create<CanvasStore>()(
   focusOnArea: (x, y, width, height, options) => {
     const padding = options?.padding ?? 40
     const maxZoom = options?.maxZoom ?? 1
-    const sidebarWidth = 320
+    const sidebarWidth = 64 + 320
     const topOffset = 56
     const bottomOffset = 80
 
@@ -328,9 +347,12 @@ export const useCanvasStore = create<CanvasStore>()(
     const centerX = x + width / 2
     const centerY = y + height / 2
 
+    const screenCenterX = containerWidth / 2
+    const screenCenterY = (containerHeight / 2) + topOffset
+
     const newViewport = {
-      x: containerWidth / 2 - centerX * zoom,
-      y: containerHeight / 2 - centerY * zoom + topOffset,
+      x: screenCenterX - centerX * zoom,
+      y: screenCenterY - centerY * zoom,
       zoom,
     }
 
