@@ -155,8 +155,7 @@ export const CanvasPage: React.FC = () => {
   return (
     <div className="w-full h-full">
       <a className="logo block w-8 flex items-center justify-center" href="https://joii.cc" target="_blank">
-      GKE
-        {/* <img src="/joii_logo_fa.svg" alt="Joii.cc" /> */}
+        <img src="/joii_logo_fa.svg" alt="Joii.cc" />
       </a>
 
       <button
