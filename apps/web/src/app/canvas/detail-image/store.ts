@@ -67,6 +67,11 @@ interface DetailImageStore {
   // 生成结果
   generatedImages: string[]
 
+  // 容器控制
+  isOpen: boolean
+  openDetailImage: () => void
+  closeDetailImage: () => void
+
   // 操作
   setStep: (step: DetailImageStep) => void
   addProductImage: (url: string) => void
@@ -121,10 +126,14 @@ const initialState = {
   } as DesignSpec,
   imagePlanItems: [] as ImagePlanItem[],
   generatedImages: [] as string[],
+  isOpen: false,
 }
 
 export const useDetailImageStore = create<DetailImageStore>((set, get) => ({
   ...initialState,
+
+  openDetailImage: () => set({ isOpen: true }),
+  closeDetailImage: () => set({ isOpen: false }),
 
   setStep: (step) => set({ step }),
 

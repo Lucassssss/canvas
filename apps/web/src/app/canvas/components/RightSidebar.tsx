@@ -1,9 +1,10 @@
 "use client"
 
 import React, { useEffect, useRef, useState, useCallback } from 'react'
-import { Plus, ChevronDown, MessageSquare, ArrowRightFromLine, MessageSquarePlus, Shirt } from 'lucide-react'
+import { Plus, ChevronDown, MessageSquare, ArrowRightFromLine, MessageSquarePlus, Shirt, Wand2 } from 'lucide-react'
 import { useSearchParams } from 'next/navigation'
 import { useCanvasStore } from '../store'
+import { useDetailImageStore } from '../detail-image/store'
 import { ClothingPanel } from './ClothingPanel'
 import { ChatMessage } from '@/features/chat/components/ChatMessage'
 import { ChatInput } from '@/features/chat/components/ChatInput'
@@ -24,6 +25,7 @@ const DEFAULT_WIDTH = 360
 export const RightSidebar: React.FC<RightSidebarProps> = ({ isOpen, onClose }) => {
   const searchParams = useSearchParams()
   const projectId = searchParams.get('projectId')
+  const { openDetailImage } = useDetailImageStore()
   
   const [showHistory, setShowHistory] = useState(false)
   const [activeTab, setActiveTab] = useState<TabType>('chat')
