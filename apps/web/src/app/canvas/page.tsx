@@ -8,6 +8,7 @@ import { LeftSidebar } from '@/components/LeftSidebar'
 import { ClothingSidebar } from './components/ClothingSidebar'
 import { ZoomControls } from './components/ZoomControls'
 import { SaveIndicator } from './components/SaveIndicator'
+import { DetailImageContainer } from './detail-image/DetailImageContainer'
 import { useCanvasStore } from './store'
 import './style.css'
 
@@ -191,6 +192,9 @@ export const CanvasPage: React.FC = () => {
 
       {/* 保存状态指示器 */}
       <SaveIndicator />
+
+      {/* 详情图容器 */}
+      <DetailImageContainer />
 
       <div className="flex w-full h-full">
         <LeftSidebar />
