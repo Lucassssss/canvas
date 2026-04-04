@@ -45,6 +45,7 @@ const baseTools: { type: ToolType; icon: React.ReactNode; label: string; shortcu
   { type: 'image', icon: <ImageIcon size={20} />, label: '图片', shortcut: 'I' },
   { type: 'shape', icon: <Square size={20} />, label: '形状', shortcut: 'S' },
   { type: 'clothing', icon: <Shirt size={20} />, label: '服装', shortcut: 'C' },
+  { type: 'detail-image', icon: <Wand2 size={20} />, label: '详情图', shortcut: 'D' },
 ]
 
 interface ShapeSize {
@@ -60,6 +61,7 @@ const SHAPE_SIZES: Record<string, ShapeSize> = {
   arrow: { width: 200, height: 50 },
   pen: { width: 200, height: 200 },
   clothing: { width: 800, height: 800 },
+  'detail-image': { width: 400, height: 280 },
 }
 
 const SLOT_SIZE = { width: 140, height: 180 }
@@ -211,6 +213,23 @@ function createShape(type: ToolType): void {
         },
         logoAreas: [],
         activeLogoId: undefined,
+      })
+      break
+
+    case 'detail-image':
+      newShape = addShape({
+        type: 'detail-image',
+        x: pos.x,
+        y: pos.y,
+        width: size.width,
+        height: size.height,
+        rotation: 0,
+        fill: 'transparent',
+        stroke: 'transparent',
+        strokeWidth: 0,
+        opacity: 1,
+        resizable: true,
+        rotatable: false,
       })
       break
 
