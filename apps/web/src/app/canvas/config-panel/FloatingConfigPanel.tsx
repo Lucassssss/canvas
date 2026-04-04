@@ -10,9 +10,11 @@ import { ResolutionSelect, type Resolution } from './ResolutionSelect'
 import { CountSelect, type Count } from './CountSelect'
 
 export type ConfigField = 'model' | 'resolution' | 'aspectRatio' | 'count'
+export type ShapeTypeFilter = 'image' | 'custom-combination' | 'all'
 
 export interface ConfigPanelConfig {
   enabledFields?: ConfigField[]
+  shapeTypeFilter?: ShapeTypeFilter
 }
 
 export interface ImageGenerationConfig {
@@ -83,9 +85,13 @@ export const FloatingConfigPanel: React.FC<FloatingConfigPanelProps> = ({ contai
 
   const [position, setPosition] = useState<{ left: number; top: number } | null>(null)
 
-  const selectedShape = shapes.find(
-    (s) => selectedIds.includes(s.id) && s.type === 'image'
-  )
+  const shapeTypeFilter = config?.shapeTypeFilter || 'all'
+
+  const selectedShape = shapes.find((s) => {
+    if (!selectedIds.includes(s.id)) return false
+    if (shapeTypeFilter === 'all') return s.type === 'image' || s.type === 'custom-combination'
+    return s.type === shapeTypeFilter
+  })
 
   const enabledFields = config?.enabledFields || DEFAULT_ENABLED_FIELDS
 

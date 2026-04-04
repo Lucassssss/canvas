@@ -2,7 +2,7 @@
 
 ## 概述
 
-属性配置面板是一个浮动在画布组件下方的配置工具，用于配置 AI 图片生成参数。当选中图片类型组件时，面板会自动显示在组件下方。
+属性配置面板是一个浮动在画布组件下方的配置工具，用于配置 AI 图片生成参数。当选中支持的组件类型时，面板会自动显示在组件下方。
 
 ## 目录结构
 
@@ -33,22 +33,45 @@ interface FloatingConfigPanelProps {
 
 interface ConfigPanelConfig {
   enabledFields?: ConfigField[]  // 启用的配置项
+  shapeTypeFilter?: ShapeTypeFilter  // 组件类型过滤
 }
 
 type ConfigField = 'model' | 'resolution' | 'aspectRatio' | 'count'
+type ShapeTypeFilter = 'image' | 'custom-combination' | 'all'
 ```
 
 **使用示例**:
 ```tsx
 import { FloatingConfigPanel } from './config-panel'
 
-// 显示所有配置项（默认）
+// 显示所有支持的组件类型（默认）
 <FloatingConfigPanel containerRef={containerRef} />
+
+// 只显示 image 组件的配置面板
+<FloatingConfigPanel 
+  containerRef={containerRef}
+  config={{ shapeTypeFilter: 'image' }}
+/>
+
+// 只显示 custom-combination 组件的配置面板
+<FloatingConfigPanel 
+  containerRef={containerRef}
+  config={{ shapeTypeFilter: 'custom-combination' }}
+/>
 
 // 只启用部分配置项
 <FloatingConfigPanel 
   containerRef={containerRef}
   config={{ enabledFields: ['model', 'count'] }}
+/>
+
+// 组合使用
+<FloatingConfigPanel 
+  containerRef={containerRef}
+  config={{ 
+    shapeTypeFilter: 'custom-combination',
+    enabledFields: ['model', 'resolution', 'aspectRatio', 'count'] 
+  }}
 />
 ```
 
@@ -180,7 +203,7 @@ import { CountSelect } from './config-panel'
 
 ### ImageConfig
 
-存储在 ShapeProps 中的配置数据类型：
+存储在 ShapeProps 中的配置数据类型，所有支持属性配置的组件都使用此结构：
 
 ```typescript
 export interface ImageConfig {
@@ -218,11 +241,11 @@ import { FloatingConfigPanel } from './config-panel'
 
 export const Canvas: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null)
-  
+
   return (
     <div ref={containerRef}>
       {/* 画布内容 */}
-      
+
       {/* 浮动配置面板 - 放在 viewport 外部 */}
       <FloatingConfigPanel containerRef={containerRef} />
     </div>
@@ -230,9 +253,20 @@ export const Canvas: React.FC = () => {
 }
 ```
 
+## 支持的组件类型
+
+### image 组件
+- 使用 `imageConfig` 存储配置
+- 支持所有配置项
+
+### custom-combination 组件
+- 使用 `imageConfig` 存储配置
+- 支持所有配置项
+- 已移除内置配置面板，统一使用属性配置面板
+
 ## 交互行为
 
-1. **显示条件**: 当选中的组件类型为 `image` 时自动显示
+1. **显示条件**: 当选中的组件类型为 `image` 或 `custom-combination` 时自动显示
 2. **定位**: 始终在选中组件下方，水平居中
 3. **边界检测**: 自动调整位置避免溢出视口
 4. **点击穿透**: 点击面板不触发画布取消选中

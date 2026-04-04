@@ -337,9 +337,11 @@ function createCustomCombination(): void {
     opacity: 1,
     customInputSlots: inputSlots,
     customOutputSlots: outputSlots,
-    customConfig: {
-      model: 'flux-pro',
-      resolution: { width: 1024, height: 1024 },
+    imageConfig: {
+      model: 'gemini-3-pro-image-preview',
+      resolution: '2K' as const,
+      aspectRatio: '1:1',
+      count: 1,
       prompt: '',
     },
     customStatus: 'idle',
