@@ -23,7 +23,7 @@
   position: relative;
   overflow: hidden;
   background-color: #f4f4f5;
-  background-image: radial-gradient(circle, #d4d4d8 1px, transparent 1px);
+  /* background-image: radial-gradient(circle, #d4d4d8 1px, transparent 1px); */
   background-size: 20px 20px;
 }
 
