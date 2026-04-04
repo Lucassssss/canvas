@@ -306,6 +306,7 @@ export const Shape: React.FC<ShapeComponentProps> = ({ shape }) => {
   }
 
   const isCustomComponent = shape.type === 'draw' || shape.type === 'arrow' || shape.type === 'clothing' || shape.type === 'ai-combination' || shape.type === 'custom-combination' || shape.type === 'detail-image'
+  const isAutoSizeComponent = shape.type === 'custom-combination'
 
   const transformStyle = useMemo(() => {
     const cx = shape.x + shape.width / 2
@@ -328,14 +329,14 @@ export const Shape: React.FC<ShapeComponentProps> = ({ shape }) => {
     position: 'absolute',
     left: 0,
     top: 0,
-    width: shape.width,
-    height: shape.height,
+    width: isAutoSizeComponent ? undefined : shape.width,
+    height: isAutoSizeComponent ? undefined : shape.height,
     ...transformStyle,
     opacity: shape.opacity,
     backgroundColor: !isCustomComponent && shape.type !== 'image' ? shape.fill : undefined,
     border: !isCustomComponent && shape.type !== 'image' ? `${shape.strokeWidth}px solid ${shape.stroke}` : undefined,
     borderRadius: shape.type === 'circle' ? '50%' : shape.type === 'note' ? '4px' : undefined,
-    overflow: shape.type === 'ai-combination' || shape.type === 'detail-image' ? 'visible' : undefined,
+    overflow: shape.type === 'ai-combination' || shape.type === 'detail-image' || shape.type === 'custom-combination' ? 'visible' : undefined,
   }
 
   const canExport = shape.type === 'image' && shape.imageUrl

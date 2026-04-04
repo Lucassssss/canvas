@@ -1,4 +1,4 @@
-export { FloatingConfigPanel, type ConfigPanelConfig } from './FloatingConfigPanel'
+export { FloatingConfigPanel, type ConfigPanelConfig, type ConfigField, type ShapeTypeFilter } from './FloatingConfigPanel'
 export { ModelSelect, MODEL_OPTIONS } from './ModelSelect'
 export { AspectRatioSelect, ASPECT_RATIO_OPTIONS } from './AspectRatioSelect'
 export { ResolutionSelect, RESOLUTION_OPTIONS, type Resolution } from './ResolutionSelect'

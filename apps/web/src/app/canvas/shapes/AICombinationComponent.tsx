@@ -93,7 +93,7 @@ const ImageSlotRenderer: React.FC<ImageSlotRendererProps> = ({
 
   return (
     <div
-      className={`group relative bg-gray-200 border-3 rounded-lg overflow-hidden shadow-md transition-colors cursor-pointer ${
+      className={`group relative bg-gray-200 border-3 overflow-hidden shadow-md transition-colors cursor-pointer ${
         isDragOver ? 'border-blue-500 bg-blue-50' : 'border-white hover:border-white'
       }`}
       style={{ width: SLOT_WIDTH, height: SLOT_HEIGHT }}
@@ -218,7 +218,7 @@ const OutputSlotContent: React.FC<OutputSlotContentProps> = ({ slot, resultImage
 
   return (
     <div
-      className="relative bg-gray-200 border-3 border-white rounded-lg overflow-hidden shadow-md"
+      className="relative bg-gray-200 border-3 border-white overflow-hidden shadow-md"
       style={{ width: SLOT_WIDTH, height: SLOT_HEIGHT }}
     >
       {resultImage ? (

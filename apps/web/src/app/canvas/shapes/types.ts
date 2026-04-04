@@ -52,12 +52,6 @@ export interface CustomCombinationSlot {
   imageUrl?: string
 }
 
-export interface CustomCombinationConfig {
-  model: string
-  resolution: { width: number; height: number }
-  prompt: string
-}
-
 export interface ImageConfig {
   model: string
   resolution: '1K' | '2K' | '4K'
@@ -101,7 +95,6 @@ export interface ShapeProps {
   rotatable?: boolean
   customInputSlots?: CustomCombinationSlot[]
   customOutputSlots?: CustomCombinationSlot[]
-  customConfig?: CustomCombinationConfig
   customStatus?: 'idle' | 'generating' | 'completed' | 'error'
   customError?: string
   slotLabel?: string
