@@ -402,7 +402,7 @@ export const CustomCombination: React.FC<CustomCombinationProps> = ({ shape }) =
   return (
     <div
       ref={containerRef}
-      className="border-3 border-dashed border-gray-200"
+      className="border-2 border-dashed border-gray-200"
       style={{ width: totalWidth }}
     >
       <div className="p-3 pb-4 flex justify-center">
