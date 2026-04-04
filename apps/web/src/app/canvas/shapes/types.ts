@@ -58,6 +58,14 @@ export interface CustomCombinationConfig {
   prompt: string
 }
 
+export interface ImageConfig {
+  model: string
+  resolution: '1K' | '2K' | '4K'
+  aspectRatio: string
+  count: number
+  prompt: string
+}
+
 export interface ShapeProps {
   id: string
   type: ShapeType
@@ -98,6 +106,7 @@ export interface ShapeProps {
   customError?: string
   slotLabel?: string
   slotVariant?: 'input' | 'output' | 'standalone'
+  imageConfig?: ImageConfig
 }
 
 export interface ViewportState {
