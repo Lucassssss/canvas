@@ -20,15 +20,14 @@ export function QuickTags() {
             key={index}
             className="
               inline-flex items-center gap-1.5 px-3 py-1.5
-              rounded-full border border-neutral-200
-              bg-white hover:bg-neutral-50 hover:border-neutral-300
-              transition-all
+              border border-neutral-200
+              hover:bg-neutral-50 hover:border-neutral-300
+              transition-all rounded
+              text-xs text-neutral-500
             "
           >
-            <Icon className="w-3.5 h-3.5 text-neutral-600" />
-            <span className="text-xs font-medium text-neutral-600">
-              {tag.label}
-            </span>
+            <Icon className="w-3 h-3" />
+            <span>{tag.label}</span>
           </button>
         )
       })}

@@ -62,7 +62,7 @@ export function LeftSidebar() {
             <Plus size={20} className={isCreating ? 'animate-spin' : ''} />
           </button>
         </TooltipTrigger>
-        <TooltipContent>
+        <TooltipContent side='right'>
           <p>{isCreating ? '创建中...' : '新建'}</p>
         </TooltipContent>
       </Tooltip>
@@ -70,13 +70,13 @@ export function LeftSidebar() {
       <Tooltip>
         <TooltipTrigger asChild>
           <Link
-            href="/"
-            className={`sidebar-left-btn ${isActive('/') ? 'active' : ''}`}
+            href="/dashboard"
+            className={`sidebar-left-btn ${isActive('/dashboard') ? 'active' : ''}`}
           >
             <Home size={20} />
           </Link>
         </TooltipTrigger>
-        <TooltipContent>
+        <TooltipContent side='right'>
           <p>首页</p>
         </TooltipContent>
       </Tooltip>
@@ -90,7 +90,7 @@ export function LeftSidebar() {
             <Folder size={20} />
           </Link>
         </TooltipTrigger>
-        <TooltipContent>
+        <TooltipContent side='right'>
           <p>项目</p>
         </TooltipContent>
       </Tooltip>
@@ -104,7 +104,7 @@ export function LeftSidebar() {
             <User size={20} />
           </Link>
         </TooltipTrigger>
-        <TooltipContent>
+        <TooltipContent side='right'>
           <p>个人</p>
         </TooltipContent>
       </Tooltip>
@@ -118,7 +118,7 @@ export function LeftSidebar() {
             <Newspaper size={20} />
           </Link>
         </TooltipTrigger>
-        <TooltipContent>
+        <TooltipContent side='right'>
           <p>新闻</p>
         </TooltipContent>
       </Tooltip>
@@ -132,7 +132,7 @@ export function LeftSidebar() {
             <HelpCircle size={20} />
           </Link>
         </TooltipTrigger>
-        <TooltipContent>
+        <TooltipContent side='right'>
           <p>帮助</p>
         </TooltipContent>
       </Tooltip>
