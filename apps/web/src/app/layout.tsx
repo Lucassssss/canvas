@@ -19,8 +19,57 @@ const notoSans = Noto_Sans_SC({
 import { AuthProvider } from '@/features/auth/AuthProvider';
 
 export const metadata: Metadata = {
-  title: 'Joii - 无限画布智能设计平台',
-  description: 'Joii电商AI神器，让爆单轻松发生',
+  title: {
+    default: 'Joii - 无限画布智能设计平台',
+    template: '%s | Joii',
+  },
+  description: 'Joii电商AI神器，让爆单轻松发生。基于AI的无限画布设计工具，专为电商场景打造，支持智能设计、批量生成、多平台适配。',
+  keywords: ['AI设计', '电商设计', '无限画布', '智能设计', 'Joii', 'AI画布', '电商作图', '设计工具', '批量生成', 'AI绘图'],
+  authors: [{ name: 'Joii Team' }],
+  creator: 'Joii',
+  publisher: 'Joii',
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+  openGraph: {
+    type: 'website',
+    locale: 'zh_CN',
+    url: 'https://joii.cc',
+    siteName: 'Joii',
+    title: 'Joii - 无限画布智能设计平台',
+    description: 'Joii电商AI神器，让爆单轻松发生。基于AI的无限画布设计工具，专为电商场景打造。',
+    images: [
+      {
+        url: '/opengraph-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'Joii - 无限画布智能设计平台',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Joii - 无限画布智能设计平台',
+    description: 'Joii电商AI神器，让爆单轻松发生。基于AI的无限画布设计工具。',
+    images: ['/opengraph-image.png'],
+    creator: '@joii_design',
+  },
+  alternates: {
+    canonical: 'https://joii.cc',
+    languages: {
+      'zh-CN': 'https://joii.cc',
+      'en-US': 'https://joii.cc/en',
+    },
+  },
+  category: 'Design Tools',
 }
 
 export default function RootLayout({
