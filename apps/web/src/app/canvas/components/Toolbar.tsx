@@ -21,7 +21,6 @@ import {
   Wand2,
 } from 'lucide-react'
 import { useCanvasStore } from '../store'
-import { useDetailImageStore } from '../detail-image/store'
 import { ToolType } from '../shapes/types'
 import { combinationRegistry } from '@/ai-combination/registry'
 import '@/ai-combination/built-in-types'
@@ -366,27 +365,6 @@ function createCustomCombination(): void {
   focusOnArea(pos.x, pos.y, totalWidth, totalHeight)
 }
 
-// 详情图生成按钮
-const DetailImageButton: React.FC = () => {
-  const { openDetailImage } = useDetailImageStore()
-
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <button
-          className="toolbar-btn"
-          onClick={() => openDetailImage()}
-        >
-          <Wand2 size={20} />
-        </button>
-      </TooltipTrigger>
-      <TooltipContent>
-        <p>详情图生成</p>
-      </TooltipContent>
-    </Tooltip>
-  )
-}
-
 export const Toolbar: React.FC = () => {
   const { activeTool, setActiveTool, activeAICategory, setActiveAICategory, undo, redo, historyIndex, history } = useCanvasStore()
   const [aiTypes, setAITypes] = useState<CombinationType[]>([])
@@ -546,10 +524,6 @@ export const Toolbar: React.FC = () => {
           </Tooltip>
         </>
       )}
-
-      <div className="toolbar-divider" />
-
-      <DetailImageButton />
 
       <div className="toolbar-divider" />
 
