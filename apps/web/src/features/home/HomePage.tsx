@@ -14,7 +14,7 @@ export function HomePage() {
 
       <Header />
 
-      <main className="w-full pb-20 md:pl-20">
+      <main className="w-full pb-20 lg:pl-20">
         <div className="max-w-[1600px] mx-auto px-6 md:px-12 py-12 md:py-16">
           <div className="flex flex-col items-center text-center">
             <div className="mb-6">

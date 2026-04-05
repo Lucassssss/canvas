@@ -47,7 +47,7 @@ export default function ProfilePage() {
   return (
     <div className="min-h-screen w-full bg-white">
       <LeftSidebar />
-      <main className="w-full pb-20 md:pl-20">
+      <main className="w-full pb-20 lg:pl-20">
         <PageHeader 
           breadcrumbs={[
             { label: '个人中心', href: '/profile' }
