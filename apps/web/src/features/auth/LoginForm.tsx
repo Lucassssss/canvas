@@ -12,7 +12,7 @@ interface LoginFormProps {
 }
 
 export function LoginForm({ onSuccess }: LoginFormProps) {
-  const { login, isLoading } = useAuth()
+  const { login, sendCode, isLoading } = useAuth()
   const [phone, setPhone] = useState('')
   const [code, setCode] = useState('')
   const [agreed, setAgreed] = useState(false)
@@ -27,14 +27,18 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
     return () => clearTimeout(timer)
   }, [countdown])
 
-  const handleSendCode = () => {
-    if (!phone || phone.length !== 11) {
+  const handleSendCode = async () => {
+    if (!phone || !/^1[3-9]\d{9}$/.test(phone)) {
       setError('请输入有效的手机号')
       return
     }
     setError('')
-    setCountdown(60)
-    // mock send code
+    const result = await sendCode(phone)
+    if (result.success) {
+      setCountdown(60)
+    } else {
+      setError(result.message || '发送验证码失败')
+    }
   }
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -79,7 +83,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
         <div className="flex gap-3">
           <Input
             type="text"
-            placeholder="6位验证码 (任意输入123456)"
+            placeholder="请输入6位验证码"
             className="flex-1 h-11 text-base bg-neutral-50 border-transparent focus-visible:bg-white transition-colors rounded-xl"
             value={code}
             onChange={(e) => setCode(e.target.value)}
@@ -90,7 +94,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
             variant="secondary"
             className="h-11 px-4 font-normal rounded-xl bg-neutral-100 hover:bg-neutral-200 text-neutral-700 min-w-[100px]"
             onClick={handleSendCode}
-            disabled={countdown > 0}
+            disabled={countdown > 0 || isLoading}
           >
             {countdown > 0 ? `${countdown}s` : '获取验证码'}
           </Button>

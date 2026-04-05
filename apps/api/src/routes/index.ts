@@ -16,11 +16,16 @@ import {
   convertToUIMessages,
 } from "../services/conversation.js";
 import projectRoutes from "./projects.js";
+import authRoutes from "./auth.js";
+import userRoutes from "./users.js";
+import creditRoutes from "./credits.js";
 
 const router = Router();
 
-// 挂载项目管理路由
 router.use('/api', projectRoutes);
+router.use('/api/auth', authRoutes);
+router.use('/api/users', userRoutes);
+router.use('/api/credits', creditRoutes);
 
 router.get("/health", (req, res) => {
   res.json({ status: "ok" });
