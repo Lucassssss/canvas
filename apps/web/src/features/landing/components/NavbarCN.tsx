@@ -1,0 +1,31 @@
+import Link from 'next/link'
+import { ArrowRight } from 'lucide-react'
+
+export function NavbarCN() {
+  return (
+    <header className="fixed top-0 left-0 right-0 h-16 md:h-20 bg-white/90 backdrop-blur-md z-50 border-b border-neutral-100">
+      <div className="max-w-[1600px] mx-auto h-full px-6 md:px-12 flex items-center justify-between">
+        <div className="flex items-center gap-12">
+          <Link href="/" className="flex items-center">
+            <img src="/joii_logo_fa.svg" alt="Joii" className="h-6" />
+          </Link>
+          <nav className="hidden md:flex items-center gap-8 font-sans-zh text-sm text-neutral-500">
+            <Link href="#features" className="hover:text-neutral-950 transition-colors">核心能力</Link>
+            <Link href="#showcase" className="hover:text-neutral-950 transition-colors">商业案例</Link>
+            <Link href="/news" className="hover:text-neutral-950 transition-colors">最新资讯</Link>
+            <Link href="/help" className="hover:text-neutral-950 transition-colors">帮助支持</Link>
+          </nav>
+        </div>
+        <div className="flex items-center gap-6">
+          <Link href="/login" className="font-sans-zh text-sm text-neutral-500 hover:text-neutral-950 transition-colors hidden md:block">
+            登录
+          </Link>
+          <Link href="/dashboard" className="inline-flex items-center gap-2 px-5 py-2.5 bg-neutral-950 text-white font-sans-zh text-sm hover:bg-neutral-800 transition-colors">
+            <span>开始免费使用</span>
+            <ArrowRight className="w-3 h-3" />
+          </Link>
+        </div>
+      </div>
+    </header>
+  )
+}
