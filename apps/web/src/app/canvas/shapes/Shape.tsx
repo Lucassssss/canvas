@@ -306,7 +306,7 @@ export const Shape: React.FC<ShapeComponentProps> = ({ shape }) => {
   }
 
   const isCustomComponent = shape.type === 'draw' || shape.type === 'arrow' || shape.type === 'clothing' || shape.type === 'ai-combination' || shape.type === 'custom-combination' || shape.type === 'detail-image'
-  const isAutoSizeComponent = shape.type === 'custom-combination'
+  const isAutoSizeComponent = shape.type === 'custom-combination' || shape.type === 'detail-image'
 
   const transformStyle = useMemo(() => {
     const cx = shape.x + shape.width / 2

@@ -37,7 +37,7 @@ interface ConfigPanelConfig {
 }
 
 type ConfigField = 'model' | 'resolution' | 'aspectRatio' | 'count'
-type ShapeTypeFilter = 'image' | 'custom-combination' | 'all'
+type ShapeTypeFilter = 'image' | 'custom-combination' | 'ai-combination' | 'detail-image' | 'all'
 ```
 
 **使用示例**:
@@ -264,9 +264,24 @@ export const Canvas: React.FC = () => {
 - 支持所有配置项
 - 已移除内置配置面板，统一使用属性配置面板
 
+### ai-combination 组件
+- 使用 `imageConfig` 存储配置
+- 支持所有配置项
+- 已移除内置配置面板，统一使用属性配置面板
+- resolution 映射到 AI 生成的实际分辨率
+
+### detail-image 组件
+- 使用 `imageConfig` 存储配置
+- 支持所有配置项
+- 组件仅保留内置的 UI：
+  - 产品图片上传区域（详情图组件特有）
+  - 步骤指示器（输入 → 分析中 → 确认规划 → 生成中 → 完成）
+  - 生成结果预览和添加到画布功能
+- 所有生成设置（模型、分辨率、比例、数量、提示词）统一使用属性配置面板
+
 ## 交互行为
 
-1. **显示条件**: 当选中的组件类型为 `image` 或 `custom-combination` 时自动显示
+1. **显示条件**: 当选中的组件类型为 `image`、`custom-combination`、`ai-combination` 或 `detail-image` 时自动显示
 2. **定位**: 始终在选中组件下方，水平居中
 3. **边界检测**: 自动调整位置避免溢出视口
 4. **点击穿透**: 点击面板不触发画布取消选中

@@ -9,19 +9,13 @@ import {
   Image as ImageIcon,
   ChevronDown,
   ChevronUp,
-  Play,
-  RotateCcw,
   Check,
   Plus,
-  Trash2,
   Wand2,
-  Gauge,
-  Zap,
 } from 'lucide-react'
 import { useCanvasStore } from '../store'
 import { aiCombinationService } from '@/ai-combination/service'
-import { detailImageService } from './service'
-import type { AspectRatio, Resolution, ModelType, GenerationSpeed, TargetLanguage, DetailImageStep } from './store'
+import type { DetailImageStep } from './store'
 
 interface DetailImageShapeProps {
   shape: {
@@ -32,13 +26,18 @@ interface DetailImageShapeProps {
     width: number
     height: number
     rotation: number
+    imageConfig?: {
+      model: string
+      resolution: '1K' | '2K' | '4K'
+      aspectRatio: string
+      count: number
+      prompt: string
+    }
   }
 }
 
 const SLOT_WIDTH = 120
 const SLOT_HEIGHT = 160
-const PADDING = 16
-const LABEL_HEIGHT = 20
 const COLLAPSED_HEIGHT = 200
 const EXPANDED_HEIGHT = 400
 
@@ -57,26 +56,6 @@ const STEP_INDEX: Record<DetailImageStep, number> = {
   generating: 3,
   done: 4,
 }
-
-const ASPECT_RATIO_OPTIONS: { value: AspectRatio; label: string }[] = [
-  { value: '1:1', label: '1:1' },
-  { value: '3:4 竖版', label: '3:4' },
-  { value: '4:3 横版', label: '4:3' },
-  { value: '9:16 竖版', label: '9:16' },
-  { value: '16:9 横版', label: '16:9' },
-]
-
-const RESOLUTION_OPTIONS: { value: Resolution; label: string }[] = [
-  { value: '1K 标准', label: '1K' },
-  { value: '2K 高清', label: '2K' },
-  { value: '4K 超清', label: '4K' },
-]
-
-const SPEED_OPTIONS: { value: GenerationSpeed; label: string; icon: React.ReactNode }[] = [
-  { value: 'standard', label: '标准', icon: <Gauge size={12} /> },
-  { value: 'fast', label: '快速', icon: <Zap size={12} /> },
-  { value: 'ultra', label: '极速', icon: <Sparkles size={12} /> },
-]
 
 interface ProductImageSlotProps {
   imageUrl?: string | null
@@ -165,7 +144,7 @@ const ProductImageSlot: React.FC<ProductImageSlotProps> = ({
             onError={() => setImageError(true)}
           />
           <button
-            className="absolute top-1.5 right-1.5 p-1 bg-black/60 hover:bg-black/80 text-white rounded-full transition-all opacity-0 hover:opacity-100 group-hover:opacity-100"
+            className="absolute top-1.5 right-1.5 p-1 bg-black/60 hover:bg-black/80 text-white rounded-full transition-all opacity-0 hover:opacity-100"
             onClick={(e) => {
               e.stopPropagation()
               onClear()
@@ -193,7 +172,7 @@ const GeneratedPreview: React.FC<GeneratedPreviewProps> = ({ imageUrl }) => {
 
   return (
     <div
-      className="relative bg-neutral-100 border-2 border-neutral-200 rounded-lg overflow-hidden"
+      className="relative bg-neutral-100 border-2 border-neutral-200 rounded-lg overflow-hidden flex-shrink-0"
       style={{ width: SLOT_WIDTH, height: SLOT_HEIGHT }}
     >
       {!imageLoaded && (
@@ -248,27 +227,55 @@ const StepIndicator: React.FC<{ currentStep: DetailImageStep }> = ({ currentStep
 
 export const DetailImageShape: React.FC<DetailImageShapeProps> = ({ shape }) => {
   const { updateShape } = useCanvasStore()
+  const containerRef = useRef<HTMLDivElement>(null)
   const [isExpanded, setIsExpanded] = useState(true)
   const [isUploading, setIsUploading] = useState(false)
 
   const [step, setStep] = useState<DetailImageStep>('input')
   const [productImages, setProductImages] = useState<string[]>([])
-  const [requirementText, setRequirementText] = useState('')
-  const [aspectRatio, setAspectRatio] = useState<AspectRatio>('3:4 竖版')
-  const [resolution, setResolution] = useState<Resolution>('2K 高清')
-  const [generationSpeed, setGenerationSpeed] = useState<GenerationSpeed>('standard')
-  const [generationCount, setGenerationCount] = useState(1)
   const [generatedImages, setGeneratedImages] = useState<string[]>([])
   const [isGenerating, setIsGenerating] = useState(false)
+
+  const imageConfig = shape.imageConfig || {
+    model: 'gemini-3-pro-image-preview',
+    resolution: '2K' as const,
+    aspectRatio: '3:4',
+    count: 1,
+    prompt: '',
+  }
 
   const totalHeight = isExpanded ? EXPANDED_HEIGHT : COLLAPSED_HEIGHT
 
   useEffect(() => {
-    if (shape.width < 300 || shape.height < 200) {
-      updateShape(shape.id, {
-        width: Math.max(shape.width, 400),
-        height: Math.max(shape.height, COLLAPSED_HEIGHT),
-      })
+    const container = containerRef.current
+    if (!container) return
+
+    let rafId: number | null = null
+
+    const updateDimensions = () => {
+      rafId = null
+      const rect = container.getBoundingClientRect()
+      if (rect.width > 0 && rect.height > 0) {
+        if (Math.abs(rect.width - shape.width) > 1 || Math.abs(rect.height - shape.height) > 1) {
+          updateShape(shape.id, { width: rect.width, height: shape.height })
+        }
+      }
+    }
+
+    const ro = new ResizeObserver(() => {
+      if (rafId === null) {
+        rafId = requestAnimationFrame(updateDimensions)
+      }
+    })
+    ro.observe(container)
+
+    requestAnimationFrame(updateDimensions)
+
+    return () => {
+      ro.disconnect()
+      if (rafId !== null) {
+        cancelAnimationFrame(rafId)
+      }
     }
   }, [shape.id, shape.width, shape.height, updateShape])
 
@@ -308,19 +315,18 @@ export const DetailImageShape: React.FC<DetailImageShapeProps> = ({ shape }) => 
 
     await new Promise((resolve) => setTimeout(resolve, 3000))
 
-    const mockImages = Array.from({ length: generationCount }, (_, i) => ({
+    const mockImages = Array.from({ length: imageConfig.count }, (_, i) => ({
       url: `https://picsum.photos/seed/detail${Date.now() + i}/768/1024`,
     }))
 
     setGeneratedImages(mockImages.map((m) => m.url))
     setStep('done')
     setIsGenerating(false)
-  }, [productImages.length, generationCount])
+  }, [productImages.length, imageConfig.count])
 
   const handleReset = useCallback(() => {
     setStep('input')
     setProductImages([])
-    setRequirementText('')
     setGeneratedImages([])
     setIsGenerating(false)
   }, [])
@@ -377,7 +383,7 @@ export const DetailImageShape: React.FC<DetailImageShapeProps> = ({ shape }) => 
               添加到画布
             </button>
             <button
-              onClick={handleReset}
+              onClick={handleStartGenerating}
               className="py-2 px-3 bg-neutral-100 text-neutral-700 text-xs font-medium rounded-lg hover:bg-neutral-200 transition-colors"
             >
               重新生成
@@ -448,91 +454,7 @@ export const DetailImageShape: React.FC<DetailImageShapeProps> = ({ shape }) => 
           </div>
         </div>
 
-        <div className="mb-3">
-          <div className="flex items-center gap-2 mb-1.5">
-            <Wand2 size={14} className="text-neutral-500" />
-            <span className="text-xs font-medium text-neutral-700">生成设置</span>
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            <div className="flex flex-col gap-1">
-              <label className="text-[10px] text-neutral-500">尺寸</label>
-              <select
-                value={aspectRatio}
-                onChange={(e) => setAspectRatio(e.target.value as AspectRatio)}
-                className="w-full px-2 py-1.5 text-xs bg-white border border-neutral-200 rounded-lg focus:outline-none focus:border-neutral-400"
-              >
-                {ASPECT_RATIO_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-[10px] text-neutral-500">清晰度</label>
-              <select
-                value={resolution}
-                onChange={(e) => setResolution(e.target.value as Resolution)}
-                className="w-full px-2 py-1.5 text-xs bg-white border border-neutral-200 rounded-lg focus:outline-none focus:border-neutral-400"
-              >
-                {RESOLUTION_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-        </div>
-
-        <div className="mb-3">
-          <label className="text-[10px] text-neutral-500 mb-1.5 block">生成数量</label>
-          <div className="flex gap-1.5">
-            {[1, 2, 3, 4].map((n) => (
-              <button
-                key={n}
-                onClick={() => setGenerationCount(n)}
-                className={`w-8 h-8 text-xs font-medium rounded-lg transition-colors ${
-                  generationCount === n
-                    ? 'bg-black text-white'
-                    : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
-                }`}
-              >
-                {n}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="mb-3">
-          <label className="text-[10px] text-neutral-500 mb-1.5 block">生图速度</label>
-          <div className="flex gap-1.5">
-            {SPEED_OPTIONS.map((opt) => (
-              <button
-                key={opt.value}
-                onClick={() => setGenerationSpeed(opt.value)}
-                className={`flex-1 flex items-center justify-center gap-1 py-1.5 text-xs font-medium rounded-lg transition-colors ${
-                  generationSpeed === opt.value
-                    ? 'bg-black text-white'
-                    : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
-                }`}
-              >
-                {opt.icon}
-                {opt.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="flex-1 mb-3">
-          <label className="text-[10px] text-neutral-500 mb-1.5 block">需求描述</label>
-          <textarea
-            value={requirementText}
-            onChange={(e) => setRequirementText(e.target.value)}
-            placeholder="描述产品信息和期望的详情图风格..."
-            className="w-full h-16 px-2 py-1.5 text-xs bg-white border border-neutral-200 rounded-lg resize-none focus:outline-none focus:border-neutral-400"
-          />
-        </div>
+        <div className="flex-1" />
 
         <button
           onClick={handleStartGenerating}
@@ -552,6 +474,7 @@ export const DetailImageShape: React.FC<DetailImageShapeProps> = ({ shape }) => 
 
   return (
     <div
+      ref={containerRef}
       className="w-full h-full bg-white rounded-xl border-2 border-neutral-200 shadow-lg overflow-hidden flex flex-col"
       style={{ width: shape.width, height: totalHeight }}
     >

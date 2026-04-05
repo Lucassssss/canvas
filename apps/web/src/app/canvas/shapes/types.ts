@@ -84,10 +84,6 @@ export interface ShapeProps {
   logoContent?: Record<string, string>
   combinationTypeId?: string
   slotContents?: Record<string, SlotContent>
-  combinationSettings?: {
-    prompt: string
-    resolution: { width: number; height: number }
-  }
   combinationStatus?: 'idle' | 'generating' | 'completed' | 'error'
   combinationResults?: string[]
   combinationError?: string

@@ -233,6 +233,13 @@ function createShape(type: ToolType): void {
         stroke: 'transparent',
         strokeWidth: 0,
         opacity: 1,
+        imageConfig: {
+          model: 'gemini-3-pro-image-preview',
+          resolution: '2K' as const,
+          aspectRatio: '3:4',
+          count: 1,
+          prompt: '',
+        },
         resizable: true,
         rotatable: false,
       })
@@ -282,8 +289,6 @@ function createAICombinationShape(categoryId: string): void {
     }
   })
 
-  const defaultResolution = combinationType.aiConfig.supportedResolutions?.[0] || { width: 768, height: 1024 }
-
   const newId = addShape({
     type: 'ai-combination',
     x: pos.x,
@@ -297,12 +302,15 @@ function createAICombinationShape(categoryId: string): void {
     opacity: 1,
     combinationTypeId: categoryId,
     slotContents,
-    combinationSettings: {
-      prompt: combinationType.aiConfig.promptTemplate || '',
-      resolution: defaultResolution,
-    },
     combinationStatus: 'idle',
     combinationResults: [],
+    imageConfig: {
+      model: 'gemini-3-pro-image-preview',
+      resolution: '2K' as const,
+      aspectRatio: '1:1',
+      count: 1,
+      prompt: combinationType.aiConfig.promptTemplate || '',
+    },
     resizable: false,
     rotatable: false,
   })
