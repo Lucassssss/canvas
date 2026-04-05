@@ -5,6 +5,11 @@ import { useCanvasStore } from '../store'
 import { aiCombinationService } from '@/ai-combination/service'
 import { Plus, Loader2, Play, Equal, Image as ImageIcon } from 'lucide-react'
 import type { ShapeProps, CustomCombinationSlot } from './types'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 
 interface CustomCombinationProps {
   shape: ShapeProps
@@ -426,13 +431,19 @@ export const CustomCombination: React.FC<CustomCombinationProps> = ({ shape }) =
             </React.Fragment>
           ))}
 
-          <button
-            className="flex-shrink-0 w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors"
-            onClick={handleAddSlot}
-            title="添加输入槽"
-          >
-            <Plus size={18} className="text-gray-500" />
-          </button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                className="flex-shrink-0 w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors"
+                onClick={handleAddSlot}
+              >
+                <Plus size={18} className="text-gray-500" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>添加输入槽</p>
+            </TooltipContent>
+          </Tooltip>
 
           <div className="flex items-center" style={{ gap: SLOT_GAP }}>
             <button

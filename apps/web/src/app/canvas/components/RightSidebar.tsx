@@ -9,6 +9,11 @@ import { ClothingPanel } from './ClothingPanel'
 import { ChatMessage } from '@/features/chat/components/ChatMessage'
 import { ChatInput } from '@/features/chat/components/ChatInput'
 import { useChat } from '@/features/chat/hooks/useChat'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 
 interface RightSidebarProps {
   isOpen: boolean
@@ -189,13 +194,19 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({ isOpen, onClose }) =
                 </span>
                 <ChevronDown size={18} />
               </button>
-              <button
-                onClick={handleNewChat}
-                className="chat-header-btn"
-                title="新建对话"
-              >
-                <MessageSquarePlus size={18} />
-              </button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={handleNewChat}
+                    className="chat-header-btn"
+                  >
+                    <MessageSquarePlus size={18} />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>新建对话</p>
+                </TooltipContent>
+              </Tooltip>
             </div>
 
             {showHistory && (
@@ -229,13 +240,19 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({ isOpen, onClose }) =
         )}
 
         {activeTab === 'chat' && !showClothingTab && (
-          <button
-            onClick={onClose}
-            className="chat-header-btn"
-            title="折叠"
-          >
-            <ArrowRightFromLine size={18} />
-          </button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={onClose}
+                className="chat-header-btn"
+              >
+                <ArrowRightFromLine size={18} />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>折叠</p>
+            </TooltipContent>
+          </Tooltip>
         )}
       </div>
 

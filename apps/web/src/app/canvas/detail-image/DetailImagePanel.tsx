@@ -22,6 +22,11 @@ import {
 import { detailImageService } from './service'
 import { aiCombinationService } from '@/ai-combination/service'
 import { AIWriteModal } from './AIWriteModal'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 
 // ───────────────────────────────────────────────
 // 步骤条
@@ -261,7 +266,14 @@ const DetailForm: React.FC = () => {
           >
             <Sparkles size={12} />
             <span>AI 帮写</span>
-            <HelpCircle size={10} className="opacity-50" />
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <HelpCircle size={10} className="opacity-50 cursor-help" />
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>AI将根据您的产品信息帮写详情图要求</p>
+              </TooltipContent>
+            </Tooltip>
           </button>
         </div>
       </div>
