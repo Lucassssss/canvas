@@ -297,26 +297,27 @@ CREATE TABLE IF NOT EXISTS payments (
 
 | Method | Path                  | 描述       | 优先级 |
 | ------ | --------------------- | -------- | --- |
-| POST   | /api/auth/send-code   | 发送验证码    | P0  |
-| POST   | /api/auth/verify-code | 验证登录     | P0  |
-| POST   | /api/auth/logout      | 登出       | P0  |
-| GET    | /api/auth/me          | 获取当前用户   | P0  |
+| POST   | /api/auth/send-code   | 发送验证码    | P0 ✅ |
+| POST   | /api/auth/verify-code | 验证登录     | P0 ✅ |
+| POST   | /api/auth/logout      | 登出       | P0 ✅ |
+| GET    | /api/auth/me          | 获取当前用户   | P0 ✅ |
 | POST   | /api/auth/refresh     | 刷新 Token | P1  |
 
 ### 5.2 用户相关 (MVP)
 
 | Method | Path               | 描述     | 优先级 |
 | ------ | ------------------ | ------ | --- |
-| GET    | /api/users/profile | 获取用户资料 | P0  |
-| PUT    | /api/users/profile | 更新用户资料 | P0  |
+| GET    | /api/users/profile | 获取用户资料 | P0 ✅ |
+| PUT    | /api/users/profile | 更新用户资料 | P0 ✅ |
 
 ### 5.3 积分相关 (MVP)
 
 | Method | Path                    | 描述     | 优先级 |
 | ------ | ----------------------- | ------ | --- |
-| GET    | /api/users/credits      | 获取积分余额 | P0  |
-| GET    | /api/users/transactions | 获取积分记录 | P0  |
-| POST   | /api/credits/consume    | 消费积分   | P0  |
+| GET    | /api/users/credits      | 获取积分余额 | P0 ✅ |
+| GET    | /api/users/transactions | 获取积分记录 | P0 ✅ |
+| GET    | /api/users/usage-logs   | 获取消费日志 | P0 ✅ |
+| POST   | /api/credits/consume    | 消费积分   | P0 ✅ |
 
 ### 5.4 套餐相关 (P1)
 
@@ -333,6 +334,154 @@ CREATE TABLE IF NOT EXISTS payments (
 | GET    | /api/payments/:id         | 查询支付状态 | P1  |
 | POST   | /api/payments/:id/confirm | 确认支付   | P1  |
 | POST   | /api/payments/webhook     | 支付回调   | P1  |
+
+### 5.6 API 详细说明 (已实现)
+
+#### 认证 API
+
+**POST /api/auth/send-code**
+```json
+// Request
+{ "phone": "13812345678" }
+
+// Response (Success)
+{ "success": true, "message": "验证码已发送" }
+
+// Response (Error)
+{ "success": false, "message": "发送过于频繁，请稍后再试" }
+```
+
+**POST /api/auth/verify-code**
+```json
+// Request
+{ "phone": "13812345678", "code": "123456" }
+
+// Response (Success)
+{
+  "success": true,
+  "token": "eyJhbG...",
+  "refreshToken": "eyJhbG...",
+  "user": {
+    "id": "usr_xxx",
+    "phone": "13812345678",
+    "nickname": "...",
+    "credits": 100,
+    "creditsUsed": 0,
+    "vipLevel": "free"
+  }
+}
+```
+
+**POST /api/auth/logout** (需要 Authorization Header)
+```json
+// Headers
+{ "Authorization": "Bearer <token>" }
+
+// Response
+{ "success": true }
+```
+
+**GET /api/auth/me** (需要 Authorization Header)
+```json
+// Response
+{ "user": { ... } }
+```
+
+#### 用户 API
+
+**GET /api/users/profile** (需要 Authorization Header)
+```json
+// Response
+{
+  "profile": {
+    "id": "usr_xxx",
+    "phone": "13812345678",
+    "nickname": "...",
+    "avatarUrl": "..."
+  }
+}
+```
+
+**PUT /api/users/profile** (需要 Authorization Header)
+```json
+// Request
+{ "nickname": "新昵称" }
+
+// Response
+{ "profile": { ... } }
+```
+
+#### 积分 API
+
+**GET /api/users/credits** (需要 Authorization Header)
+```json
+// Response
+{ "balance": 100, "used": 0 }
+```
+
+**GET /api/users/transactions** (需要 Authorization Header)
+```json
+// Query: ?limit=50&offset=0
+// Response
+{
+  "transactions": [
+    {
+      "id": "ct_xxx",
+      "userId": "usr_xxx",
+      "type": "signup",
+      "amount": 100,
+      "balanceBefore": 0,
+      "balanceAfter": 100,
+      "description": "新用户注册赠送",
+      "createdAt": 1712312400000
+    }
+  ]
+}
+```
+
+**GET /api/users/usage-logs** (需要 Authorization Header)
+```json
+// Response
+{
+  "logs": [
+    {
+      "id": "ul_xxx",
+      "userId": "usr_xxx",
+      "action": "image_generate",
+      "creditsCost": 1,
+      "details": "{}",
+      "createdAt": 1712312400000
+    }
+  ]
+}
+```
+
+**POST /api/credits/consume** (需要 Authorization Header)
+```json
+// Request
+{
+  "amount": 1,
+  "action": "image_generate",
+  "description": "图片生成消耗",
+  "details": { "resolution": "1024x1024" }
+}
+
+// Response (Success)
+{
+  "success": true,
+  "balanceBefore": 100,
+  "balanceAfter": 99,
+  "transactionId": "ct_xxx"
+}
+
+// Response (Error - 积分不足)
+{
+  "success": false,
+  "balanceBefore": 0,
+  "balanceAfter": 0,
+  "error": "积分不足"
+}
+```
 
 ***
 
@@ -558,9 +707,43 @@ interface VerificationCode {
 
 ***
 
-## 10. 文件结构
+## 10. 架构约束
 
-### 10.1 后端结构
+### 10.1 服务端与客户端分离
+
+| 约束 | 说明 |
+|------|------|
+| **API 服务** | 所有服务端代码位于 `apps/api/src/` |
+| **前端项目** | `apps/web` 是纯前端项目，**禁止编写任何服务端代码** |
+| **API 调用** | 前端通过 `apps/api` 提供的 REST API 进行通信 |
+
+### 10.2 目录结构规范
+
+**核心原则**：API services 下的目录结构与 routes 保持一致
+
+```
+apps/api/src/
+├── routes/              # 路由层
+│   ├── auth.ts          # 认证路由
+│   ├── users.ts         # 用户路由
+│   └── credits.ts       # 积分路由
+└── services/            # 服务层（与 routes 一一对应）
+    ├── auth/
+    │   └── index.ts     # 认证服务
+    ├── users/
+    │   └── index.ts     # 用户服务
+    ├── credits/
+    │   └── index.ts     # 积分服务
+    ├── sms/
+    │   └── index.ts     # 短信服务
+    └── database.ts      # 数据库服务
+```
+
+---
+
+## 11. 文件结构
+
+### 11.1 后端结构
 
 ```
 apps/api/src/
@@ -571,9 +754,14 @@ apps/api/src/
 │   ├── credits.ts          # 积分相关路由 (MVP)
 │   └── payments.ts         # 支付相关路由 (P1)
 ├── services/
-│   ├── auth.ts             # 认证服务
-│   ├── sms.ts              # 短信服务
-│   ├── credits.ts          # 积分服务
+│   ├── auth/               # 认证服务
+│   │   └── index.ts
+│   ├── users/              # 用户服务
+│   │   └── index.ts
+│   ├── credits/            # 积分服务
+│   │   └── index.ts
+│   ├── sms/                # 短信服务
+│   │   └── index.ts
 │   └── database.ts         # 数据库服务 (扩展)
 ├── middleware/
 │   └── auth.ts             # JWT 认证中间件
@@ -609,6 +797,7 @@ apps/web/src/
 
 | 版本     | 日期         | 修改人       | 修改内容                        |
 | ------ | ---------- | --------- | --------------------------- |
+| v1.3.0 | 2026-04-06 | AI Agent  | 完成MVP后端API实现：认证、用户、积分系统      |
 | v1.2.0 | 2026-04-05 | AI Agent  | 更新实施进度，完成前端登录UI与个人中心模块      |
 | v1.1.0 | 2026-04-05 | Joii Team | UI部分前置，环境变量已配置说明，MVP与P1阶段分离 |
 | v1.0.0 | 2026-03-29 | Joii Team | 初始版本                        |

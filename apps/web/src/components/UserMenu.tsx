@@ -51,7 +51,7 @@ export function UserMenu() {
               {user.nickname || 'Joii 用户'}
             </p>
             <p className="text-xs leading-none text-neutral-500 mt-1">
-              {user.phone}
+              {user.phone.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2')}
             </p>
           </div>
         </DropdownMenuLabel>

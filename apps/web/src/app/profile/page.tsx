@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useCallback } from 'react'
 import { LeftSidebar } from '@/components/LeftSidebar'
 import { PageHeader } from '@/components/PageHeader'
 import { useAuth } from '@/features/auth/useAuth'
@@ -8,31 +8,48 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Zap, Clock, CreditCard, PenLine } from 'lucide-react'
+import { Zap, CreditCard, PenLine, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 
-const MOCK_CREDIT_TRANSACTIONS = [
-  { id: '1', date: '2026-04-05', action: '图片生成', amount: -1, balance: 1017 },
-  { id: '2', date: '2026-04-05', action: '注册赠送', amount: 100, balance: 1018 },
-  { id: '3', date: '2026-04-04', action: '图片生成', amount: -1, balance: 918 },
-]
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
 
-const MOCK_USAGE_LOGS = [
-  { id: '1', date: '2026-04-05 02:30', action: '图片生成', details: '768x1024', amount: -1 },
-  { id: '2', date: '2026-04-04 15:22', action: '视频生成', details: '30s', amount: -5 },
-]
+interface Transaction {
+  id: string
+  userId: string
+  type: 'purchase' | 'consume' | 'refund' | 'gift' | 'admin' | 'signup'
+  amount: number
+  balanceBefore: number
+  balanceAfter: number
+  description?: string
+  createdAt: number
+}
+
+const ACTION_LABELS: Record<string, string> = {
+  image_generate: '图片生成',
+  video_generate: '视频生成',
+  chat: 'AI 对话',
+  tryon: '试衣功能',
+  signup: '注册赠送',
+  purchase: '积分购买',
+  gift: '积分赠送',
+  admin: '管理员操作',
+  refund: '退款',
+}
 
 export default function ProfilePage() {
-  const { user, isAuthenticated, isLoading } = useAuth()
+  const { user, isAuthenticated, isLoading: authLoading, token, fetchUser } = useAuth()
   const router = useRouter()
   const [isEditing, setIsEditing] = useState(false)
   const [nickname, setNickname] = useState('')
+  const [isSaving, setIsSaving] = useState(false)
+  const [transactions, setTransactions] = useState<Transaction[]>([])
+  const [isLoadingData, setIsLoadingData] = useState(false)
 
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      router.push('/login')
+    if (!authLoading && !isAuthenticated) {
+      router.push('/')
     }
-  }, [isAuthenticated, isLoading, router])
+  }, [isAuthenticated, authLoading, router])
 
   useEffect(() => {
     if (user) {
@@ -40,9 +57,73 @@ export default function ProfilePage() {
     }
   }, [user])
 
+  const fetchData = useCallback(async () => {
+    if (!token) return
+    
+    setIsLoadingData(true)
+    try {
+      const headers = {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      }
+
+      const res = await fetch(`${API_BASE}/api/users/transactions`, { headers })
+
+      if (res.ok) {
+        const data = await res.json()
+        setTransactions(data.transactions || [])
+      }
+    } catch (error) {
+      console.error('Failed to fetch profile data:', error)
+    } finally {
+      setIsLoadingData(false)
+    }
+  }, [token])
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchData()
+    }
+  }, [isAuthenticated, fetchData])
+
+  const handleSaveNickname = async () => {
+    if (!token || !nickname.trim()) return
+
+    setIsSaving(true)
+    try {
+      const res = await fetch(`${API_BASE}/api/users/profile`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ nickname: nickname.trim() }),
+      })
+
+      if (res.ok) {
+        setIsEditing(false)
+        fetchUser()
+      }
+    } catch (error) {
+      console.error('Failed to save nickname:', error)
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
   if (!isAuthenticated || !user) return null
 
   const initials = user.nickname ? user.nickname.slice(0, 2).toUpperCase() : user.phone.slice(-4)
+
+  const formatDate = (timestamp: number) => {
+    return new Date(timestamp).toLocaleString('zh-CN', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+    })
+  }
 
   return (
     <div className="min-h-screen w-full bg-white">
@@ -73,8 +154,26 @@ export default function ProfilePage() {
                           onChange={(e) => setNickname(e.target.value)}
                           className="h-9 w-48 font-sans-zh text-base"
                           autoFocus
+                          disabled={isSaving}
                         />
-                        <Button size="sm" variant="secondary" onClick={() => setIsEditing(false)} className="font-sans-zh">保存</Button>
+                        <Button 
+                          size="sm" 
+                          variant="secondary" 
+                          onClick={handleSaveNickname} 
+                          className="font-sans-zh"
+                          disabled={isSaving}
+                        >
+                          {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : '保存'}
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          variant="ghost" 
+                          onClick={() => setIsEditing(false)} 
+                          className="font-sans-zh"
+                          disabled={isSaving}
+                        >
+                          取消
+                        </Button>
                       </div>
                     ) : (
                       <>
@@ -105,65 +204,49 @@ export default function ProfilePage() {
                       <span className="font-serif-display text-4xl tracking-tight text-neutral-950">{user.credits}</span>
                       <span className="font-sans-zh text-sm text-neutral-500">积分</span>
                     </div>
-                    <Button className="h-10 px-5 bg-neutral-950 hover:bg-neutral-800 text-white gap-2 font-sans-zh text-sm">
-                      <Zap className="w-4 h-4" />
-                      升级套餐
-                    </Button>
+                    <Link href="/packages">
+                      <Button className="h-10 px-5 bg-neutral-950 hover:bg-neutral-800 text-white gap-2 font-sans-zh text-sm">
+                        <Zap className="w-4 h-4" />
+                        升级套餐
+                      </Button>
+                    </Link>
                   </div>
                 </div>
               </section>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <section>
-                  <div className="flex items-center gap-2 mb-4">
-                    <CreditCard className="w-4 h-4 text-neutral-400" />
-                    <h2 className="font-sans-zh text-sm font-medium text-neutral-700">积分明细</h2>
-                  </div>
-                  <div className="border border-neutral-200">
-                    <div className="divide-y divide-neutral-100">
-                      {MOCK_CREDIT_TRANSACTIONS.map((tx) => (
+              <section>
+                <div className="flex items-center gap-2 mb-4">
+                  <CreditCard className="w-4 h-4 text-neutral-400" />
+                  <h2 className="font-sans-zh text-sm font-medium text-neutral-700">积分明细</h2>
+                  {isLoadingData && <Loader2 className="w-4 h-4 animate-spin text-neutral-400" />}
+                </div>
+                <div className="border border-neutral-200">
+                  {transactions.length === 0 && !isLoadingData ? (
+                    <div className="p-8 text-center text-neutral-400 text-sm">
+                      暂无积分记录
+                    </div>
+                  ) : (
+                    <div className="divide-y divide-neutral-100 max-h-[400px] overflow-y-auto">
+                      {transactions.map((tx) => (
                         <div key={tx.id} className="flex items-center justify-between p-4 hover:bg-neutral-50 transition-colors">
                           <div className="flex flex-col gap-0.5">
-                            <span className="font-sans-zh text-sm text-neutral-800">{tx.action}</span>
-                            <span className="font-sans-zh text-xs text-neutral-400">{tx.date}</span>
+                            <span className="font-sans-zh text-sm text-neutral-800">
+                              {tx.description || ACTION_LABELS[tx.type] || tx.type}
+                            </span>
+                            <span className="font-sans-zh text-xs text-neutral-400">{formatDate(tx.createdAt)}</span>
                           </div>
                           <div className="flex flex-col items-end gap-0.5">
                             <span className={`font-sans-zh text-sm font-medium ${tx.amount > 0 ? 'text-emerald-600' : 'text-neutral-900'}`}>
                               {tx.amount > 0 ? '+' : ''}{tx.amount}
                             </span>
-                            <span className="font-sans-zh text-xs text-neutral-400">余额: {tx.balance}</span>
+                            <span className="font-sans-zh text-xs text-neutral-400">余额: {tx.balanceAfter}</span>
                           </div>
                         </div>
                       ))}
                     </div>
-                  </div>
-                </section>
-
-                <section>
-                  <div className="flex items-center gap-2 mb-4">
-                    <Clock className="w-4 h-4 text-neutral-400" />
-                    <h2 className="font-sans-zh text-sm font-medium text-neutral-700">消费记录</h2>
-                  </div>
-                  <div className="border border-neutral-200">
-                    <div className="divide-y divide-neutral-100">
-                      {MOCK_USAGE_LOGS.map((log) => (
-                        <div key={log.id} className="flex items-center justify-between p-4 hover:bg-neutral-50 transition-colors">
-                          <div className="flex flex-col gap-0.5">
-                            <div className="flex items-center gap-2">
-                              <span className="font-sans-zh text-sm text-neutral-800">{log.action}</span>
-                              <span className="font-mono text-[10px] px-1.5 py-0.5 bg-neutral-100 text-neutral-500 rounded">{log.details}</span>
-                            </div>
-                            <span className="font-sans-zh text-xs text-neutral-400">{log.date}</span>
-                          </div>
-                          <div className="flex items-center">
-                            <span className="font-sans-zh text-sm font-medium text-neutral-900">{log.amount}</span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </section>
-              </div>
+                  )}
+                </div>
+              </section>
             </div>
           </div>
         </div>

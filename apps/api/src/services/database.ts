@@ -52,8 +52,72 @@ db.exec(`
   );
 
   CREATE INDEX IF NOT EXISTS idx_projects_updated_at ON projects(updated_at DESC);
-  CREATE INDEX IF NOT EXISTS idx_project_conversations_project_id ON project_conversations(project_id);
-  CREATE INDEX IF NOT EXISTS idx_project_conversations_conversation_id ON project_conversations(conversation_id);
+CREATE INDEX IF NOT EXISTS idx_project_conversations_project_id ON project_conversations(project_id);
+CREATE INDEX IF NOT EXISTS idx_project_conversations_conversation_id ON project_conversations(conversation_id);
+
+-- 用户表
+CREATE TABLE IF NOT EXISTS users (
+  id TEXT PRIMARY KEY,
+  phone TEXT UNIQUE NOT NULL,
+  nickname TEXT,
+  avatar_url TEXT,
+  credits INTEGER NOT NULL DEFAULT 0,
+  credits_used INTEGER NOT NULL DEFAULT 0,
+  vip_level TEXT DEFAULT 'free' CHECK (vip_level IN ('free', 'pro', 'enterprise')),
+  vip_expires_at INTEGER,
+  created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now') * 1000),
+  updated_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now') * 1000)
+);
+
+-- 验证码表
+CREATE TABLE IF NOT EXISTS verification_codes (
+  id TEXT PRIMARY KEY,
+  phone TEXT NOT NULL,
+  code TEXT NOT NULL,
+  expires_at INTEGER NOT NULL,
+  used_at INTEGER,
+  created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now') * 1000)
+);
+
+-- 积分记录表
+CREATE TABLE IF NOT EXISTS credit_transactions (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  type TEXT NOT NULL CHECK (type IN ('purchase', 'consume', 'refund', 'gift', 'admin', 'signup')),
+  amount INTEGER NOT NULL,
+  balance_before INTEGER NOT NULL,
+  balance_after INTEGER NOT NULL,
+  description TEXT,
+  created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now') * 1000),
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- 消费记录表
+CREATE TABLE IF NOT EXISTS usage_logs (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  action TEXT NOT NULL,
+  credits_cost INTEGER DEFAULT 0,
+  details TEXT,
+  created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now') * 1000),
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- JWT Token 黑名单表
+CREATE TABLE IF NOT EXISTS token_blacklist (
+  id TEXT PRIMARY KEY,
+  token_jti TEXT UNIQUE NOT NULL,
+  expires_at INTEGER NOT NULL,
+  created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now') * 1000)
+);
+
+-- 认证相关索引
+CREATE INDEX IF NOT EXISTS idx_users_phone ON users(phone);
+CREATE INDEX IF NOT EXISTS idx_users_credits ON users(credits);
+CREATE INDEX IF NOT EXISTS idx_credit_transactions_user ON credit_transactions(user_id);
+CREATE INDEX IF NOT EXISTS idx_verification_codes_phone ON verification_codes(phone);
+CREATE INDEX IF NOT EXISTS idx_usage_logs_user ON usage_logs(user_id);
+CREATE INDEX IF NOT EXISTS idx_token_blacklist_jti ON token_blacklist(token_jti);
 `);
 
 console.log('[Database] Tables initialized successfully');
