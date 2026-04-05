@@ -12,6 +12,7 @@ export type ShapeType =
   | 'ai-combination' 
   | 'image-slot' 
   | 'custom-combination'
+  | 'detail-image'
 
 export const SHAPE_MIN_SIZE: Record<ShapeType, { minWidth: number; minHeight: number }> = {
   rect: { minWidth: 20, minHeight: 20 },
@@ -25,6 +26,7 @@ export const SHAPE_MIN_SIZE: Record<ShapeType, { minWidth: number; minHeight: nu
   'ai-combination': { minWidth: 400, minHeight: 200 },
   'image-slot': { minWidth: 100, minHeight: 100 },
   'custom-combination': { minWidth: 200, minHeight: 300 },
+  'detail-image': { minWidth: 300, minHeight: 200 },
 }
 
 export type ClothingView = 'front' | 'back' | 'side'
@@ -50,9 +52,11 @@ export interface CustomCombinationSlot {
   imageUrl?: string
 }
 
-export interface CustomCombinationConfig {
+export interface ImageConfig {
   model: string
-  resolution: { width: number; height: number }
+  resolution: '1K' | '2K' | '4K'
+  aspectRatio: string
+  count: number
   prompt: string
 }
 
@@ -80,10 +84,6 @@ export interface ShapeProps {
   logoContent?: Record<string, string>
   combinationTypeId?: string
   slotContents?: Record<string, SlotContent>
-  combinationSettings?: {
-    prompt: string
-    resolution: { width: number; height: number }
-  }
   combinationStatus?: 'idle' | 'generating' | 'completed' | 'error'
   combinationResults?: string[]
   combinationError?: string
@@ -91,11 +91,11 @@ export interface ShapeProps {
   rotatable?: boolean
   customInputSlots?: CustomCombinationSlot[]
   customOutputSlots?: CustomCombinationSlot[]
-  customConfig?: CustomCombinationConfig
   customStatus?: 'idle' | 'generating' | 'completed' | 'error'
   customError?: string
   slotLabel?: string
   slotVariant?: 'input' | 'output' | 'standalone'
+  imageConfig?: ImageConfig
 }
 
 export interface ViewportState {
@@ -104,7 +104,7 @@ export interface ViewportState {
   zoom: number
 }
 
-export type ToolType = 'select' | 'hand' | 'pen' | 'eraser' | 'arrow' | 'text' | 'note' | 'image' | 'shape' | 'clothing' | 'ai-combination'
+export type ToolType = 'select' | 'hand' | 'pen' | 'eraser' | 'arrow' | 'text' | 'note' | 'image' | 'shape' | 'clothing' | 'ai-combination' | 'detail-image'
 
 export interface HistoryEntry {
   shapes: ShapeProps[]

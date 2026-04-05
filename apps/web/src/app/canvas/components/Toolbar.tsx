@@ -18,8 +18,10 @@ import {
   Undo2,
   Redo2,
   Plus,
+  Wand2,
 } from 'lucide-react'
 import { useCanvasStore } from '../store'
+import { useDetailImageStore } from '../detail-image/store'
 import { ToolType } from '../shapes/types'
 import { combinationRegistry } from '@/ai-combination/registry'
 import '@/ai-combination/built-in-types'
@@ -31,6 +33,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 
 const baseTools: { type: ToolType; icon: React.ReactNode; label: string; shortcut: string }[] = [
   { type: 'select', icon: <MousePointer2 size={20} />, label: '选择', shortcut: 'V' },
@@ -43,6 +50,7 @@ const baseTools: { type: ToolType; icon: React.ReactNode; label: string; shortcu
   { type: 'image', icon: <ImageIcon size={20} />, label: '图片', shortcut: 'I' },
   { type: 'shape', icon: <Square size={20} />, label: '形状', shortcut: 'S' },
   { type: 'clothing', icon: <Shirt size={20} />, label: '服装', shortcut: 'C' },
+  { type: 'detail-image', icon: <Wand2 size={20} />, label: '详情图', shortcut: 'D' },
 ]
 
 interface ShapeSize {
@@ -58,6 +66,7 @@ const SHAPE_SIZES: Record<string, ShapeSize> = {
   arrow: { width: 200, height: 50 },
   pen: { width: 200, height: 200 },
   clothing: { width: 800, height: 800 },
+  'detail-image': { width: 400, height: 280 },
 }
 
 const SLOT_SIZE = { width: 140, height: 180 }
@@ -212,6 +221,30 @@ function createShape(type: ToolType): void {
       })
       break
 
+    case 'detail-image':
+      newShape = addShape({
+        type: 'detail-image',
+        x: pos.x,
+        y: pos.y,
+        width: size.width,
+        height: size.height,
+        rotation: 0,
+        fill: 'transparent',
+        stroke: 'transparent',
+        strokeWidth: 0,
+        opacity: 1,
+        imageConfig: {
+          model: 'gemini-3-pro-image-preview',
+          resolution: '2K' as const,
+          aspectRatio: '3:4',
+          count: 1,
+          prompt: '',
+        },
+        resizable: true,
+        rotatable: false,
+      })
+      break
+
     default:
       return
   }
@@ -256,8 +289,6 @@ function createAICombinationShape(categoryId: string): void {
     }
   })
 
-  const defaultResolution = combinationType.aiConfig.supportedResolutions?.[0] || { width: 768, height: 1024 }
-
   const newId = addShape({
     type: 'ai-combination',
     x: pos.x,
@@ -271,12 +302,15 @@ function createAICombinationShape(categoryId: string): void {
     opacity: 1,
     combinationTypeId: categoryId,
     slotContents,
-    combinationSettings: {
-      prompt: combinationType.aiConfig.promptTemplate || '',
-      resolution: defaultResolution,
-    },
     combinationStatus: 'idle',
     combinationResults: [],
+    imageConfig: {
+      model: 'gemini-3-pro-image-preview',
+      resolution: '2K' as const,
+      aspectRatio: '1:1',
+      count: 1,
+      prompt: combinationType.aiConfig.promptTemplate || '',
+    },
     resizable: false,
     rotatable: false,
   })
@@ -316,9 +350,11 @@ function createCustomCombination(): void {
     opacity: 1,
     customInputSlots: inputSlots,
     customOutputSlots: outputSlots,
-    customConfig: {
-      model: 'flux-pro',
-      resolution: { width: 1024, height: 1024 },
+    imageConfig: {
+      model: 'gemini-3-pro-image-preview',
+      resolution: '2K' as const,
+      aspectRatio: '1:1',
+      count: 1,
       prompt: '',
     },
     customStatus: 'idle',
@@ -328,6 +364,27 @@ function createCustomCombination(): void {
 
   setSelectedIds([newId.id])
   focusOnArea(pos.x, pos.y, totalWidth, totalHeight)
+}
+
+// 详情图生成按钮
+const DetailImageButton: React.FC = () => {
+  const { openDetailImage } = useDetailImageStore()
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <button
+          className="toolbar-btn"
+          onClick={() => openDetailImage()}
+        >
+          <Wand2 size={20} />
+        </button>
+      </TooltipTrigger>
+      <TooltipContent>
+        <p>详情图生成</p>
+      </TooltipContent>
+    </Tooltip>
+  )
 }
 
 export const Toolbar: React.FC = () => {
@@ -414,85 +471,117 @@ export const Toolbar: React.FC = () => {
   return (
     <div className="toolbar">
       {baseTools.map((tool) => (
-        <button
-          key={tool.type}
-          className={`toolbar-btn ${activeTool === tool.type ? 'active' : ''}`}
-          onClick={(e) => {
-            e.stopPropagation()
-            handleBaseToolClick(tool.type)
-          }}
-          title={`${tool.label} (${tool.shortcut})`}
-        >
-          {tool.icon}
-        </button>
+        <Tooltip key={tool.type}>
+          <TooltipTrigger asChild>
+            <button
+              className={`toolbar-btn ${activeTool === tool.type ? 'active' : ''}`}
+              onClick={(e) => {
+                e.stopPropagation()
+                handleBaseToolClick(tool.type)
+              }}
+            >
+              {tool.icon}
+            </button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>{tool.label} ({tool.shortcut})</p>
+          </TooltipContent>
+        </Tooltip>
       ))}
 
       {aiTypes.length > 0 && (
         <>
           <div className="toolbar-divider" />
-          <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
-            <DropdownMenuTrigger asChild>
-              <button
-                className={`toolbar-btn ${isAIToolActive ? 'active' : ''}`}
-                title="AI组件"
-              >
-                <Sparkles size={20} />
-                <ChevronDown size={12} className="ml-0.5" />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent
-              side="top"
-              align="start"
-              className="w-56"
-            >
-              {aiTypes.map((type) => (
-                <DropdownMenuItem
-                  key={type.id}
-                  onSelect={() => handleAITypeSelect(type.id)}
-                  className="flex items-center justify-between"
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    className={`toolbar-btn ${isAIToolActive ? 'active' : ''}`}
+                  >
+                    <Sparkles size={20} />
+                    <ChevronDown size={12} className="ml-0.5" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  side="top"
+                  align="start"
+                  className="w-42"
                 >
-                  <div className="flex flex-col">
-                    <span>{type.name}</span>
-                    <span className="text-xs text-muted-foreground">{type.description}</span>
-                  </div>
-                  {activeAICategory === type.id && <Check size={14} />}
-                </DropdownMenuItem>
-              ))}
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onSelect={() => {
-                  setDropdownOpen(false)
-                  createCustomCombination()
-                }}
-                className="flex items-center gap-2 text-blue-600"
-              >
-                <Plus size={14} />
-                <span>创建自定义组合</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+                  {aiTypes.map((type) => (
+                    <Tooltip key={type.id}>
+                      <TooltipTrigger asChild>
+                        <DropdownMenuItem
+                          onSelect={() => handleAITypeSelect(type.id)}
+                          className="flex items-center justify-between"
+                        >
+                          <span className="whitespace-nowrap">{type.name}</span>
+                          {activeAICategory === type.id && <Check size={14} />}
+                        </DropdownMenuItem>
+                      </TooltipTrigger>
+                      {type.description && (
+                        <TooltipContent side="right">
+                          <p>{type.description}</p>
+                        </TooltipContent>
+                      )}
+                    </Tooltip>
+                  ))}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onSelect={() => {
+                      setDropdownOpen(false)
+                      createCustomCombination()
+                    }}
+                    className="flex items-center gap-2 text-blue-600"
+                  >
+                    <Plus size={14} />
+                    <span>创建自定义组合</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>AI组件</p>
+            </TooltipContent>
+          </Tooltip>
         </>
       )}
 
       <div className="toolbar-divider" />
 
-      <button
-        className={`toolbar-btn ${!canUndo ? 'opacity-50 cursor-not-allowed' : ''}`}
-        onClick={() => canUndo && undo()}
-        disabled={!canUndo}
-        title="撤销 (Ctrl+Z)"
-      >
-        <Undo2 size={20} />
-      </button>
+      <DetailImageButton />
 
-      <button
-        className={`toolbar-btn ${!canRedo ? 'opacity-50 cursor-not-allowed' : ''}`}
-        onClick={() => canRedo && redo()}
-        disabled={!canRedo}
-        title="重做 (Ctrl+Y)"
-      >
-        <Redo2 size={20} />
-      </button>
+      <div className="toolbar-divider" />
+
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button
+            className={`toolbar-btn ${!canUndo ? 'opacity-50 cursor-not-allowed' : ''}`}
+            onClick={() => canUndo && undo()}
+            disabled={!canUndo}
+          >
+            <Undo2 size={20} />
+          </button>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>撤销 (Ctrl+Z)</p>
+        </TooltipContent>
+      </Tooltip>
+
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button
+            className={`toolbar-btn ${!canRedo ? 'opacity-50 cursor-not-allowed' : ''}`}
+            onClick={() => canRedo && redo()}
+            disabled={!canRedo}
+          >
+            <Redo2 size={20} />
+          </button>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>重做 (Ctrl+Y)</p>
+        </TooltipContent>
+      </Tooltip>
     </div>
   )
 }

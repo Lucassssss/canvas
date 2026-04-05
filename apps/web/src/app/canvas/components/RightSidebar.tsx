@@ -1,13 +1,19 @@
 "use client"
 
 import React, { useEffect, useRef, useState, useCallback } from 'react'
-import { Plus, ChevronDown, MessageSquare, ArrowRightFromLine, MessageSquarePlus, Shirt } from 'lucide-react'
+import { Plus, ChevronDown, MessageSquare, ArrowRightFromLine, MessageSquarePlus, Shirt, Wand2 } from 'lucide-react'
 import { useSearchParams } from 'next/navigation'
 import { useCanvasStore } from '../store'
+import { useDetailImageStore } from '../detail-image/store'
 import { ClothingPanel } from './ClothingPanel'
 import { ChatMessage } from '@/features/chat/components/ChatMessage'
 import { ChatInput } from '@/features/chat/components/ChatInput'
 import { useChat } from '@/features/chat/hooks/useChat'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 
 interface RightSidebarProps {
   isOpen: boolean
@@ -24,6 +30,7 @@ const DEFAULT_WIDTH = 360
 export const RightSidebar: React.FC<RightSidebarProps> = ({ isOpen, onClose }) => {
   const searchParams = useSearchParams()
   const projectId = searchParams.get('projectId')
+  const { openDetailImage } = useDetailImageStore()
   
   const [showHistory, setShowHistory] = useState(false)
   const [activeTab, setActiveTab] = useState<TabType>('chat')
@@ -187,13 +194,19 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({ isOpen, onClose }) =
                 </span>
                 <ChevronDown size={18} />
               </button>
-              <button
-                onClick={handleNewChat}
-                className="chat-header-btn"
-                title="新建对话"
-              >
-                <MessageSquarePlus size={18} />
-              </button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={handleNewChat}
+                    className="chat-header-btn"
+                  >
+                    <MessageSquarePlus size={18} />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>新建对话</p>
+                </TooltipContent>
+              </Tooltip>
             </div>
 
             {showHistory && (
@@ -227,13 +240,19 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({ isOpen, onClose }) =
         )}
 
         {activeTab === 'chat' && !showClothingTab && (
-          <button
-            onClick={onClose}
-            className="chat-header-btn"
-            title="折叠"
-          >
-            <ArrowRightFromLine size={18} />
-          </button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={onClose}
+                className="chat-header-btn"
+              >
+                <ArrowRightFromLine size={18} />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>折叠</p>
+            </TooltipContent>
+          </Tooltip>
         )}
       </div>
 
