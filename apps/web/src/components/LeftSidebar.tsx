@@ -5,6 +5,11 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { Home, Folder, User, HelpCircle, Plus } from 'lucide-react'
 import { useProjectStore } from '@/store/project-store'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 
 export function LeftSidebar() {
   const pathname = usePathname()
@@ -38,42 +43,76 @@ export function LeftSidebar() {
 
   return (
     <div className="sidebar-left shadow-md">
-      <button
-        onClick={handleNewProject}
-        disabled={isCreating}
-        className="sidebar-left-btn disabled:opacity-50 disabled:cursor-not-allowed"
-        title={isCreating ? '创建中...' : '新建'}
-      >
-        <Plus size={20} className={isCreating ? 'animate-spin' : ''} />
-      </button>
-      <Link
-        href="/"
-        className={`sidebar-left-btn ${isActive('/') ? 'active' : ''}`}
-        title="首页"
-      >
-        <Home size={20} />
-      </Link>
-      <Link
-        href="/projects"
-        className={`sidebar-left-btn ${isActive('/projects') ? 'active' : ''}`}
-        title="项目"
-      >
-        <Folder size={20} />
-      </Link>
-      <Link
-        href="/profile"
-        className={`sidebar-left-btn ${isActive('/profile') ? 'active' : ''}`}
-        title="个人"
-      >
-        <User size={20} />
-      </Link>
-      <Link
-        href="/help"
-        className="sidebar-left-btn"
-        title="帮助"
-      >
-        <HelpCircle size={20} />
-      </Link>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button
+            onClick={handleNewProject}
+            disabled={isCreating}
+            className="sidebar-left-btn disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <Plus size={20} className={isCreating ? 'animate-spin' : ''} />
+          </button>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>{isCreating ? '创建中...' : '新建'}</p>
+        </TooltipContent>
+      </Tooltip>
+
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Link
+            href="/"
+            className={`sidebar-left-btn ${isActive('/') ? 'active' : ''}`}
+          >
+            <Home size={20} />
+          </Link>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>首页</p>
+        </TooltipContent>
+      </Tooltip>
+
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Link
+            href="/projects"
+            className={`sidebar-left-btn ${isActive('/projects') ? 'active' : ''}`}
+          >
+            <Folder size={20} />
+          </Link>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>项目</p>
+        </TooltipContent>
+      </Tooltip>
+
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Link
+            href="/profile"
+            className={`sidebar-left-btn ${isActive('/profile') ? 'active' : ''}`}
+          >
+            <User size={20} />
+          </Link>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>个人</p>
+        </TooltipContent>
+      </Tooltip>
+
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Link
+            href="/help"
+            className="sidebar-left-btn"
+          >
+            <HelpCircle size={20} />
+          </Link>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>帮助</p>
+        </TooltipContent>
+      </Tooltip>
     </div>
   )
 }

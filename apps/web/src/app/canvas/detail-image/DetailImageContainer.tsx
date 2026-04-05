@@ -8,6 +8,11 @@ import { DesignPlanPanel } from './DesignPlanPanel'
 import { AIWriteModal } from './AIWriteModal'
 import './style.css'
 import './components.css'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 
 export const DetailImageContainer: React.FC = () => {
   const { isOpen, step, closeDetailImage } = useDetailImageStore()
@@ -72,9 +77,15 @@ export const DetailImageContainer: React.FC = () => {
           <button
             onClick={closeDetailImage}
             className="detail-image-close-btn"
-            title="关闭"
           >
-            <X size={20} />
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <X size={20} />
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>关闭</p>
+              </TooltipContent>
+            </Tooltip>
           </button>
         </div>
 
