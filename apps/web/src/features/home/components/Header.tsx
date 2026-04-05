@@ -1,13 +1,16 @@
 'use client'
 
 import React, { useState } from 'react'
-import { ChevronDown, Globe, Sparkles } from 'lucide-react'
+import { ChevronDown, Globe, Sparkles, User as UserIcon } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { useAuth } from '@/features/auth/useAuth'
+import { CreditsBadge } from '@/components/CreditsBadge'
+import { UserMenu } from '@/components/UserMenu'
 
 const languages = [
   { code: 'zh', name: '简体中文', flag: '🇨🇳' },
@@ -17,6 +20,7 @@ const languages = [
 
 export function Header() {
   const [currentLang, setCurrentLang] = useState(languages[0])
+  const { isAuthenticated, openLoginModal } = useAuth()
 
   return (
     <header className="w-full sticky top-0 z-50 bg-gray-50">
@@ -48,10 +52,20 @@ export function Header() {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <button className="flex items-center gap-2 px-4 py-1.5 bg-neutral-900 rounded-lg hover:bg-neutral-800 transition-all text-sm font-medium text-white">
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>升级</span>
-          </button>
+          {isAuthenticated ? (
+            <>
+              <CreditsBadge />
+              <UserMenu />
+            </>
+          ) : (
+            <button
+              onClick={openLoginModal}
+              className="flex items-center gap-2 px-4 py-1.5 bg-neutral-900 rounded-lg hover:bg-neutral-800 transition-all text-sm font-medium text-white"
+            >
+              <UserIcon className="w-4 h-4" />
+              <span>登录 / 注册</span>
+            </button>
+          )}
         </div>
       </div>
     </header>

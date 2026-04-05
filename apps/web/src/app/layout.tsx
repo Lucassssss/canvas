@@ -6,6 +6,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 
 const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
+import { AuthProvider } from '@/features/auth/AuthProvider';
+
 export const metadata: Metadata = {
   title: 'Joii - 无限画布智能设计平台',
   description: 'Joii电商AI神器，让爆单轻松发生',
@@ -19,7 +21,9 @@ export default function RootLayout({
   return (
     <html lang="zh-CN" className={cn("font-sans", geist.variable)}>
       <body>
-        <TooltipProvider>{children}</TooltipProvider>
+        <AuthProvider>
+          <TooltipProvider>{children}</TooltipProvider>
+        </AuthProvider>
       </body>
     </html>
   )
