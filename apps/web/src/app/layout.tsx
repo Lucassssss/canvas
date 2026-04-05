@@ -7,8 +7,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
 export const metadata: Metadata = {
-  title: 'AI Draw - 智能图片生成',
-  description: '使用 AI 技术快速生成高质量图片，支持多种换装模式',
+  title: 'Joii - 无限画布智能设计平台',
+  description: 'Joii电商AI神器，让爆单轻松发生',
 }
 
 export default function RootLayout({
