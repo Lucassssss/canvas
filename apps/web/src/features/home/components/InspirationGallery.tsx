@@ -115,66 +115,72 @@ export function InspirationGallery() {
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-base font-medium text-neutral-700">灵感发现</h2>
-          <p className="text-sm text-neutral-500 mt-1">探索更多优秀设计作品</p>
+    <div>
+      <div className="grid grid-cols-12 gap-6">
+        <div className="col-span-12">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="font-sans-zh text-sm font-medium text-neutral-700">灵感发现</h2>
+              <p className="font-sans-zh text-xs text-neutral-400 mt-1">探索更多优秀设计作品</p>
+            </div>
+          </div>
         </div>
-      </div>
 
-      <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 xl:columns-5 gap-4">
-        {items.map((item) => (
-          <div
-            key={item.id}
-            onClick={() => handleItemClick(item.id)}
-            className="group cursor-pointer break-inside-avoid mb-4"
-          >
-            <div className={`relative ${item.height || 'h-56'} rounded-lg overflow-hidden bg-neutral-200`}>
-              <img
-                src={item.imageUrl}
-                alt={item.title}
-                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-              />
-              
-              <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-              
-              <div className="absolute bottom-0 left-0 right-0 p-3 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
-                <h3 className="text-sm font-medium text-white truncate mb-1">
-                  {item.title}
-                </h3>
-                <p className="text-xs text-neutral-300 truncate mb-2">
-                  by {item.author}
-                </p>
-                <div className="flex items-center gap-3 text-xs text-white/80">
-                  <button
-                    onClick={(e) => handleLike(e, item.id)}
-                    className="flex items-center gap-1 hover:text-red-400 transition-colors"
-                  >
-                    <Heart className="w-3 h-3" />
-                    {item.likes}
-                  </button>
-                  <div className="flex items-center gap-1">
-                    <Eye className="w-3 h-3" />
-                    {item.views}
+        <div className="col-span-12">
+          <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 xl:columns-5 gap-4">
+            {items.map((item) => (
+              <div
+                key={item.id}
+                onClick={() => handleItemClick(item.id)}
+                className="group cursor-pointer break-inside-avoid mb-4"
+              >
+                <div className={`relative ${item.height || 'h-56'} bg-neutral-100`}>
+                  <img
+                    src={item.imageUrl}
+                    alt={item.title}
+                    className="w-full h-full object-cover transition-opacity duration-200 group-hover:opacity-90"
+                  />
+                  
+                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+                  
+                  <div className="absolute bottom-0 left-0 right-0 p-3 translate-y-full group-hover:translate-y-0 transition-transform duration-200">
+                    <h3 className="font-sans-zh text-xs text-white truncate mb-1">
+                      {item.title}
+                    </h3>
+                    <p className="font-sans-zh text-[10px] text-neutral-300 truncate mb-1.5">
+                      by {item.author}
+                    </p>
+                    <div className="flex items-center gap-3 text-[10px] text-white/70">
+                      <button
+                        onClick={(e) => handleLike(e, item.id)}
+                        className="flex items-center gap-1 hover:text-red-400 transition-colors"
+                      >
+                        <Heart className="w-3 h-3" />
+                        {item.likes}
+                      </button>
+                      <div className="flex items-center gap-1">
+                        <Eye className="w-3 h-3" />
+                        {item.views}
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
+            ))}
           </div>
-        ))}
-      </div>
 
-      <div ref={loaderRef} className="flex justify-center py-8">
-        {loading && (
-          <div className="flex items-center gap-2 text-neutral-500">
-            <Loader2 className="w-5 h-5 animate-spin" />
-            <span className="text-sm">加载更多...</span>
+          <div ref={loaderRef} className="flex justify-center py-8">
+            {loading && (
+              <div className="flex items-center gap-2 text-neutral-400">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span className="font-sans-zh text-xs">加载更多...</span>
+              </div>
+            )}
+            {!hasMore && items.length > 0 && (
+              <span className="font-sans-zh text-xs text-neutral-400">已加载全部 {items.length} 个灵感作品</span>
+            )}
           </div>
-        )}
-        {!hasMore && items.length > 0 && (
-          <span className="text-sm text-neutral-400">已加载全部 {items.length} 个灵感作品</span>
-        )}
+        </div>
       </div>
     </div>
   )

@@ -1,15 +1,8 @@
 import { Metadata } from 'next'
 import { LeftSidebar } from '@/components/LeftSidebar'
+import { PageHeader } from '@/components/PageHeader'
 import Link from 'next/link'
-import { ArrowLeft, ArrowRight, Calendar, Newspaper, Tag, TrendingUp, Sparkles, Image as ImageIcon } from 'lucide-react'
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb"
+import { ArrowRight, Calendar } from 'lucide-react'
 
 export const metadata: Metadata = {
   title: '新闻动态 - Joii 无限画布智能设计平台',
@@ -25,8 +18,6 @@ const NEWS_ITEMS = [
     date: '2026-04-05',
     category: '产品更新',
     readTime: '3 分钟阅读',
-    icon: <Sparkles className="w-5 h-5" />,
-    color: 'bg-indigo-50 text-indigo-600',
     coverImage: 'bg-gradient-to-br from-indigo-100 to-purple-50',
     featured: true,
   },
@@ -37,9 +28,7 @@ const NEWS_ITEMS = [
     date: '2026-03-20',
     category: '设计干货',
     readTime: '5 分钟阅读',
-    icon: <TrendingUp className="w-5 h-5" />,
-    color: 'bg-emerald-50 text-emerald-600',
-    coverImage: 'bg-gradient-to-br from-emerald-50 to-teal-50',
+    coverImage: 'bg-gradient-to-br from-neutral-200 to-neutral-100',
     featured: false,
   },
   {
@@ -49,9 +38,7 @@ const NEWS_ITEMS = [
     date: '2026-01-10',
     category: '技术专栏',
     readTime: '8 分钟阅读',
-    icon: <ImageIcon className="w-5 h-5" />,
-    color: 'bg-amber-50 text-amber-600',
-    coverImage: 'bg-gradient-to-br from-amber-50 to-orange-50',
+    coverImage: 'bg-gradient-to-br from-neutral-200 to-neutral-100',
     featured: false,
   },
   {
@@ -61,9 +48,7 @@ const NEWS_ITEMS = [
     date: '2026-02-15',
     category: '公司动态',
     readTime: '2 分钟阅读',
-    icon: <Newspaper className="w-5 h-5" />,
-    color: 'bg-blue-50 text-blue-600',
-    coverImage: 'bg-gradient-to-br from-blue-50 to-cyan-50',
+    coverImage: 'bg-gradient-to-br from-neutral-200 to-neutral-100',
     featured: false,
   },
 ]
@@ -73,126 +58,106 @@ export default function NewsPage() {
   const regularNews = NEWS_ITEMS.filter(n => !n.featured)
 
   return (
-    <div className="min-h-screen w-full bg-neutral-50 flex">
+    <div className="min-h-screen w-full bg-white flex">
       <LeftSidebar />
       <main className="flex-1 w-full pb-20 md:pl-20">
-        {/* Header */}
-        <header className="w-full h-14 flex items-center justify-between px-8 sticky top-0 z-10 bg-neutral-50/80 backdrop-blur-md border-b border-neutral-200/50">
-          <Breadcrumb>
-            <BreadcrumbList>
-              <BreadcrumbItem>
-                <BreadcrumbLink href="/" className="flex items-center">
-                  <img src="/joii_logo_fa.svg" alt="LOGO" className="h-4" />
-                </BreadcrumbLink>
-              </BreadcrumbItem>
-              <BreadcrumbSeparator />
-              <BreadcrumbItem>
-                <BreadcrumbPage>新闻动态</BreadcrumbPage>
-              </BreadcrumbItem>
-            </BreadcrumbList>
-          </Breadcrumb>
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-neutral-500">简体中文</span>
-          </div>
-        </header>
+        <PageHeader breadcrumbs={[{ label: '新闻动态' }]} />
 
-        <div className="max-w-6xl mx-auto mt-12 px-8">
-          {/* Page Title */}
-          <div className="mb-12">
-            <h1 className="text-4xl font-bold tracking-tight text-neutral-900 mb-4">
-              新闻动态
-            </h1>
-            <p className="text-lg text-neutral-500 max-w-2xl">
-              探索 Joii 的最新产品功能、行业洞察与前沿 AIGC 技术分享。
-            </p>
-          </div>
-
-          {/* Featured News Hero Card */}
-          {featuredNews && (
-            <article className="mb-16 group relative bg-white rounded-[2rem] border border-neutral-100 shadow-[0_8px_30px_-12px_rgba(0,0,0,0.04)] hover:shadow-[0_16px_40px_-12px_rgba(0,0,0,0.08)] transition-all duration-500 overflow-hidden flex flex-col md:flex-row">
-              {/* Left Content */}
-              <div className="flex-1 p-8 md:p-12 flex flex-col justify-center relative z-10">
-                <div className="flex items-center gap-4 text-sm font-medium text-neutral-500 mb-6">
-                  <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg ${featuredNews.color}`}>
-                    {featuredNews.icon}
-                    {featuredNews.category}
-                  </span>
-                  <span className="inline-flex items-center gap-1.5">
-                    <Calendar className="w-4 h-4" />
-                    <time dateTime={featuredNews.date}>{featuredNews.date}</time>
-                  </span>
-                </div>
-                
-                <h2 className="text-3xl md:text-4xl font-bold text-neutral-900 mb-4 leading-tight group-hover:text-indigo-600 transition-colors">
-                  <Link href={`/news/${featuredNews.id}`} className="outline-none focus-visible:underline before:absolute before:inset-0">
-                    {featuredNews.title}
-                  </Link>
-                </h2>
-                
-                <p className="text-lg text-neutral-500 leading-relaxed mb-8 line-clamp-3">
-                  {featuredNews.excerpt}
-                </p>
-                
-                <div className="inline-flex items-center gap-2 text-base font-semibold text-neutral-900 group-hover:gap-3 transition-all mt-auto">
-                  阅读全文
-                  <ArrowRight className="w-5 h-5" />
-                </div>
+        <div className="max-w-[1600px] mx-auto py-16 md:py-24 lg:py-32 px-6 md:px-12">
+          <div className="grid grid-cols-12 gap-6 mb-16 md:mb-24">
+            <div className="col-span-12 lg:col-span-5">
+              <div className="text-xs font-sans-zh font-medium text-neutral-400 tracking-[0.3em] uppercase mb-6">
+                最新资讯
               </div>
+              <h1 className="font-serif-display text-4xl md:text-5xl lg:text-6xl tracking-tight leading-tight">
+                Updates<span className="font-sans-zh font-extralight italic text-neutral-400">.</span>
+              </h1>
+            </div>
+            <div className="col-span-12 lg:col-span-6 lg:col-start-7 flex items-end">
+              <p className="font-sans-zh text-sm md:text-base text-neutral-400 max-w-md leading-relaxed">
+                探索 Joii 的最新产品功能、<br className="hidden md:block" />
+                行业洞察与前沿 <span className="italic">AIGC</span> 技术分享。
+              </p>
+            </div>
+          </div>
+
+          {featuredNews && (
+            <article className="group relative bg-neutral-100 p-8 md:p-12 mb-16 md:mb-20 overflow-hidden">
+              <div className="absolute top-0 left-0 w-16 h-16 border-l-2 border-t-2 border-neutral-300" />
               
-              {/* Right Abstract Visual */}
-              <div className={`w-full md:w-2/5 min-h-[300px] md:min-h-full relative overflow-hidden ${featuredNews.coverImage}`}>
-                <div className="absolute inset-0 bg-white/20 backdrop-blur-[2px]" />
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-white/40 rounded-full blur-3xl mix-blend-overlay animate-pulse" />
-                <div className="absolute inset-0 flex items-center justify-center text-indigo-900/10">
-                  <Sparkles className="w-32 h-32" />
+              <div className="grid grid-cols-12 gap-6 items-center">
+                <div className="col-span-12 lg:col-span-7 relative">
+                  <div className="flex items-center gap-6 mb-8">
+                    <span className="font-mono text-xs text-neutral-400">01</span>
+                    <span className="font-sans-zh text-xs text-neutral-500 tracking-wider uppercase">{featuredNews.category}</span>
+                    <span className="font-sans-zh text-xs text-neutral-400 flex items-center gap-1.5 ml-auto">
+                      <time dateTime={featuredNews.date}>{featuredNews.date}</time>
+                    </span>
+                  </div>
+                  
+                  <h2 className="font-serif-zh text-2xl md:text-3xl lg:text-4xl font-medium mb-6 leading-snug">
+                    <Link href={`/news/${featuredNews.id}`} className="outline-none focus-visible:underline before:absolute before:inset-0">
+                      {featuredNews.title}
+                    </Link>
+                  </h2>
+                  
+                  <p className="font-sans-zh text-neutral-500 text-sm md:text-base leading-relaxed mb-8 max-w-xl">
+                    {featuredNews.excerpt}
+                  </p>
+                  
+                  <Link href={`/news/${featuredNews.id}`} className="inline-flex items-center gap-2 font-sans-zh text-sm font-medium text-neutral-900 group-hover:gap-3 transition-all">
+                    <span>阅读更多</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </Link>
+                </div>
+                
+                <div className="col-span-12 lg:col-span-5">
+                  <div className="relative aspect-[4/3] overflow-hidden bg-neutral-100">
+                    <div className="absolute inset-0 bg-white/20 backdrop-blur-[2px]" />
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 bg-white/40 rounded-full blur-3xl mix-blend-overlay" />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <span className="font-serif-display text-6xl text-neutral-300/50">01</span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </article>
           )}
 
-          {/* Grid Layout for Regular News */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {regularNews.map((item) => (
-              <article key={item.id} className="group flex flex-col bg-white rounded-3xl border border-neutral-100 shadow-[0_4px_20px_-12px_rgba(0,0,0,0.03)] hover:shadow-[0_8px_30px_-12px_rgba(0,0,0,0.06)] hover:-translate-y-1 transition-all duration-300 overflow-hidden relative">
+          <div className="grid grid-cols-12 gap-6">
+            {regularNews.map((item, index) => (
+              <article key={item.id} className="group relative col-span-12 md:col-span-6 bg-white p-8 md:p-12 border border-neutral-200 hover:border-neutral-300 transition-colors">
+                <div className="absolute top-0 left-0 w-12 h-12 border-l-2 border-t-2 border-neutral-200 group-hover:border-neutral-400 transition-colors" />
                 
-                {/* Card Header Visual */}
-                <div className={`h-40 w-full relative ${item.coverImage}`}>
-                  <div className="absolute inset-0 bg-white/30 backdrop-blur-[1px]" />
-                  <div className="absolute top-6 left-6 p-3 bg-white/60 rounded-2xl backdrop-blur-md border border-white/50 text-neutral-700 shadow-sm">
-                    {item.icon}
-                  </div>
+                <div className="flex items-center gap-4 mb-6">
+                  <span className="font-mono text-xs text-neutral-300">{String(index + 2).padStart(2, '0')}</span>
+                  <span className="font-sans-zh text-xs text-neutral-500 tracking-wider uppercase">{item.category}</span>
+                  <span className="font-sans-zh text-xs text-neutral-400 ml-auto">{item.date}</span>
                 </div>
-
-                <div className="p-8 flex-1 flex flex-col">
-                  <div className="flex items-center justify-between text-xs font-medium text-neutral-400 mb-4">
-                    <span className={`inline-flex items-center px-2.5 py-1 rounded-md ${item.color}`}>
-                      {item.category}
-                    </span>
-                    <time dateTime={item.date}>{item.date}</time>
-                  </div>
-                  
-                  <h2 className="text-xl font-semibold text-neutral-900 mb-3 group-hover:text-neutral-600 transition-colors leading-snug">
-                    <Link href={`/news/${item.id}`} className="outline-none focus-visible:underline before:absolute before:inset-0">
-                      {item.title}
-                    </Link>
-                  </h2>
-                  
-                  <p className="text-sm text-neutral-500 leading-relaxed mb-6 line-clamp-3">
-                    {item.excerpt}
-                  </p>
-                  
-                  <div className="mt-auto pt-4 border-t border-neutral-100 flex items-center justify-between">
-                    <span className="text-xs text-neutral-400">{item.readTime}</span>
-                    <ArrowRight className="w-4 h-4 text-neutral-300 group-hover:text-neutral-900 group-hover:translate-x-1 transition-all" />
-                  </div>
+                
+                <h2 className="font-serif-zh text-xl md:text-2xl font-medium mb-4 leading-snug">
+                  <Link href={`/news/${item.id}`} className="outline-none focus-visible:underline before:absolute before:inset-0">
+                    {item.title}
+                  </Link>
+                </h2>
+                
+                <p className="font-sans-zh text-neutral-500 text-sm leading-relaxed mb-6 line-clamp-2">
+                  {item.excerpt}
+                </p>
+                
+                <div className="flex items-center justify-between pt-4 border-t border-neutral-100">
+                  <span className="font-sans-zh text-xs text-neutral-400">{item.readTime}</span>
+                  <Link href={`/news/${item.id}`} className="inline-flex items-center gap-1 font-sans-zh text-xs text-neutral-500 hover:text-neutral-900 group-hover:gap-2 transition-all">
+                    <span>阅读</span>
+                    <ArrowRight className="w-3 h-3" />
+                  </Link>
                 </div>
               </article>
             ))}
           </div>
 
-          {/* Pagination Placeholder */}
-          <div className="mt-16 mb-10 flex justify-center">
-            <button className="inline-flex items-center gap-2 px-6 py-3 bg-white border border-neutral-200 rounded-full shadow-sm text-sm font-medium text-neutral-600 hover:bg-neutral-50 transition-colors">
+          <div className="mt-16 md:mt-20 flex justify-center">
+            <button className="inline-flex items-center gap-2 px-8 py-4 bg-neutral-950 text-white font-sans-zh font-medium text-sm hover:bg-neutral-800 transition-colors">
               加载更多
             </button>
           </div>

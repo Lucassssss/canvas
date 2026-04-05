@@ -152,7 +152,7 @@ function ImageStack({ images, showLabel, targetWidth }: ImageStackProps) {
             onMouseLeave={() => setHoveredIndex(null)}
           >
             <div 
-              className="w-full h-full rounded-lg overflow-hidden border-2 border-white shadow-lg bg-white"
+              className="w-full h-full overflow-hidden bg-neutral-100"
             >
               <img 
                 src={img.src} 
@@ -163,7 +163,7 @@ function ImageStack({ images, showLabel, targetWidth }: ImageStackProps) {
             
             {showLabel && isHovered && (
               <div 
-                className="absolute -top-8 left-1/2 -translate-x-1/2 px-3 py-1 bg-neutral-900 text-white text-xs rounded-md whitespace-nowrap shadow-lg z-50"
+                className="absolute -top-7 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-neutral-900 text-white text-[10px] rounded whitespace-nowrap z-50"
               >
                 {img.label}
               </div>
@@ -181,13 +181,13 @@ export function EcommerceMaster() {
   }
 
   return (
-    <div className="space-y-4">
-      <div>
-        <h2 className="text-base font-medium text-neutral-700">AI换装</h2>
-        <p className="text-sm text-neutral-500 mt-1">智能搭配场景与模特，丝滑获得服装套图</p>
+    <div>
+      <div className="mb-6">
+        <h2 className="font-sans-zh text-sm font-medium text-neutral-700">AI换装</h2>
+        <p className="font-sans-zh text-xs text-neutral-400 mt-1">智能搭配场景与模特，丝滑获得服装套图</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {tryonModes.map((mode) => {
           const Icon = mode.icon
           const inputImages = mode.inputs.map(i => ({ src: i.image || '', label: i.name }))
@@ -212,21 +212,19 @@ export function EcommerceMaster() {
             <div
               key={mode.id}
               onClick={() => handleModeClick(mode.id)}
-              className="group bg-white rounded-xl p-4 border border-neutral-200 hover:border-neutral-400 hover:shadow-lg transition-all duration-200 text-left cursor-pointer"
+              className="group bg-white p-4 border border-neutral-300 hover:border-neutral-400 hover:shadow-md transition-all cursor-pointer"
             >
-              <div className="flex items-center gap-2 mb-4 justify-between">
+              <div className="flex items-center justify-between mb-4">
                 <div className='flex items-center gap-2'>
-                  <div className="p-1 rounded-sm border">
-                    <Icon className="w-3 h-3" />
-                  </div>
-                  <span className="text-sm font-medium text-neutral-800">{mode.name}</span>
+                  <Icon className="w-4 h-4 text-neutral-500" />
+                  <span className="font-sans-zh text-sm text-neutral-800">{mode.name}</span>
                 </div>
-                <Button variant="link" size="xs" className="text-sm transition-colors flex items-center gap-1">
+                <Button variant="link" size="xs" className="font-sans-zh text-xs h-5 px-2 text-neutral-400 hover:text-neutral-600">
                   做同款
                 </Button>
               </div>
 
-              <div className="flex items-center justify-center gap-2 mb-4">
+              <div className="flex items-center justify-center gap-3">
                 <div className="flex-shrink-0">
                   <ImageStack 
                     images={inputImages} 
@@ -235,7 +233,7 @@ export function EcommerceMaster() {
                   />
                 </div>
                 
-                <div className="flex-shrink-0 px-1">
+                <div className="flex-shrink-0">
                   <ArrowRight className="w-4 h-4 text-neutral-400" />
                 </div>
                 
