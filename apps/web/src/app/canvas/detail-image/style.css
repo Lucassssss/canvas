@@ -1,0 +1,253 @@
+/* 详情图容器 - 全屏覆盖 */
+.detail-image-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.detail-image-container {
+  width: 90%;
+  height: 90vh;
+  max-width: 1400px;
+  background: white;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+}
+
+/* 顶部头部 */
+.detail-image-header {
+  padding: 24px;
+  border-bottom: 1px solid #f0f0f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* 进度条样式 */
+.detail-image-progress {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+
+.progress-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  min-width: fit-content;
+}
+
+.progress-step-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 600;
+  background: #e5e5e5;
+  color: #666;
+  transition: all 0.3s ease;
+}
+
+.progress-step[data-complete="true"] .progress-step-icon {
+  background: #1a1a1a;
+  color: white;
+}
+
+.progress-step:has(+ .progress-line[data-active="true"]) .progress-step-icon {
+  background: #1a1a1a;
+  color: white;
+}
+
+.check-icon {
+  font-weight: 700;
+}
+
+.progress-step span {
+  font-size: 12px;
+  color: #666;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.progress-step[data-complete="true"] span,
+.progress-step:has(+ .progress-line[data-active="true"]) span {
+  color: #1a1a1a;
+}
+
+.progress-line {
+  flex: 1;
+  height: 2px;
+  background: #e5e5e5;
+  min-width: 24px;
+  transition: all 0.3s ease;
+}
+
+.progress-line[data-active="true"] {
+  background: #1a1a1a;
+}
+
+.detail-image-close-btn {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  background: #f5f5f5;
+  border: none;
+  cursor: pointer;
+  color: #666;
+  transition: all 0.2s ease;
+}
+
+.detail-image-close-btn:hover {
+  background: #e5e5e5;
+  color: #1a1a1a;
+}
+
+/* 主体内容区 */
+.detail-image-content {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  gap: 24px;
+  padding: 24px;
+}
+
+/* 左侧面板 */
+.detail-image-left {
+  flex: 0 0 360px;
+  overflow-y: auto;
+  border-right: 1px solid #f0f0f0;
+  padding-right: 24px;
+}
+
+/* 右侧面板 */
+.detail-image-right {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.detail-image-empty-state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: #999;
+  text-align: center;
+  padding: 40px;
+}
+
+.empty-icon {
+  font-size: 48px;
+  margin-bottom: 12px;
+}
+
+.detail-image-empty-state p {
+  font-size: 14px;
+  max-width: 280px;
+  line-height: 1.5;
+}
+
+/* 响应式设计 */
+@media (max-width: 1200px) {
+  .detail-image-container {
+    width: 95%;
+    height: 95vh;
+  }
+
+  .detail-image-content {
+    gap: 16px;
+    padding: 16px;
+  }
+
+  .detail-image-left {
+    flex: 0 0 300px;
+    padding-right: 16px;
+  }
+}
+
+@media (max-width: 768px) {
+  .detail-image-container {
+    width: 100%;
+    height: 100vh;
+    border-radius: 0;
+  }
+
+  .detail-image-header {
+    padding: 16px;
+  }
+
+  .detail-image-progress {
+    gap: 8px;
+    font-size: 12px;
+  }
+
+  .detail-image-content {
+    flex-direction: column;
+    padding: 12px;
+  }
+
+  .detail-image-left {
+    flex: 0 1 auto;
+    border-right: none;
+    border-bottom: 1px solid #f0f0f0;
+    padding-right: 0;
+    padding-bottom: 12px;
+  }
+
+  .detail-image-right {
+    flex: 1;
+  }
+}
+
+/* 滚动条美化 */
+.detail-image-left::-webkit-scrollbar,
+.detail-image-right::-webkit-scrollbar {
+  width: 6px;
+}
+
+.detail-image-left::-webkit-scrollbar-track,
+.detail-image-right::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.detail-image-left::-webkit-scrollbar-thumb,
+.detail-image-right::-webkit-scrollbar-thumb {
+  background: #d0d0d0;
+  border-radius: 3px;
+}
+
+.detail-image-left::-webkit-scrollbar-thumb:hover,
+.detail-image-right::-webkit-scrollbar-thumb:hover {
+  background: #a0a0a0;
+}

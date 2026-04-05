@@ -6,6 +6,7 @@ import { ShapeProps } from './types'
 import { ClothingComponent } from './ClothingComponent'
 import { AICombinationComponent } from './AICombinationComponent'
 import { CustomCombination } from './CustomCombination'
+import { DetailImageShape } from '../detail-image/DetailImageShape'
 import { aiCombinationService } from '@/ai-combination/service'
 import { Loader2, Copy, Clipboard, Trash2, BringToFront, SendToBack, CopyPlus, Download } from 'lucide-react'
 import { TransformMatrix } from '@/lib/canvas/transform'
@@ -296,12 +297,16 @@ export const Shape: React.FC<ShapeComponentProps> = ({ shape }) => {
       case 'custom-combination':
         return <CustomCombination shape={shape} />
 
+      case 'detail-image':
+        return <DetailImageShape shape={shape as ShapeProps & { type: 'detail-image' }} />
+
       default:
         return null
     }
   }
 
-  const isCustomComponent = shape.type === 'draw' || shape.type === 'arrow' || shape.type === 'clothing' || shape.type === 'ai-combination' || shape.type === 'custom-combination'
+  const isCustomComponent = shape.type === 'draw' || shape.type === 'arrow' || shape.type === 'clothing' || shape.type === 'ai-combination' || shape.type === 'custom-combination' || shape.type === 'detail-image'
+  const isAutoSizeComponent = shape.type === 'custom-combination' || shape.type === 'detail-image'
 
   const transformStyle = useMemo(() => {
     const cx = shape.x + shape.width / 2
@@ -324,14 +329,14 @@ export const Shape: React.FC<ShapeComponentProps> = ({ shape }) => {
     position: 'absolute',
     left: 0,
     top: 0,
-    width: shape.width,
-    height: shape.height,
+    width: isAutoSizeComponent ? undefined : shape.width,
+    height: isAutoSizeComponent ? undefined : shape.height,
     ...transformStyle,
     opacity: shape.opacity,
     backgroundColor: !isCustomComponent && shape.type !== 'image' ? shape.fill : undefined,
     border: !isCustomComponent && shape.type !== 'image' ? `${shape.strokeWidth}px solid ${shape.stroke}` : undefined,
     borderRadius: shape.type === 'circle' ? '50%' : shape.type === 'note' ? '4px' : undefined,
-    overflow: shape.type === 'ai-combination' ? 'visible' : undefined,
+    overflow: shape.type === 'ai-combination' || shape.type === 'detail-image' || shape.type === 'custom-combination' ? 'visible' : undefined,
   }
 
   const canExport = shape.type === 'image' && shape.imageUrl
@@ -360,7 +365,7 @@ export const Shape: React.FC<ShapeComponentProps> = ({ shape }) => {
       <ContextMenuTrigger asChild>
         <div
           ref={elementRef}
-          className={`canvas-shape ${isMouseDragging ? 'dragging' : ''} ${shape.type === 'ai-combination' ? 'pointer-events-auto' : ''} ${shape.type === 'image' && shape.imageUrl ? 'has-image' : ''}`}
+          className={`canvas-shape ${isMouseDragging ? 'dragging' : ''} ${shape.type === 'ai-combination' || shape.type === 'detail-image' ? 'pointer-events-auto' : ''} ${shape.type === 'image' && shape.imageUrl ? 'has-image' : ''}`}
           data-type={shape.type}
           data-shape-id={shape.id}
           style={style}

@@ -3,6 +3,11 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { Minus, Plus, Maximize } from 'lucide-react'
 import { useCanvasStore } from '../store'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 
 export const ZoomControls: React.FC = () => {
   const { viewport, setViewport, zoomToFit } = useCanvasStore()
@@ -59,14 +64,20 @@ export const ZoomControls: React.FC = () => {
 
   return (
     <div className="zoom-controls">
-      <button
-        className="zoom-btn"
-        onClick={zoomOut}
-        disabled={viewport.zoom <= 0.1}
-        title="缩小 (Cmd/Ctrl + -)"
-      >
-        <Minus size={16} />
-      </button>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button
+            className="zoom-btn"
+            onClick={zoomOut}
+            disabled={viewport.zoom <= 0.1}
+          >
+            <Minus size={16} />
+          </button>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>缩小 (Cmd/Ctrl + -)</p>
+        </TooltipContent>
+      </Tooltip>
 
       <div
         className="zoom-value relative"
@@ -92,22 +103,34 @@ export const ZoomControls: React.FC = () => {
         )}
       </div>
 
-      <button
-        className="zoom-btn"
-        onClick={zoomIn}
-        disabled={viewport.zoom >= 5}
-        title="放大 (Cmd/Ctrl + =)"
-      >
-        <Plus size={16} />
-      </button>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button
+            className="zoom-btn"
+            onClick={zoomIn}
+            disabled={viewport.zoom >= 5}
+          >
+            <Plus size={16} />
+          </button>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>放大 (Cmd/Ctrl + =)</p>
+        </TooltipContent>
+      </Tooltip>
 
-      <button
-        className="zoom-btn"
-        onClick={handleFitToScreen}
-        title="适合屏幕 (Cmd/Ctrl + 0)"
-      >
-        <Maximize size={16} />
-      </button>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button
+            className="zoom-btn"
+            onClick={handleFitToScreen}
+          >
+            <Maximize size={16} />
+          </button>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>适合屏幕 (Cmd/Ctrl + 0)</p>
+        </TooltipContent>
+      </Tooltip>
     </div>
   )
 }

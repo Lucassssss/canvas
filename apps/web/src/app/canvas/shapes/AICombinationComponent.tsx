@@ -17,9 +17,12 @@ interface AICombinationComponentProps {
     height: number
     combinationTypeId?: string
     slotContents?: Record<string, SlotContent>
-    combinationSettings?: {
+    imageConfig?: {
+      model: string
+      resolution: '1K' | '2K' | '4K'
+      aspectRatio: string
+      count: number
       prompt: string
-      resolution: { width: number; height: number }
     }
     combinationStatus?: 'idle' | 'generating' | 'completed' | 'error'
     combinationResults?: string[]
@@ -93,7 +96,7 @@ const ImageSlotRenderer: React.FC<ImageSlotRendererProps> = ({
 
   return (
     <div
-      className={`group relative bg-gray-200 border-3 rounded-lg overflow-hidden shadow-md transition-colors cursor-pointer ${
+      className={`group relative bg-gray-200 border-3 overflow-hidden shadow-md transition-colors cursor-pointer ${
         isDragOver ? 'border-blue-500 bg-blue-50' : 'border-white hover:border-white'
       }`}
       style={{ width: SLOT_WIDTH, height: SLOT_HEIGHT }}
@@ -218,7 +221,7 @@ const OutputSlotContent: React.FC<OutputSlotContentProps> = ({ slot, resultImage
 
   return (
     <div
-      className="relative bg-gray-200 border-3 border-white rounded-lg overflow-hidden shadow-md"
+      className="relative bg-gray-200 border-3 border-white overflow-hidden shadow-md"
       style={{ width: SLOT_WIDTH, height: SLOT_HEIGHT }}
     >
       {resultImage ? (
@@ -311,14 +314,23 @@ export const AICombinationComponent: React.FC<AICombinationComponentProps> = ({ 
 
     updateShape(shape.id, { combinationStatus: 'generating', combinationError: undefined })
 
+    const resolutionMap: Record<string, { width: number; height: number }> = {
+      '1K': { width: 1024, height: 1024 },
+      '2K': { width: 2048, height: 2048 },
+      '4K': { width: 4096, height: 4096 },
+    }
+
+    const settings = {
+      prompt: shape.imageConfig?.prompt || '',
+      resolution: resolutionMap[shape.imageConfig?.resolution || '2K'] || { width: 2048, height: 2048 },
+    }
+
     const result = await aiCombinationService.generate({
       id: shape.id,
       combinationTypeId: shape.combinationTypeId || 'simple-tryon',
       slotContents: shape.slotContents || {},
-      settings: shape.combinationSettings || { prompt: '', resolution: { width: 768, height: 1024 } },
+      settings,
     })
-
-    // todo 这里返回的 imageUrl 是 base64，不能直接使用，要上传到 S3 并返回 URL 类型
 
     if (result.success && result.imageUrl) {
       updateShape(shape.id, {

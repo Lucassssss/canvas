@@ -15,8 +15,11 @@ const RightSidebar = dynamic(() => import('./components/RightSidebar').then(mod 
 const Toolbar = dynamic(() => import('./components/Toolbar').then(mod => ({ default: mod.Toolbar })), { ssr: false })
 const Canvas = dynamic(() => import('./Canvas').then(mod => ({ default: mod.Canvas })), { ssr: false })
 
+const CHAT_OPEN_STORAGE_KEY = 'right-sidebar-open'
+
 export const CanvasPage: React.FC = () => {
   const searchParams = useSearchParams()
+  const [mounted, setMounted] = useState(false)
   const [isChatOpen, setIsChatOpen] = useState(true)
   const [isLoading, setIsLoading] = useState(false)
   const [loadError, setLoadError] = useState<string | null>(null)
@@ -34,6 +37,26 @@ export const CanvasPage: React.FC = () => {
   const selectedClothing = shapes.find(
     (s) => s.type === 'clothing' && selectedIds.includes(s.id)
   )
+
+  /**
+   * 客户端挂载后读取缓存状态
+   */
+  useEffect(() => {
+    setMounted(true)
+    const stored = localStorage.getItem(CHAT_OPEN_STORAGE_KEY)
+    if (stored !== null) {
+      setIsChatOpen(stored === 'true')
+    }
+  }, [])
+
+  /**
+   * 缓存右侧对话栏的打开/关闭状态
+   */
+  useEffect(() => {
+    if (mounted) {
+      localStorage.setItem(CHAT_OPEN_STORAGE_KEY, String(isChatOpen))
+    }
+  }, [isChatOpen, mounted])
 
   /**
    * 从 URL 参数加载项目
@@ -155,8 +178,7 @@ export const CanvasPage: React.FC = () => {
   return (
     <div className="w-full h-full">
       <a className="logo block w-8 flex items-center justify-center" href="https://joii.cc" target="_blank">
-      GKE
-        {/* <img src="/joii_logo_fa.svg" alt="Joii.cc" /> */}
+        <img src="/joii_logo_fa.svg" alt="Joii.cc" />
       </a>
 
       <button

@@ -1,19 +1,18 @@
 'use client'
 
-import React, { useCallback, useState } from 'react'
+import React, { useCallback, useState, useRef, useEffect } from 'react'
 import { useCanvasStore } from '../store'
 import { aiCombinationService } from '@/ai-combination/service'
 import { Plus, Loader2, Play, Equal, Image as ImageIcon } from 'lucide-react'
-import type { ShapeProps, CustomCombinationSlot, CustomCombinationConfig } from './types'
+import type { ShapeProps, CustomCombinationSlot } from './types'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 
 interface CustomCombinationProps {
   shape: ShapeProps
-}
-
-const DEFAULT_CONFIG: CustomCombinationConfig = {
-  model: 'flux-pro',
-  resolution: { width: 1024, height: 1024 },
-  prompt: '',
 }
 
 const SLOT_WIDTH = 140
@@ -115,7 +114,7 @@ const InputSlotRenderer: React.FC<InputSlotRendererProps> = ({
         )}
       </div>
       <div
-        className={`group relative bg-gray-200 border-3 rounded-lg overflow-hidden shadow-md transition-colors cursor-pointer ${
+        className={`group relative bg-gray-200 border-3 overflow-hidden shadow-md transition-colors cursor-pointer ${
           isDragOver ? 'border-blue-500 bg-blue-50' : 'border-white hover:border-white'
         }`}
         style={{ width: SLOT_WIDTH, height: SLOT_HEIGHT }}
@@ -245,7 +244,7 @@ const OutputSlotRenderer: React.FC<OutputSlotRendererProps> = ({ slot, onLabelCh
         )}
       </div>
       <div
-        className="relative bg-gray-200 border-3 border-white rounded-lg overflow-hidden shadow-md"
+        className="relative bg-gray-200 border-3 border-white overflow-hidden shadow-md"
         style={{ width: SLOT_WIDTH, height: SLOT_HEIGHT }}
       >
         {slot.imageUrl ? (
@@ -275,12 +274,11 @@ const OutputSlotRenderer: React.FC<OutputSlotRendererProps> = ({ slot, onLabelCh
 
 export const CustomCombination: React.FC<CustomCombinationProps> = ({ shape }) => {
   const [isDragOver, setIsDragOver] = useState<string | null>(null)
-  const [configExpanded, setConfigExpanded] = useState(true)
+  const containerRef = useRef<HTMLDivElement>(null)
   const { updateShape } = useCanvasStore()
 
   const inputSlots = shape.customInputSlots || [{ id: `${shape.id}-input-1`, label: '输入1', imageUrl: undefined }]
   const outputSlots = shape.customOutputSlots || [{ id: `${shape.id}-output-1`, label: '输出', imageUrl: undefined }]
-  const config = shape.customConfig || DEFAULT_CONFIG
   const status = shape.customStatus || 'idle'
 
   const inputCount = inputSlots.length
@@ -293,6 +291,39 @@ export const CustomCombination: React.FC<CustomCombinationProps> = ({ shape }) =
   const addButtonWidth = SLOT_GAP + 32
   const totalWidth = totalInputWidth + inputPlusIconsWidth + addButtonWidth + totalOutputWidth + BUTTON_WIDTH + EQUAL_WIDTH + PADDING * 2 + SLOT_GAP * 3
   const totalHeight = SLOT_HEIGHT + LABEL_HEIGHT + PADDING * 2
+
+  useEffect(() => {
+    const container = containerRef.current
+    if (!container) return
+
+    let rafId: number | null = null
+
+    const updateDimensions = () => {
+      rafId = null
+      const rect = container.getBoundingClientRect()
+      if (rect.width > 0 && rect.height > 0) {
+        if (Math.abs(rect.width - shape.width) > 1 || Math.abs(rect.height - shape.height) > 1) {
+          updateShape(shape.id, { width: rect.width, height: rect.height })
+        }
+      }
+    }
+
+    const ro = new ResizeObserver(() => {
+      if (rafId === null) {
+        rafId = requestAnimationFrame(updateDimensions)
+      }
+    })
+    ro.observe(container)
+
+    requestAnimationFrame(updateDimensions)
+
+    return () => {
+      ro.disconnect()
+      if (rafId !== null) {
+        cancelAnimationFrame(rafId)
+      }
+    }
+  }, [shape.id, shape.width, shape.height, updateShape])
 
   const handleFileSelect = useCallback(async (slotId: string, fileOrUrl: File | string) => {
     let imageUrl: string | undefined
@@ -347,12 +378,6 @@ export const CustomCombination: React.FC<CustomCombinationProps> = ({ shape }) =
     updateShape(shape.id, { [key]: newSlots })
   }, [shape.id, inputSlots, outputSlots, updateShape])
 
-  const handleConfigChange = useCallback((updates: Partial<CustomCombinationConfig>) => {
-    updateShape(shape.id, {
-      customConfig: { ...config, ...updates },
-    })
-  }, [shape.id, config, updateShape])
-
   const handleGenerate = useCallback(() => {
     updateShape(shape.id, {
       customStatus: 'generating',
@@ -381,10 +406,11 @@ export const CustomCombination: React.FC<CustomCombinationProps> = ({ shape }) =
 
   return (
     <div
-      className="bg-white rounded-xl shadow-lg border-2 border-gray-200"
+      ref={containerRef}
+      className="border-2 border-dashed border-gray-200"
       style={{ width: totalWidth }}
     >
-      <div className="p-3">
+      <div className="p-3 pb-4 flex justify-center">
         <div className="inline-flex items-center" style={{ gap: SLOT_GAP }}>
           {inputSlots.map((slot, index) => (
             <React.Fragment key={slot.id}>
@@ -405,13 +431,19 @@ export const CustomCombination: React.FC<CustomCombinationProps> = ({ shape }) =
             </React.Fragment>
           ))}
 
-          <button
-            className="flex-shrink-0 w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors"
-            onClick={handleAddSlot}
-            title="添加输入槽"
-          >
-            <Plus size={18} className="text-gray-500" />
-          </button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                className="flex-shrink-0 w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors"
+                onClick={handleAddSlot}
+              >
+                <Plus size={18} className="text-gray-500" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>添加输入槽</p>
+            </TooltipContent>
+          </Tooltip>
 
           <div className="flex items-center" style={{ gap: SLOT_GAP }}>
             <button
@@ -445,70 +477,6 @@ export const CustomCombination: React.FC<CustomCombinationProps> = ({ shape }) =
         {shape.customError && (
           <div className="mt-2 text-xs text-red-500 text-center">
             {shape.customError}
-          </div>
-        )}
-      </div>
-
-      <div className="border-t border-gray-200">
-        <button
-          className="w-full px-4 py-2 flex items-center justify-between text-sm text-gray-600 hover:bg-gray-50"
-          onClick={() => setConfigExpanded(!configExpanded)}
-        >
-          <span className="font-medium">配置</span>
-          {configExpanded ? (
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M18 15l-6-6-6 6" />
-            </svg>
-          ) : (
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M6 9l6 6 6-6" />
-            </svg>
-          )}
-        </button>
-
-        {configExpanded && (
-          <div className="px-4 pb-4 space-y-3">
-            <div className="flex gap-3">
-              <div className="flex-1">
-                <label className="block text-xs text-gray-500 mb-1">模型</label>
-                <select
-                  className="w-full px-2 py-1.5 text-sm border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  value={config.model}
-                  onChange={(e) => handleConfigChange({ model: e.target.value })}
-                >
-                  <option value="flux-pro">Flux Pro</option>
-                  <option value="flux-dev">Flux Dev</option>
-                  <option value="sd-xl">SD XL</option>
-                </select>
-              </div>
-              <div className="flex-1">
-                <label className="block text-xs text-gray-500 mb-1">分辨率</label>
-                <select
-                  className="w-full px-2 py-1.5 text-sm border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  value={`${config.resolution.width}x${config.resolution.height}`}
-                  onChange={(e) => {
-                    const [w, h] = e.target.value.split('x').map(Number)
-                    handleConfigChange({ resolution: { width: w, height: h } })
-                  }}
-                >
-                  <option value="1024x1024">1024 × 1024</option>
-                  <option value="1024x768">1024 × 768</option>
-                  <option value="768x1024">768 × 1024</option>
-                  <option value="512x512">512 × 512</option>
-                </select>
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-xs text-gray-500 mb-1">提示词</label>
-              <textarea
-                className="w-full px-2 py-1.5 text-sm border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 resize-none"
-                rows={2}
-                placeholder="输入提示词..."
-                value={config.prompt}
-                onChange={(e) => handleConfigChange({ prompt: e.target.value })}
-              />
-            </div>
           </div>
         )}
       </div>

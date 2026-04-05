@@ -6,6 +6,7 @@ import { Shape } from './shapes/Shape'
 import { ToolType, ShapeProps, SHAPE_MIN_SIZE } from './shapes/types'
 import { LogoEditorLayer } from './components/LogoEditorLayer'
 import { LogoMaterialPanel } from './components/LogoMaterialPanel'
+import { FloatingConfigPanel } from './config-panel'
 import { aiCombinationService } from '@/ai-combination/service'
 import { TransformMatrix } from '@/lib/canvas/transform'
 
@@ -88,7 +89,7 @@ const SelectionBoxLayer: React.FC<{
   onMultiResizeStart: (e: React.MouseEvent, handle: string) => void
   onMultiRotateStart: (e: React.MouseEvent) => void
 }> = ({ shapes, selectedIds, viewport, onSingleResizeStart, onSingleRotateStart, onMultiResizeStart, onMultiRotateStart }) => {
-  const selectedShapes = shapes.filter((s) => selectedIds.includes(s.id) && s.type !== 'custom-combination')
+  const selectedShapes = shapes.filter((s) => selectedIds.includes(s.id))
 
   if (selectedShapes.length === 0) return null
 
@@ -1329,6 +1330,8 @@ export const Canvas: React.FC = () => {
       />
 
       <LogoMaterialPanel />
+
+      <FloatingConfigPanel containerRef={containerRef} />
 
       {renderSelectionRect()}
     </div>
