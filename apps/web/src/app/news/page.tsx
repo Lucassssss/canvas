@@ -60,7 +60,7 @@ export default function NewsPage() {
   return (
     <div className="min-h-screen w-full bg-white flex">
       <LeftSidebar />
-      <main className="flex-1 w-full pb-20 md:pl-20">
+      <main className="flex-1 w-full pb-20 lg:pl-20">
         <PageHeader breadcrumbs={[{ label: '新闻动态' }]} />
 
         <div className="max-w-[1600px] mx-auto py-16 md:py-24 lg:py-32 px-6 md:px-12">

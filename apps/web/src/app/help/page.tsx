@@ -14,7 +14,7 @@ export default function HelpPage() {
   return (
     <div className="min-h-screen w-full bg-white">
       <LeftSidebar />
-      <main className="flex-1 w-full pb-20 md:pl-20">
+      <main className="flex-1 w-full pb-20 lg:pl-20">
         <PageHeader 
           breadcrumbs={[{ label: '帮助中心' }]}
           rightContent={

@@ -8,7 +8,7 @@ export default function ProjectsPage() {
   return (
     <div className="min-h-screen w-full bg-white">
       <LeftSidebar />
-      <main className="w-full pb-20 md:pl-20">
+      <main className="w-full pb-20 lg:pl-20">
         <PageHeader breadcrumbs={[{ label: '我的项目' }]} />
         <div className="max-w-[1600px] mx-auto px-6 md:px-12 py-12">
           <ProjectsPageContent />

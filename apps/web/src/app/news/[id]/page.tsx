@@ -125,7 +125,7 @@ async function NewsDetailContent({ params }: { params: Promise<{ id: string }> }
   return (
     <div className="min-h-screen w-full bg-white">
       <LeftSidebar />
-      <main className="flex-1 w-full pb-20 md:pb-24 lg:pb-32 md:pl-20">
+      <main className="flex-1 w-full pb-20 md:pb-24 lg:pb-32 lg:pl-20">
         <PageHeader 
           breadcrumbs={[
             { label: '新闻动态', href: '/news' },
@@ -141,7 +141,7 @@ async function NewsDetailContent({ params }: { params: Promise<{ id: string }> }
         <div className="max-w-[1600px] mx-auto px-6 md:px-12 py-16 md:py-24 lg:py-32">
           <div className="grid grid-cols-12 gap-6">
             <article className="col-span-12 lg:col-span-8 lg:col-start-3 relative">
-              <div className="absolute top-0 left-0 w-16 h-16 border-l-2 border-t-2 border-neutral-200 -translate-x-6 md:-translate-x-12" />
+              <div className="hidden md:block absolute top-0 left-0 w-16 h-16 border-l-2 border-t-2 border-neutral-200 -translate-x-6 md:-translate-x-12" />
               
               <header className="mb-12 md:mb-16 pt-8">
                 <div className="flex items-center gap-4 mb-8">
