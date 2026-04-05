@@ -7,7 +7,7 @@ import { EcommerceMaster } from './components/EcommerceMaster'
 import { RecentProjects } from './components/RecentProjects'
 import { InspirationGallery } from './components/InspirationGallery'
 
-export function HomePage() {
+export function DashboardPage() {
   return (
     <div className="min-h-screen w-full bg-[#f4f4f5]">
       <LeftSidebar />
