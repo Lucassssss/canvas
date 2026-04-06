@@ -29,7 +29,7 @@ export async function getTransactions(userId: string, limit = 50, offset = 0): P
     balanceBefore: row.balanceBefore,
     balanceAfter: row.balanceAfter,
     description: row.description ?? undefined,
-    createdAt: row.createdAt.getTime(),
+    createdAt: row.createdAt,
   }))
 }
 
@@ -46,7 +46,7 @@ export async function getUsageLogs(userId: string, limit = 50, offset = 0): Prom
     action: row.action,
     creditsCost: row.creditsCost ?? 0,
     details: row.details ?? undefined,
-    createdAt: row.createdAt.getTime(),
+    createdAt: row.createdAt,
   }))
 }
 

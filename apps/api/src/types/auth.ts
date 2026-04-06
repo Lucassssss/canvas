@@ -6,9 +6,9 @@ export interface User {
   credits: number
   creditsUsed: number
   vipLevel: 'free' | 'pro' | 'enterprise'
-  vipExpiresAt?: number
-  createdAt: number
-  updatedAt: number
+  vipExpiresAt?: Date
+  createdAt: Date
+  updatedAt: Date
 }
 
 export interface UserProfile {
@@ -59,7 +59,7 @@ export interface CreditTransaction {
   balanceBefore: number
   balanceAfter: number
   description?: string
-  createdAt: number
+  createdAt: Date
 }
 
 export interface UsageLog {
@@ -68,7 +68,7 @@ export interface UsageLog {
   action: string
   creditsCost: number
   details?: string
-  createdAt: number
+  createdAt: Date
 }
 
 export interface ConsumeCreditsRequest {

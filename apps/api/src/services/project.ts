@@ -44,8 +44,8 @@ export async function createProject(params: CreateProjectParams = {}): Promise<P
       version: row.version,
       canvasData: row.canvasData,
       thumbnail: row.thumbnail ?? undefined,
-      createdAt: row.createdAt.getTime(),
-      updatedAt: row.updatedAt.getTime(),
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
     }
   } catch (error) {
     console.error(`[Project Service] Failed to create project:`, error)
@@ -75,8 +75,8 @@ export async function getProjects(): Promise<ProjectMetadata[]> {
       id: row.id,
       name: row.name,
       thumbnail: row.thumbnail ?? undefined,
-      createdAt: row.createdAt.getTime(),
-      updatedAt: row.updatedAt.getTime(),
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
       conversationCount: Number(row.conversationCount),
     }))
   } catch (error) {
@@ -117,8 +117,8 @@ export async function getProject(id: string): Promise<Project | null> {
       version: row.version,
       canvasData: row.canvasData,
       thumbnail: row.thumbnail ?? undefined,
-      createdAt: row.createdAt.getTime(),
-      updatedAt: row.updatedAt.getTime(),
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
       conversations: convRows,
     }
   } catch (error) {

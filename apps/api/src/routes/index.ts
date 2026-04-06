@@ -120,12 +120,12 @@ router.post("/api/chat", async (req, res) => {
     let currentConversationId = conversationId;
 
     if (!currentConversationId) {
-      const newConversation = createConversation(undefined, modelName, mode);
+      const newConversation = await createConversation(undefined, modelName, mode);
       currentConversationId = newConversation.id;
       res.write(`data: ${JSON.stringify({ type: "conversation_created", id: newConversation.id })}\n\n`);
     }
 
-    const conversation = getConversation(currentConversationId);
+    const conversation = await getConversation(currentConversationId);
     if (!conversation) {
       return res.status(404).json({ error: "Conversation not found" });
     }
@@ -134,7 +134,7 @@ router.post("/api/chat", async (req, res) => {
       return res.status(400).json({ error: "messages array is required" });
     }
 
-    const historicalMessages = getMessages(currentConversationId);
+    const historicalMessages = await getMessages(currentConversationId);
     const historicalUIMessages = convertToUIMessages(historicalMessages);
 
     const incomingUIMessages = messages
@@ -167,17 +167,17 @@ router.post("/api/chat", async (req, res) => {
       res.write("data: [DONE]\n\n");
 
       for (const msg of incomingUIMessages) {
-        addMessage(currentConversationId, msg.role, msg.content);
+        await addMessage(currentConversationId, msg.role, msg.content);
       }
 
       if (lastAssistantContent) {
-        addMessage(currentConversationId, "assistant", lastAssistantContent);
+        await addMessage(currentConversationId, "assistant", lastAssistantContent);
       }
 
-      const currentMessages = getMessages(currentConversationId);
+      const currentMessages = await getMessages(currentConversationId);
       if (currentMessages.length === 2) {
         const title = await generateTitle(lastUserMessage);
-        updateConversation(currentConversationId, { title });
+        await updateConversation(currentConversationId, { title });
         res.write(`data: ${JSON.stringify({ type: "title_generated", title })}\n\n`);
       }
     } catch (error) {

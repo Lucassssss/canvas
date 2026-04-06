@@ -20,9 +20,9 @@ export async function getUserById(userId: string): Promise<User | null> {
     credits: row.credits,
     creditsUsed: row.creditsUsed,
     vipLevel: row.vipLevel,
-    vipExpiresAt: row.vipExpiresAt?.getTime() ?? undefined,
-    createdAt: row.createdAt.getTime(),
-    updatedAt: row.updatedAt.getTime(),
+    vipExpiresAt: row.vipExpiresAt ?? undefined,
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
   }
 }
 
@@ -39,9 +39,9 @@ export async function getUserByPhone(phone: string): Promise<User | null> {
     credits: row.credits,
     creditsUsed: row.creditsUsed,
     vipLevel: row.vipLevel,
-    vipExpiresAt: row.vipExpiresAt?.getTime() ?? undefined,
-    createdAt: row.createdAt.getTime(),
-    updatedAt: row.updatedAt.getTime(),
+    vipExpiresAt: row.vipExpiresAt ?? undefined,
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
   }
 }
 
