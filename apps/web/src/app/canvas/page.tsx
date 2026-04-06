@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import { MessageSquare } from 'lucide-react'
@@ -17,7 +17,16 @@ const Canvas = dynamic(() => import('./Canvas').then(mod => ({ default: mod.Canv
 
 const CHAT_OPEN_STORAGE_KEY = 'right-sidebar-open'
 
-export const CanvasPage: React.FC = () => {
+const CanvasPageFallback: React.FC = () => (
+  <div className="w-full h-full flex items-center justify-center bg-neutral-50">
+    <div className="text-center">
+      <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-neutral-900 mb-4"></div>
+      <p className="text-neutral-600 text-sm">加载中...</p>
+    </div>
+  </div>
+)
+
+const CanvasPageContent: React.FC = () => {
   const searchParams = useSearchParams()
   const [mounted, setMounted] = useState(false)
   const [isChatOpen, setIsChatOpen] = useState(true)
@@ -203,6 +212,14 @@ export const CanvasPage: React.FC = () => {
         <RightSidebar isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
       </div>
     </div>
+  )
+}
+
+const CanvasPage: React.FC = () => {
+  return (
+    <Suspense fallback={<CanvasPageFallback />}>
+      <CanvasPageContent />
+    </Suspense>
   )
 }
 
