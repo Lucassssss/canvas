@@ -17,12 +17,12 @@ export interface ToolCall {
 export interface ConversationMessage {
   role: string;
   content: string;
-  timestamp: number;
+  timestamp: Date;
 }
 
 export interface ConversationHistory {
   messages: ConversationMessage[];
-  lastUpdated: number;
+  lastUpdated: Date;
 }
 
 export interface Conversation {
@@ -30,8 +30,8 @@ export interface Conversation {
   title: string;
   model: string;
   mode: string;
-  createdAt: number;
-  updatedAt: number;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface Message {
@@ -39,7 +39,7 @@ export interface Message {
   conversationId: string;
   role: "user" | "assistant" | "system";
   content: string;
-  createdAt: number;
+  createdAt: Date;
 }
 
 // 导出项目相关类型

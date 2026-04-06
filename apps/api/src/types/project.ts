@@ -41,10 +41,10 @@ export interface Project {
   canvasData: CanvasData
   /** 缩略图（base64 或 URL） */
   thumbnail?: string
-  /** 创建时间戳 */
-  createdAt: number
-  /** 更新时间戳 */
-  updatedAt: number
+  /** 创建时间 */
+  createdAt: Date
+  /** 更新时间 */
+  updatedAt: Date
   /** 关联的会话列表 */
   conversations?: Conversation[]
 }
@@ -59,10 +59,10 @@ export interface ProjectMetadata {
   name: string
   /** 缩略图 */
   thumbnail?: string
-  /** 创建时间戳 */
-  createdAt: number
-  /** 更新时间戳 */
-  updatedAt: number
+  /** 创建时间 */
+  createdAt: Date
+  /** 更新时间 */
+  updatedAt: Date
   /** 关联的会话数量 */
   conversationCount: number
 }

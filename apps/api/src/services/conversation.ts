@@ -1,13 +1,15 @@
 import { nanoid } from "nanoid"
-import { db, conversations, messages } from '../db/index.js'
+import { db, conversations, messages, projectModeEnum } from '../db/index.js'
 import { eq, asc } from 'drizzle-orm'
 import type { Conversation, Message } from "../types/index.js"
+
+type ProjectMode = 'agent' | 'chat'
 
 function generateId(): string {
   return nanoid()
 }
 
-export async function createConversation(title?: string, model?: string, mode?: string): Promise<Conversation> {
+export async function createConversation(title?: string, model?: string, mode?: ProjectMode): Promise<Conversation> {
   const id = generateId()
   const defaultTitle = title || "New Conversation"
 
@@ -25,8 +27,8 @@ export async function createConversation(title?: string, model?: string, mode?: 
     title: row.title,
     model: row.model,
     mode: row.mode,
-    createdAt: row.createdAt.getTime(),
-    updatedAt: row.updatedAt.getTime(),
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
   }
 }
 
@@ -37,8 +39,8 @@ export async function getConversations(): Promise<Conversation[]> {
     title: row.title,
     model: row.model,
     mode: row.mode,
-    createdAt: row.createdAt.getTime(),
-    updatedAt: row.updatedAt.getTime(),
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
   }))
 }
 
@@ -50,8 +52,8 @@ export async function getConversation(id: string): Promise<Conversation | null> 
     title: row.title,
     model: row.model,
     mode: row.mode,
-    createdAt: row.createdAt.getTime(),
-    updatedAt: row.updatedAt.getTime(),
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
   }
 }
 
@@ -88,7 +90,7 @@ export async function getMessages(conversationId: string): Promise<Message[]> {
     conversationId: row.conversationId,
     role: row.role,
     content: row.content,
-    createdAt: row.createdAt.getTime(),
+    createdAt: row.createdAt,
   }))
 }
 
@@ -109,7 +111,7 @@ export async function addMessage(conversationId: string, role: "user" | "assista
     conversationId: row.conversationId,
     role: row.role,
     content: row.content,
-    createdAt: row.createdAt.getTime(),
+    createdAt: row.createdAt,
   }
 }
 
