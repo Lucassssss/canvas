@@ -8,7 +8,7 @@ import { UserMenu } from '@/components/UserMenu'
 import Link from 'next/link'
 
 export const Header: React.FC = () => {
-  const { isAuthenticated, token } = useAuth()
+  const { isAuthenticated } = useAuth()
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {

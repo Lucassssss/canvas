@@ -1,20 +1,11 @@
-import type { Message, MessageBlock } from '../types';
+/**
+ * 聊天服务 - 重构使用统一 API 客户端
+ */
+import { streamChat as apiStreamChat, type StreamEvent as ApiStreamEvent } from '@/lib/api/chat-api'
+import type { Message, MessageBlock } from '../types'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-
-export interface StreamEvent {
-  type: 'reasoning' | 'text' | 'tool_call' | 'tool_result' | 'tool_error' | 'artifact' | 'conversation_created' | 'title_generated'
-  content?: string
-  id?: string
-  name?: string
-  toolName?: string
-  input?: string
-  output?: string
-  error?: string
-  [key: string]: unknown
-}
-
-export type StreamHandler = (event: StreamEvent) => void
+export type { ApiStreamEvent as StreamEvent }
+export type StreamHandler = (event: ApiStreamEvent) => void
 
 export async function* streamChat(
   messages: { role: 'user' | 'assistant'; content: string }[],
@@ -24,67 +15,13 @@ export async function* streamChat(
     model?: string
     onEvent?: StreamHandler
   }
-): AsyncGenerator<StreamEvent> {
-  const { conversationId, mode = 'agent', model, onEvent } = options || {}
-
-  const response = await fetch(`${API_URL}/api/chat`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      conversationId,
-      messages,
-      mode,
-      model,
-    }),
-  })
-
-  if (!response.ok) {
-    throw new Error(`Chat API error: ${response.status}`)
-  }
-
-  if (!response.body) {
-    throw new Error('No response body')
-  }
-
-  const reader = response.body.getReader()
-  const decoder = new TextDecoder()
-  let buffer = ''
-
-  try {
-    while (true) {
-      const { done, value } = await reader.read()
-      if (done) break
-
-      buffer += decoder.decode(value, { stream: true })
-      const lines = buffer.split('\n')
-      buffer = lines.pop() || ''
-
-      for (const line of lines) {
-        if (line.startsWith('data: ')) {
-          const data = line.slice(6)
-          if (data === '[DONE]') {
-            return
-          }
-          try {
-            const event = JSON.parse(data) as StreamEvent
-            onEvent?.(event)
-            yield event
-          } catch (e) {
-            console.error('Failed to parse SSE event:', e)
-          }
-        }
-      }
-    }
-  } finally {
-    reader.releaseLock()
-  }
+): AsyncGenerator<ApiStreamEvent> {
+  yield* apiStreamChat(messages, options)
 }
 
 export function parseStreamEvents(
   messages: Message[],
-  event: StreamEvent
+  event: ApiStreamEvent
 ): { updatedMessages: Message[]; newBlock?: MessageBlock } {
   const lastMessage = messages[messages.length - 1]
   let updatedMessages = [...messages]
