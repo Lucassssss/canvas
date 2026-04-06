@@ -1,7 +1,9 @@
 import { Router, Request, Response, NextFunction } from "express";
-import { authMiddleware } from "../middleware/auth.js";
+import { authMiddleware, setAuthCookies } from "../middleware/auth.js";
 import { runChat } from "../services/llm.js";
 import { imageGenerationService, s3UploadService } from "../services/image/index.js";
+import { sendVerificationCode } from "../services/sms/index.js";
+import { loginWithCode } from "../services/auth/index.js";
 import {
   getConversation,
   getConversations,
@@ -21,25 +23,154 @@ import creditRoutes from "./credits.js";
 
 const router = Router();
 
-router.use('/api', projectRoutes);
-router.use('/api/auth', authRoutes);
-router.use('/api/users', userRoutes);
-router.use('/api/credits', creditRoutes);
-
-router.get("/health", (req, res) => {
-  res.json({ status: "ok" });
-});
-
-router.get("/models", (req, res) => {
-  res.json({ models: [] });
-});
-
 function asyncHandler<T extends (...args: any[]) => Promise<any>>(fn: T) {
   return (req: Request, res: Response, next: NextFunction) => {
     Promise.resolve(fn(req, res, next)).catch(next)
   }
 }
 
+// ========== 公开接口 (无需认证) ==========
+router.post("/api/auth/send-code", asyncHandler(async (req: Request, res: Response) => {
+  const { phone } = req.body
+  
+  if (!phone) {
+    return res.status(400).json({ success: false, message: '手机号不能为空' })
+  }
+  
+  const result = await sendVerificationCode(phone)
+  
+  if (result.success) {
+    res.json(result)
+  } else {
+    res.status(400).json(result)
+  }
+}))
+
+router.post("/api/auth/verify-code", asyncHandler(async (req: Request, res: Response) => {
+  const { phone, code } = req.body
+  
+  if (!phone || !code) {
+    return res.status(400).json({ success: false, error: '手机号和验证码不能为空' })
+  }
+  
+  const result = await loginWithCode(phone, code)
+  
+  if (result.success) {
+    setAuthCookies(res, result.token!, result.refreshToken!)
+    res.json({ success: true, user: result.user })
+  } else {
+    res.status(401).json(result)
+  }
+}))
+
+// ========== 上传和生成 API (需要认证) ==========
+router.post("/api/image/generate", authMiddleware, async (req, res) => {
+  try {
+    const { combinationTypeId, slotContents, settings } = req.body;
+
+    if (!combinationTypeId) {
+      return res.status(400).json({ success: false, error: "combinationTypeId is required" });
+    }
+
+    if (!slotContents || typeof slotContents !== "object") {
+      return res.status(400).json({ success: false, error: "slotContents is required" });
+    }
+
+    const result = await imageGenerationService.generate({
+      combinationTypeId,
+      slotContents,
+      settings: settings || { resolution: { width: 768, height: 1024 } },
+    });
+
+    res.json(result);
+  } catch (error) {
+    console.error("[API] Image generate error:", error);
+    res.status(500).json({ success: false, error: "Internal server error" });
+  }
+});
+
+router.post("/api/upload", authMiddleware, async (req, res) => {
+  try {
+    const { file, filename, contentType, folder } = req.body;
+
+    if (!file) {
+      return res.status(400).json({ success: false, error: "file is required (base64 encoded)" });
+    }
+
+    const buffer = Buffer.from(file, "base64");
+    const result = await s3UploadService.uploadFile(
+      buffer,
+      filename || "upload.png",
+      {
+        folder: folder || "uploads",
+        contentType: contentType || "image/png",
+      }
+    );
+
+    if (result.success) {
+      res.json({ success: true, url: result.url, key: result.key });
+    } else {
+      res.status(500).json({ success: false, error: result.error });
+    }
+  } catch (error) {
+    console.error("[API] Upload error:", error);
+    res.status(500).json({ success: false, error: "Upload failed" });
+  }
+});
+
+router.post("/api/upload/url", authMiddleware, async (req, res) => {
+  try {
+    const { imageUrl, folder } = req.body;
+
+    if (!imageUrl) {
+      return res.status(400).json({ success: false, error: "imageUrl is required" });
+    }
+
+    const result = await s3UploadService.uploadFromUrl(imageUrl, folder || "ai-generated");
+
+    if (result.success) {
+      res.json({ success: true, url: result.url, key: result.key });
+    } else {
+      res.status(500).json({ success: false, error: result.error });
+    }
+  } catch (error) {
+    console.error("[API] Upload from URL error:", error);
+    res.status(500).json({ success: false, error: "Upload from URL failed" });
+  }
+});
+
+router.post("/api/upload/signed-url", authMiddleware, async (req, res) => {
+  try {
+    const { filename, contentType, folder } = req.body;
+
+    if (!filename) {
+      return res.status(400).json({ success: false, error: "filename is required" });
+    }
+
+    const result = await s3UploadService.getSignedUploadUrl(
+      filename,
+      contentType || "image/png",
+      folder || "uploads"
+    );
+
+    if (result.success) {
+      res.json({ success: true, uploadUrl: result.uploadUrl, key: result.key, url: result.url });
+    } else {
+      res.status(500).json({ success: false, error: result.error });
+    }
+  } catch (error) {
+    console.error("[API] Signed URL error:", error);
+    res.status(500).json({ success: false, error: "Failed to generate signed URL" });
+  }
+});
+
+// ========== 需要认证的 API ==========
+router.use('/api/auth', authRoutes);
+router.use('/api/projects', authMiddleware, projectRoutes);
+router.use('/api/users', authMiddleware, userRoutes);
+router.use('/api/credits', authMiddleware, creditRoutes);
+
+// ========== 需要认证的路由 ==========
 router.get("/conversations", authMiddleware, asyncHandler(async (req: Request, res: Response) => {
   const userId = req.user!.userId
   const conversations = await getConversations(userId)
@@ -101,31 +232,7 @@ router.delete("/conversations/:id/messages", authMiddleware, asyncHandler(async 
   res.json({ success: true })
 }))
 
-router.post("/api/image/generate", async (req, res) => {
-  try {
-    const { combinationTypeId, slotContents, settings } = req.body;
-
-    if (!combinationTypeId) {
-      return res.status(400).json({ success: false, error: "combinationTypeId is required" });
-    }
-
-    if (!slotContents || typeof slotContents !== "object") {
-      return res.status(400).json({ success: false, error: "slotContents is required" });
-    }
-
-    const result = await imageGenerationService.generate({
-      combinationTypeId,
-      slotContents,
-      settings: settings || { resolution: { width: 768, height: 1024 } },
-    });
-
-    res.json(result);
-  } catch (error) {
-    console.error("[API] Image generate error:", error);
-    res.status(500).json({ success: false, error: "Internal server error" });
-  }
-});
-
+// ========== 需要认证的流式 API ==========
 router.post("/api/chat", authMiddleware, async (req, res) => {
   try {
     const userId = req.user!.userId
@@ -226,79 +333,13 @@ router.post("/api/chat", authMiddleware, async (req, res) => {
   }
 });
 
-router.post("/api/upload", async (req, res) => {
-  try {
-    const { file, filename, contentType, folder } = req.body;
-
-    if (!file) {
-      return res.status(400).json({ success: false, error: "file is required (base64 encoded)" });
-    }
-
-    const buffer = Buffer.from(file, "base64");
-    const result = await s3UploadService.uploadFile(
-      buffer,
-      filename || "upload.png",
-      {
-        folder: folder || "uploads",
-        contentType: contentType || "image/png",
-      }
-    );
-
-    if (result.success) {
-      res.json({ success: true, url: result.url, key: result.key });
-    } else {
-      res.status(500).json({ success: false, error: result.error });
-    }
-  } catch (error) {
-    console.error("[API] Upload error:", error);
-    res.status(500).json({ success: false, error: "Upload failed" });
-  }
+// ========== 系统端点 ==========
+router.get("/health", (req, res) => {
+  res.json({ status: "ok" });
 });
 
-router.post("/api/upload/url", async (req, res) => {
-  try {
-    const { imageUrl, folder } = req.body;
-
-    if (!imageUrl) {
-      return res.status(400).json({ success: false, error: "imageUrl is required" });
-    }
-
-    const result = await s3UploadService.uploadFromUrl(imageUrl, folder || "ai-generated");
-
-    if (result.success) {
-      res.json({ success: true, url: result.url, key: result.key });
-    } else {
-      res.status(500).json({ success: false, error: result.error });
-    }
-  } catch (error) {
-    console.error("[API] Upload from URL error:", error);
-    res.status(500).json({ success: false, error: "Upload from URL failed" });
-  }
-});
-
-router.post("/api/upload/signed-url", async (req, res) => {
-  try {
-    const { filename, contentType, folder } = req.body;
-
-    if (!filename) {
-      return res.status(400).json({ success: false, error: "filename is required" });
-    }
-
-    const result = await s3UploadService.getSignedUploadUrl(
-      filename,
-      contentType || "image/png",
-      folder || "uploads"
-    );
-
-    if (result.success) {
-      res.json({ success: true, uploadUrl: result.uploadUrl, key: result.key, url: result.url });
-    } else {
-      res.status(500).json({ success: false, error: result.error });
-    }
-  } catch (error) {
-    console.error("[API] Signed URL error:", error);
-    res.status(500).json({ success: false, error: "Failed to generate signed URL" });
-  }
+router.get("/models", (req, res) => {
+  res.json({ models: [] });
 });
 
 export default router;
