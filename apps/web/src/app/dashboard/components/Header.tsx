@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react'
 import { ChevronDown, Globe, User as UserIcon } from 'lucide-react'
+import Link from 'next/link'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,7 +21,7 @@ const languages = [
 
 export function Header() {
   const [currentLang, setCurrentLang] = useState(languages[0])
-  const { isAuthenticated, openLoginModal } = useAuth()
+  const { isAuthenticated } = useAuth()
 
   return (
     <header className="w-full h-16 md:h-20 sticky top-0 z-50 bg-neutral-100 border-b border-neutral-200">
@@ -58,13 +59,13 @@ export function Header() {
               <UserMenu />
             </>
           ) : (
-            <button
-              onClick={openLoginModal}
+            <Link
+              href="/login"
               className="flex items-center gap-2 px-4 py-2 bg-neutral-950 rounded-lg hover:bg-neutral-800 transition-all text-sm font-medium text-white rounded-none"
             >
               <UserIcon className="w-4 h-4" />
               <span className="font-sans-zh">登录</span>
-            </button>
+            </Link>
           )}
         </div>
       </div>

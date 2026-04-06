@@ -27,7 +27,7 @@ interface CreditsState {
   closeConsumeModal: () => void
   openInsufficientModal: () => void
   closeInsufficientModal: () => void
-  consumeCredits: (token: string) => Promise<ConsumeResult>
+  consumeCredits: () => Promise<ConsumeResult>
 }
 
 export const useCredits = create<CreditsState>((set, get) => ({
@@ -53,7 +53,7 @@ export const useCredits = create<CreditsState>((set, get) => ({
     set({ isInsufficientModalOpen: false })
   },
 
-  consumeCredits: async (token: string) => {
+  consumeCredits: async () => {
     const { pendingConsume } = get()
     if (!pendingConsume) {
       return { success: false, balanceBefore: 0, balanceAfter: 0, error: 'No pending consume' }
@@ -64,10 +64,8 @@ export const useCredits = create<CreditsState>((set, get) => ({
     try {
       const res = await fetch(`${API_BASE}/api/credits/consume`, {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(pendingConsume),
       })
 

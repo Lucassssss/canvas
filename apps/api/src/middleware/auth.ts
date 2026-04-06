@@ -1,9 +1,12 @@
 import { Request, Response, NextFunction } from 'express'
 import jwt from 'jsonwebtoken'
-import db from '../services/database.js'
+import { db, tokenBlacklist } from '../db/index.js'
+import { eq } from 'drizzle-orm'
 import type { JWTPayload } from '../types/auth.js'
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-jwt-secret-change-in-production'
+const TOKEN_COOKIE_NAME = 'auth_token'
+const REFRESH_TOKEN_COOKIE_NAME = 'refresh_token'
 
 export function generateToken(userId: string, phone: string): { token: string; refreshToken: string; jti: string } {
   const jti = `jti_${Date.now()}_${Math.random().toString(36).substring(2)}`
@@ -32,27 +35,73 @@ export function verifyToken(token: string): JWTPayload | null {
   }
 }
 
-export function isTokenBlacklisted(jti: string): boolean {
-  const result = db.prepare('SELECT 1 FROM token_blacklist WHERE token_jti = ?').get(jti)
+export async function isTokenBlacklisted(jti: string): Promise<boolean> {
+  const [result] = await db.select().from(tokenBlacklist).where(eq(tokenBlacklist.tokenJti, jti))
   return !!result
 }
 
-export function blacklistToken(jti: string, expiresAt: number): void {
+export async function blacklistToken(jti: string, expiresAt: Date): Promise<void> {
   const id = `bl_${Date.now()}_${Math.random().toString(36).substring(2)}`
-  db.prepare(
-    'INSERT OR IGNORE INTO token_blacklist (id, token_jti, expires_at) VALUES (?, ?, ?)'
-  ).run(id, jti, expiresAt)
+  await db.insert(tokenBlacklist).values({
+    id,
+    tokenJti: jti,
+    expiresAt,
+  })
 }
 
-export function authMiddleware(req: Request, res: Response, next: NextFunction): void {
-  const authHeader = req.headers.authorization
+export function setAuthCookies(res: Response, token: string, refreshToken: string): void {
+  const isProd = process.env.NODE_ENV === 'production'
   
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+  res.cookie(TOKEN_COOKIE_NAME, token, {
+    httpOnly: true,
+    secure: isProd,
+    sameSite: 'lax',
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+    path: '/',
+  })
+  
+  res.cookie(REFRESH_TOKEN_COOKIE_NAME, refreshToken, {
+    httpOnly: true,
+    secure: isProd,
+    sameSite: 'lax',
+    maxAge: 30 * 24 * 60 * 60 * 1000,
+    path: '/',
+  })
+}
+
+export function clearAuthCookies(res: Response): void {
+  res.cookie(TOKEN_COOKIE_NAME, '', {
+    httpOnly: true,
+    maxAge: 0,
+    path: '/',
+  })
+  res.cookie(REFRESH_TOKEN_COOKIE_NAME, '', {
+    httpOnly: true,
+    maxAge: 0,
+    path: '/',
+  })
+}
+
+export function getTokenFromRequest(req: Request): string | null {
+  const cookieToken = req.cookies?.[TOKEN_COOKIE_NAME]
+  if (cookieToken) return cookieToken
+  
+  const authHeader = req.headers.authorization
+  if (authHeader?.startsWith('Bearer ')) {
+    return authHeader.substring(7)
+  }
+  
+  return null
+}
+
+export async function authMiddleware(req: Request, res: Response, next: NextFunction): Promise<void> {
+  const token = getTokenFromRequest(req)
+  
+  if (!token) {
     res.status(401).json({ error: '未授权访问' })
     return
   }
   
-  const token = authHeader.substring(7)
   const decoded = verifyToken(token)
   
   if (!decoded) {
@@ -60,7 +109,7 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction):
     return
   }
   
-  if (isTokenBlacklisted(decoded.jti)) {
+  if (await isTokenBlacklisted(decoded.jti)) {
     res.status(401).json({ error: 'Token 已失效' })
     return
   }
@@ -69,14 +118,13 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction):
   next()
 }
 
-export function optionalAuthMiddleware(req: Request, res: Response, next: NextFunction): void {
-  const authHeader = req.headers.authorization
+export async function optionalAuthMiddleware(req: Request, res: Response, next: NextFunction): Promise<void> {
+  const token = getTokenFromRequest(req)
   
-  if (authHeader && authHeader.startsWith('Bearer ')) {
-    const token = authHeader.substring(7)
+  if (token) {
     const decoded = verifyToken(token)
     
-    if (decoded && !isTokenBlacklisted(decoded.jti)) {
+    if (decoded && !(await isTokenBlacklisted(decoded.jti))) {
       req.user = decoded
     }
   }

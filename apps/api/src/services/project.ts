@@ -1,45 +1,21 @@
-/**
- * 项目管理服务层
- * 
- * 职责：
- * 1. 项目的 CRUD 操作
- * 2. 画布数据的持久化
- * 3. 项目与会话的关联管理
- * 
- * 数据流：
- * Frontend → API Routes → Project Service → Database
- */
-
 import { nanoid } from 'nanoid'
-import db from './database.js'
+import { db, projects, conversations, projectConversations, type CanvasData, CanvasDataSchema } from '../db/index.js'
+import { eq, desc, sql, and } from 'drizzle-orm'
 import type { 
   Project, 
   ProjectMetadata, 
-  CanvasData,
   CreateProjectParams,
   UpdateProjectParams
 } from '../types/index.js'
 
-/**
- * 生成唯一 ID
- * 使用 nanoid 生成短 ID
- */
 function generateId(): string {
   return nanoid()
 }
 
-/**
- * 创建新项目
- * 
- * @param params - 创建参数
- * @returns 创建的项目对象
- */
-export function createProject(params: CreateProjectParams = {}): Project {
+export async function createProject(params: CreateProjectParams = {}): Promise<Project> {
   const id = generateId()
-  const now = Date.now()
   const name = params.name || 'Untitled Project'
   
-  // 默认画布数据
   const defaultCanvasData: CanvasData = {
     shapes: [],
     viewport: { x: 0, y: 0, zoom: 1 },
@@ -47,25 +23,29 @@ export function createProject(params: CreateProjectParams = {}): Project {
   }
   
   const canvasData = params.canvasData || defaultCanvasData
+  const validatedCanvasData = CanvasDataSchema.parse(canvasData)
 
   console.log(`[Project Service] Creating project: ${name} (${id})`)
 
   try {
-    db.prepare(`
-      INSERT INTO projects (id, name, version, canvas_data, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?)
-    `).run(id, name, '1.0.0', JSON.stringify(canvasData), now, now)
+    await db.insert(projects).values({
+      id,
+      name,
+      canvasData: validatedCanvasData,
+    })
 
     console.log(`[Project Service] Project created successfully: ${id}`)
 
+    const [row] = await db.select().from(projects).where(eq(projects.id, id))
+
     return {
-      id,
-      name,
-      version: '1.0.0',
-      canvasData,
-      createdAt: now,
-      updatedAt: now,
-      conversations: []
+      id: row.id,
+      name: row.name,
+      version: row.version,
+      canvasData: row.canvasData,
+      thumbnail: row.thumbnail ?? undefined,
+      createdAt: row.createdAt.getTime(),
+      updatedAt: row.updatedAt.getTime(),
     }
   } catch (error) {
     console.error(`[Project Service] Failed to create project:`, error)
@@ -73,81 +53,73 @@ export function createProject(params: CreateProjectParams = {}): Project {
   }
 }
 
-/**
- * 获取所有项目（元数据）
- * 
- * @returns 项目元数据列表
- */
-export function getProjects(): ProjectMetadata[] {
+export async function getProjects(): Promise<ProjectMetadata[]> {
   console.log('[Project Service] Fetching all projects')
 
   try {
-    const rows = db.prepare(`
-      SELECT 
-        p.id, 
-        p.name, 
-        p.thumbnail, 
-        p.created_at as createdAt, 
-        p.updated_at as updatedAt,
-        COUNT(pc.conversation_id) as conversationCount
-      FROM projects p
-      LEFT JOIN project_conversations pc ON p.id = pc.project_id
-      GROUP BY p.id
-      ORDER BY p.updated_at DESC
-    `).all() as ProjectMetadata[]
+    const rows = await db.select({
+      id: projects.id,
+      name: projects.name,
+      thumbnail: projects.thumbnail,
+      createdAt: projects.createdAt,
+      updatedAt: projects.updatedAt,
+      conversationCount: sql<number>`count(${projectConversations.conversationId})`.as('conversationCount'),
+    })
+    .from(projects)
+    .leftJoin(projectConversations, eq(projects.id, projectConversations.projectId))
+    .groupBy(projects.id)
+    .orderBy(desc(projects.updatedAt))
 
     console.log(`[Project Service] Found ${rows.length} projects`)
-    return rows
+    return rows.map(row => ({
+      id: row.id,
+      name: row.name,
+      thumbnail: row.thumbnail ?? undefined,
+      createdAt: row.createdAt.getTime(),
+      updatedAt: row.updatedAt.getTime(),
+      conversationCount: Number(row.conversationCount),
+    }))
   } catch (error) {
     console.error('[Project Service] Failed to fetch projects:', error)
     throw error
   }
 }
 
-/**
- * 获取单个项目（完整数据）
- * 
- * @param id - 项目 ID
- * @returns 项目对象或 null
- */
-export function getProject(id: string): Project | null {
+export async function getProject(id: string): Promise<Project | null> {
   console.log(`[Project Service] Fetching project: ${id}`)
 
   try {
-    // 获取项目基本信息
-    const row = db.prepare(`
-      SELECT id, name, version, canvas_data, thumbnail, 
-             created_at as createdAt, updated_at as updatedAt
-      FROM projects
-      WHERE id = ?
-    `).get(id) as any
+    const [row] = await db.select().from(projects).where(eq(projects.id, id))
 
     if (!row) {
       console.log(`[Project Service] Project not found: ${id}`)
       return null
     }
 
-    // 获取关联的会话
-    const conversations = db.prepare(`
-      SELECT c.id, c.title, c.model, c.mode,
-             c.created_at as createdAt, c.updated_at as updatedAt
-      FROM conversations c
-      INNER JOIN project_conversations pc ON c.id = pc.conversation_id
-      WHERE pc.project_id = ?
-      ORDER BY c.updated_at DESC
-    `).all(id) as any[]
+    const convRows = await db.select({
+      id: conversations.id,
+      title: conversations.title,
+      model: conversations.model,
+      mode: conversations.mode,
+      createdAt: conversations.createdAt,
+      updatedAt: conversations.updatedAt,
+    })
+    .from(conversations)
+    .innerJoin(projectConversations, eq(conversations.id, projectConversations.conversationId))
+    .where(eq(projectConversations.projectId, id))
+    .orderBy(desc(conversations.updatedAt))
 
-    console.log(`[Project Service] Project found with ${conversations.length} conversations`)
+    console.log(`[Project Service] Project found with ${convRows.length} conversations`)
 
     return {
       id: row.id,
       name: row.name,
       version: row.version,
-      canvasData: JSON.parse(row.canvas_data),
-      thumbnail: row.thumbnail,
-      createdAt: row.createdAt,
-      updatedAt: row.updatedAt,
-      conversations
+      canvasData: row.canvasData,
+      thumbnail: row.thumbnail ?? undefined,
+      createdAt: row.createdAt.getTime(),
+      updatedAt: row.updatedAt.getTime(),
+      conversations: convRows,
     }
   } catch (error) {
     console.error(`[Project Service] Failed to fetch project ${id}:`, error)
@@ -155,170 +127,125 @@ export function getProject(id: string): Project | null {
   }
 }
 
-/**
- * 更新项目
- * 
- * @param id - 项目 ID
- * @param params - 更新参数
- */
-export function updateProject(id: string, params: UpdateProjectParams): void {
+export async function updateProject(id: string, params: UpdateProjectParams): Promise<void> {
   console.log(`[Project Service] Updating project: ${id}`, {
     hasName: !!params.name,
     hasCanvasData: !!params.canvasData,
     hasThumbnail: !!params.thumbnail
   })
 
-  const updates: string[] = []
-  const values: any[] = []
+  const updateData: Record<string, unknown> = {}
 
   if (params.name !== undefined) {
-    updates.push('name = ?')
-    values.push(params.name)
+    updateData.name = params.name
   }
 
   if (params.canvasData !== undefined) {
-    updates.push('canvas_data = ?')
-    values.push(JSON.stringify(params.canvasData))
+    updateData.canvasData = CanvasDataSchema.parse(params.canvasData)
   }
 
   if (params.thumbnail !== undefined) {
-    updates.push('thumbnail = ?')
-    values.push(params.thumbnail)
+    updateData.thumbnail = params.thumbnail
   }
 
-  if (updates.length === 0) {
+  if (Object.keys(updateData).length === 0) {
     console.log('[Project Service] No updates to apply')
     return
   }
 
-  // 总是更新 updated_at
-  updates.push('updated_at = ?')
-  values.push(Date.now())
-  values.push(id)
-
   try {
-    const result = db.prepare(
-      `UPDATE projects SET ${updates.join(', ')} WHERE id = ?`
-    ).run(...values)
+    await db.update(projects)
+      .set(updateData)
+      .where(eq(projects.id, id))
 
-    console.log(`[Project Service] Project updated: ${id}, changes: ${result.changes}`)
+    console.log(`[Project Service] Project updated: ${id}`)
   } catch (error) {
     console.error(`[Project Service] Failed to update project ${id}:`, error)
     throw error
   }
 }
 
-/**
- * 删除项目
- * 注意：会级联删除关联的会话关系，但不会删除会话本身
- * 
- * @param id - 项目 ID
- */
-export function deleteProject(id: string): void {
+export async function deleteProject(id: string): Promise<void> {
   console.log(`[Project Service] Deleting project: ${id}`)
 
   try {
-    // 先删除关联关系
-    db.prepare('DELETE FROM project_conversations WHERE project_id = ?').run(id)
+    await db.delete(projectConversations)
+      .where(eq(projectConversations.projectId, id))
     
-    // 再删除项目
-    const result = db.prepare('DELETE FROM projects WHERE id = ?').run(id)
+    await db.delete(projects)
+      .where(eq(projects.id, id))
 
-    console.log(`[Project Service] Project deleted: ${id}, changes: ${result.changes}`)
+    console.log(`[Project Service] Project deleted: ${id}`)
   } catch (error) {
     console.error(`[Project Service] Failed to delete project ${id}:`, error)
     throw error
   }
 }
 
-/**
- * 保存画布数据（快速保存接口）
- * 
- * @param projectId - 项目 ID
- * @param canvasData - 画布数据
- */
-export function saveCanvasData(projectId: string, canvasData: CanvasData): void {
+export async function saveCanvasData(projectId: string, canvasData: CanvasData): Promise<void> {
   console.log(`[Project Service] Saving canvas data for project: ${projectId}`)
 
   try {
-    const result = db.prepare(`
-      UPDATE projects 
-      SET canvas_data = ?, updated_at = ? 
-      WHERE id = ?
-    `).run(JSON.stringify(canvasData), Date.now(), projectId)
+    const validatedData = CanvasDataSchema.parse(canvasData)
+    
+    await db.update(projects)
+      .set({ canvasData: validatedData })
+      .where(eq(projects.id, projectId))
 
-    console.log(`[Project Service] Canvas data saved: ${projectId}, changes: ${result.changes}`)
+    console.log(`[Project Service] Canvas data saved: ${projectId}`)
   } catch (error) {
     console.error(`[Project Service] Failed to save canvas data for ${projectId}:`, error)
     throw error
   }
 }
 
-/**
- * 获取项目的会话列表
- * 
- * @param projectId - 项目 ID
- * @returns 会话列表
- */
-export function getProjectConversations(projectId: string): any[] {
+export async function getProjectConversations(projectId: string): Promise<any[]> {
   console.log(`[Project Service] Fetching conversations for project: ${projectId}`)
 
   try {
-    const conversations = db.prepare(`
-      SELECT c.id, c.title, c.model, c.mode,
-             c.created_at as createdAt, c.updated_at as updatedAt
-      FROM conversations c
-      INNER JOIN project_conversations pc ON c.id = pc.conversation_id
-      WHERE pc.project_id = ?
-      ORDER BY c.updated_at DESC
-    `).all(projectId) as any[]
+    const rows = await db.select({
+      id: conversations.id,
+      title: conversations.title,
+      model: conversations.model,
+      mode: conversations.mode,
+      createdAt: conversations.createdAt,
+      updatedAt: conversations.updatedAt,
+    })
+    .from(conversations)
+    .innerJoin(projectConversations, eq(conversations.id, projectConversations.conversationId))
+    .where(eq(projectConversations.projectId, projectId))
+    .orderBy(desc(conversations.updatedAt))
 
-    console.log(`[Project Service] Found ${conversations.length} conversations`)
-    return conversations
+    console.log(`[Project Service] Found ${rows.length} conversations`)
+    return rows
   } catch (error) {
     console.error(`[Project Service] Failed to fetch conversations for ${projectId}:`, error)
     throw error
   }
 }
 
-/**
- * 为项目创建新会话
- * 
- * @param projectId - 项目 ID
- * @param title - 会话标题
- * @param model - 模型名称
- * @returns 新会话的 ID
- */
-export function createProjectConversation(
+export async function createProjectConversation(
   projectId: string,
   title?: string,
   model?: string
-): string {
+): Promise<string> {
   const conversationId = generateId()
-  const now = Date.now()
 
   console.log(`[Project Service] Creating conversation for project ${projectId}: ${title || 'New Conversation'}`)
 
   try {
-    // 创建会话
-    db.prepare(`
-      INSERT INTO conversations (id, title, model, mode, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?)
-    `).run(
-      conversationId,
-      title || 'New Conversation',
-      model || 'deepseek/deepseek-chat',
-      'agent',
-      now,
-      now
-    )
+    await db.insert(conversations).values({
+      id: conversationId,
+      title: title || 'New Conversation',
+      model: model || 'deepseek/deepseek-chat',
+    })
 
-    // 关联到项目
     const linkId = generateId()
-    db.prepare(`
-      INSERT INTO project_conversations (id, project_id, conversation_id, created_at)
-      VALUES (?, ?, ?, ?)
-    `).run(linkId, projectId, conversationId, now)
+    await db.insert(projectConversations).values({
+      id: linkId,
+      projectId,
+      conversationId,
+    })
 
     console.log(`[Project Service] Conversation created and linked: ${conversationId}`)
     return conversationId
@@ -328,24 +255,19 @@ export function createProjectConversation(
   }
 }
 
-/**
- * 关联现有会话到项目
- * 
- * @param projectId - 项目 ID
- * @param conversationId - 会话 ID
- */
-export function linkConversationToProject(
+export async function linkConversationToProject(
   projectId: string,
   conversationId: string
-): void {
+): Promise<void> {
   console.log(`[Project Service] Linking conversation ${conversationId} to project ${projectId}`)
 
   try {
     const id = generateId()
-    db.prepare(`
-      INSERT OR IGNORE INTO project_conversations (id, project_id, conversation_id, created_at)
-      VALUES (?, ?, ?, ?)
-    `).run(id, projectId, conversationId, Date.now())
+    await db.insert(projectConversations).values({
+      id,
+      projectId,
+      conversationId,
+    })
 
     console.log('[Project Service] Conversation linked successfully')
   } catch (error) {
@@ -354,26 +276,22 @@ export function linkConversationToProject(
   }
 }
 
-/**
- * 取消会话与项目的关联
- * 注意：不会删除会话本身，只删除关联关系
- * 
- * @param projectId - 项目 ID
- * @param conversationId - 会话 ID
- */
-export function unlinkConversationFromProject(
+export async function unlinkConversationFromProject(
   projectId: string,
   conversationId: string
-): void {
+): Promise<void> {
   console.log(`[Project Service] Unlinking conversation ${conversationId} from project ${projectId}`)
 
   try {
-    const result = db.prepare(`
-      DELETE FROM project_conversations 
-      WHERE project_id = ? AND conversation_id = ?
-    `).run(projectId, conversationId)
+    await db.delete(projectConversations)
+      .where(
+        and(
+          eq(projectConversations.projectId, projectId),
+          eq(projectConversations.conversationId, conversationId)
+        )
+      )
 
-    console.log(`[Project Service] Conversation unlinked, changes: ${result.changes}`)
+    console.log('[Project Service] Conversation unlinked')
   } catch (error) {
     console.error(`[Project Service] Failed to unlink conversation:`, error)
     throw error

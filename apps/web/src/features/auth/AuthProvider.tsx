@@ -1,24 +1,23 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
-import { LoginModal } from './LoginModal'
+import React, { useEffect, useState, useRef } from 'react'
 import { useAuth } from './useAuth'
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const { fetchUser, token } = useAuth()
-  const [isHydrated, setIsHydrated] = useState(false)
+  const { fetchUser } = useAuth()
+  const [mounted, setMounted] = useState(false)
+  const hasFetched = useRef(false)
 
   useEffect(() => {
-    setIsHydrated(true)
-    if (token) {
-      fetchUser()
-    }
-  }, [token, fetchUser])
+    setMounted(true)
+    if (hasFetched.current) return
+    hasFetched.current = true
+    fetchUser()
+  }, [fetchUser])
 
-  return (
-    <>
-      {children}
-      {isHydrated && <LoginModal />}
-    </>
-  )
+  if (!mounted) {
+    return null
+  }
+
+  return <>{children}</>
 }

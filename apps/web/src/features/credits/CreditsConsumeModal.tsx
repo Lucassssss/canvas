@@ -20,7 +20,7 @@ interface CreditsConsumeModalProps {
 }
 
 export function CreditsConsumeModal({ onSuccess, onInsufficient }: CreditsConsumeModalProps) {
-  const { token, user } = useAuth()
+  const { user } = useAuth()
   const { 
     isModalOpen, 
     closeConsumeModal, 
@@ -30,9 +30,7 @@ export function CreditsConsumeModal({ onSuccess, onInsufficient }: CreditsConsum
   } = useCredits()
 
   const handleConfirm = async () => {
-    if (!token) return
-
-    const result = await consumeCredits(token)
+    const result = await consumeCredits()
     
     if (result.success) {
       onSuccess?.()
