@@ -9,6 +9,7 @@ import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
+  TooltipProvider,
 } from '@/components/ui/tooltip'
 import {
   Sheet,
@@ -55,39 +56,41 @@ export function LeftSidebar() {
     <>
       {/* PC Sidebar - hidden on mobile/tablet, shown on lg+ */}
       <div className="hidden lg:flex sidebar-left">
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              onClick={handleNewProject}
-              disabled={isCreating}
-              className="sidebar-left-btn disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <Plus size={20} className={isCreating ? 'animate-spin' : ''} />
-            </button>
-          </TooltipTrigger>
-          <TooltipContent side='right'>
-            <p>{isCreating ? '创建中...' : '新建'}</p>
-          </TooltipContent>
-        </Tooltip>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={handleNewProject}
+                disabled={isCreating}
+                className="sidebar-left-btn disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Plus size={20} className={isCreating ? 'animate-spin' : ''} />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side='right'>
+              <p>{isCreating ? '创建中...' : '新建'}</p>
+            </TooltipContent>
+          </Tooltip>
 
-        {navItems.map((item) => {
-          const Icon = item.icon
-          return (
-            <Tooltip key={item.href}>
-              <TooltipTrigger asChild>
-                <Link
-                  href={item.href}
-                  className={`sidebar-left-btn ${isActive(item.href) ? 'active' : ''}`}
-                >
-                  <Icon size={20} />
-                </Link>
-              </TooltipTrigger>
-              <TooltipContent side='right'>
-                <p>{item.label}</p>
-              </TooltipContent>
-            </Tooltip>
-          )
-        })}
+          {navItems.map((item) => {
+            const Icon = item.icon
+            return (
+              <Tooltip key={item.href}>
+                <TooltipTrigger asChild>
+                  <Link
+                    href={item.href}
+                    className={`sidebar-left-btn ${isActive(item.href) ? 'active' : ''}`}
+                  >
+                    <Icon size={20} />
+                  </Link>
+                </TooltipTrigger>
+                <TooltipContent side='right'>
+                  <p>{item.label}</p>
+                </TooltipContent>
+              </Tooltip>
+            )
+          })}
+        </TooltipProvider>
       </div>
 
       {/* Mobile Menu Button */}
