@@ -1,10 +1,11 @@
-import db from '../database.js'
+import { db, users, creditTransactions, usageLogs } from '../../db/index.js'
+import { eq, desc } from 'drizzle-orm'
 import { nanoid } from 'nanoid'
 import { getUserById } from '../auth/index.js'
 import type { CreditsInfo, CreditTransaction, UsageLog, ConsumeCreditsResponse } from '../../types/auth.js'
 
-export function getCreditsInfo(userId: string): CreditsInfo | null {
-  const user = getUserById(userId)
+export async function getCreditsInfo(userId: string): Promise<CreditsInfo | null> {
+  const user = await getUserById(userId)
   if (!user) return null
   
   return {
@@ -13,62 +14,50 @@ export function getCreditsInfo(userId: string): CreditsInfo | null {
   }
 }
 
-export function getTransactions(userId: string, limit = 50, offset = 0): CreditTransaction[] {
-  const rows = db.prepare(
-    'SELECT * FROM credit_transactions WHERE user_id = ? ORDER BY created_at DESC LIMIT ? OFFSET ?'
-  ).all(userId, limit, offset) as Array<{
-    id: string
-    user_id: string
-    type: 'purchase' | 'consume' | 'refund' | 'gift' | 'admin' | 'signup'
-    amount: number
-    balance_before: number
-    balance_after: number
-    description: string | null
-    created_at: number
-  }>
+export async function getTransactions(userId: string, limit = 50, offset = 0): Promise<CreditTransaction[]> {
+  const rows = await db.select().from(creditTransactions)
+    .where(eq(creditTransactions.userId, userId))
+    .orderBy(desc(creditTransactions.createdAt))
+    .limit(limit)
+    .offset(offset)
   
   return rows.map(row => ({
     id: row.id,
-    userId: row.user_id,
+    userId: row.userId,
     type: row.type,
     amount: row.amount,
-    balanceBefore: row.balance_before,
-    balanceAfter: row.balance_after,
-    description: row.description || undefined,
-    createdAt: row.created_at,
+    balanceBefore: row.balanceBefore,
+    balanceAfter: row.balanceAfter,
+    description: row.description ?? undefined,
+    createdAt: row.createdAt.getTime(),
   }))
 }
 
-export function getUsageLogs(userId: string, limit = 50, offset = 0): UsageLog[] {
-  const rows = db.prepare(
-    'SELECT * FROM usage_logs WHERE user_id = ? ORDER BY created_at DESC LIMIT ? OFFSET ?'
-  ).all(userId, limit, offset) as Array<{
-    id: string
-    user_id: string
-    action: string
-    credits_cost: number
-    details: string | null
-    created_at: number
-  }>
+export async function getUsageLogs(userId: string, limit = 50, offset = 0): Promise<UsageLog[]> {
+  const rows = await db.select().from(usageLogs)
+    .where(eq(usageLogs.userId, userId))
+    .orderBy(desc(usageLogs.createdAt))
+    .limit(limit)
+    .offset(offset)
   
   return rows.map(row => ({
     id: row.id,
-    userId: row.user_id,
+    userId: row.userId,
     action: row.action,
-    creditsCost: row.credits_cost,
-    details: row.details || undefined,
-    createdAt: row.created_at,
+    creditsCost: row.creditsCost ?? 0,
+    details: row.details ?? undefined,
+    createdAt: row.createdAt.getTime(),
   }))
 }
 
-export function consumeCredits(
+export async function consumeCredits(
   userId: string,
   amount: number,
   action: string,
   description: string,
   details?: Record<string, unknown>
-): ConsumeCreditsResponse {
-  const user = getUserById(userId)
+): Promise<ConsumeCreditsResponse> {
+  const user = await getUserById(userId)
   if (!user) {
     return { success: false, balanceBefore: 0, balanceAfter: 0, error: '用户不存在' }
   }
@@ -84,50 +73,88 @@ export function consumeCredits(
   
   const balanceBefore = user.credits
   const balanceAfter = user.credits - amount
-  const now = Date.now()
   
-  db.prepare('UPDATE users SET credits = ?, credits_used = credits_used + ?, updated_at = ? WHERE id = ?')
-    .run(balanceAfter, amount, now, userId)
-  
-  const transactionId = `ct_${nanoid(12)}`
-  db.prepare(
-    'INSERT INTO credit_transactions (id, user_id, type, amount, balance_before, balance_after, description, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
-  ).run(transactionId, userId, 'consume', -amount, balanceBefore, balanceAfter, description, now)
-  
-  const logId = `ul_${nanoid(12)}`
-  const detailsJson = details ? JSON.stringify(details) : null
-  db.prepare(
-    'INSERT INTO usage_logs (id, user_id, action, credits_cost, details, created_at) VALUES (?, ?, ?, ?, ?, ?)'
-  ).run(logId, userId, action, amount, detailsJson, now)
-  
-  return {
-    success: true,
-    balanceBefore,
-    balanceAfter,
-    transactionId,
+  try {
+    await db.transaction(async (tx) => {
+      await tx.update(users)
+        .set({ 
+          credits: balanceAfter, 
+          creditsUsed: user.creditsUsed + amount, 
+        })
+        .where(eq(users.id, userId))
+      
+      const transactionId = `ct_${nanoid(12)}`
+      await tx.insert(creditTransactions).values({
+        id: transactionId,
+        userId,
+        type: 'consume',
+        amount: -amount,
+        balanceBefore,
+        balanceAfter,
+        description,
+      })
+      
+      const logId = `ul_${nanoid(12)}`
+      const detailsJson = details ? JSON.stringify(details) : null
+      await tx.insert(usageLogs).values({
+        id: logId,
+        userId,
+        action,
+        creditsCost: amount,
+        details: detailsJson,
+      })
+    })
+    
+    return {
+      success: true,
+      balanceBefore,
+      balanceAfter,
+      transactionId: `ct_${nanoid(12)}`,
+    }
+  } catch (error) {
+    console.error('[Credits] Consume credits transaction failed:', error)
+    return {
+      success: false,
+      balanceBefore,
+      balanceAfter: balanceBefore,
+      error: '积分消费失败，请重试',
+    }
   }
 }
 
-export function addCredits(
+export async function addCredits(
   userId: string,
   amount: number,
   type: 'purchase' | 'gift' | 'admin' | 'refund',
   description: string
-): CreditsInfo | null {
-  const user = getUserById(userId)
+): Promise<CreditsInfo | null> {
+  const user = await getUserById(userId)
   if (!user) return null
   
   const balanceBefore = user.credits
   const balanceAfter = user.credits + amount
-  const now = Date.now()
   
-  db.prepare('UPDATE users SET credits = ?, updated_at = ? WHERE id = ?')
-    .run(balanceAfter, now, userId)
-  
-  const transactionId = `ct_${nanoid(12)}`
-  db.prepare(
-    'INSERT INTO credit_transactions (id, user_id, type, amount, balance_before, balance_after, description, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
-  ).run(transactionId, userId, type, amount, balanceBefore, balanceAfter, description, now)
-  
-  return { balance: balanceAfter, used: user.creditsUsed }
+  try {
+    await db.transaction(async (tx) => {
+      await tx.update(users)
+        .set({ credits: balanceAfter })
+        .where(eq(users.id, userId))
+      
+      const transactionId = `ct_${nanoid(12)}`
+      await tx.insert(creditTransactions).values({
+        id: transactionId,
+        userId,
+        type,
+        amount,
+        balanceBefore,
+        balanceAfter,
+        description,
+      })
+    })
+    
+    return { balance: balanceAfter, used: user.creditsUsed }
+  } catch (error) {
+    console.error('[Credits] Add credits transaction failed:', error)
+    return null
+  }
 }

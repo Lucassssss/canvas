@@ -1,118 +1,124 @@
-import { generateObject, generateText, ModelMessage } from "ai";
-import { nanoid } from "nanoid";
-import { z } from "zod";
-import db from "./database.js";
-import type { Conversation, Message } from "../types/index.js";
+import { nanoid } from "nanoid"
+import { db, conversations, messages } from '../db/index.js'
+import { eq, asc } from 'drizzle-orm'
+import type { Conversation, Message } from "../types/index.js"
 
 function generateId(): string {
-  return nanoid();
+  return nanoid()
 }
 
-export function createConversation(title?: string, model?: string, mode?: string): Conversation {
-  const id = generateId();
-  const now = Date.now();
-  const defaultTitle = title || "New Conversation";
+export async function createConversation(title?: string, model?: string, mode?: string): Promise<Conversation> {
+  const id = generateId()
+  const defaultTitle = title || "New Conversation"
 
-  db.prepare(`
-    INSERT INTO conversations (id, title, model, mode, created_at, updated_at)
-    VALUES (?, ?, ?, ?, ?, ?)
-  `).run(id, defaultTitle, model || "deepseek/deepseek-chat", mode || "agent", now, now);
-
-  return {
+  await db.insert(conversations).values({
     id,
     title: defaultTitle,
     model: model || "deepseek/deepseek-chat",
     mode: mode || "agent",
-    createdAt: now,
-    updatedAt: now,
-  };
-}
+  })
 
-export function getConversations(): Conversation[] {
-  const rows = db.prepare(`
-    SELECT id, title, model, mode, created_at as createdAt, updated_at as updatedAt
-    FROM conversations
-    ORDER BY updated_at DESC
-  `).all() as Conversation[];
-  return rows;
-}
-
-export function getConversation(id: string): Conversation | null {
-  const row = db.prepare(`
-    SELECT id, title, model, mode, created_at as createdAt, updated_at as updatedAt
-    FROM conversations
-    WHERE id = ?
-  `).get(id) as Conversation | undefined;
-  return row || null;
-}
-
-export function updateConversation(id: string, data: Partial<Pick<Conversation, "title" | "model" | "mode">>): void {
-  const updates: string[] = [];
-  const values: any[] = [];
-
-  if (data.title !== undefined) {
-    updates.push("title = ?");
-    values.push(data.title);
-  }
-  if (data.model !== undefined) {
-    updates.push("model = ?");
-    values.push(data.model);
-  }
-  if (data.mode !== undefined) {
-    updates.push("mode = ?");
-    values.push(data.mode);
-  }
-
-  if (updates.length > 0) {
-    updates.push("updated_at = ?");
-    values.push(Date.now());
-    values.push(id);
-
-    db.prepare(`UPDATE conversations SET ${updates.join(", ")} WHERE id = ?`).run(...values);
-  }
-}
-
-export function deleteConversation(id: string): void {
-  db.prepare("DELETE FROM messages WHERE conversation_id = ?").run(id);
-  db.prepare("DELETE FROM conversations WHERE id = ?").run(id);
-}
-
-export function getMessages(conversationId: string): Message[] {
-  const rows = db.prepare(`
-    SELECT id, conversation_id as conversationId, role, content, created_at as createdAt
-    FROM messages
-    WHERE conversation_id = ?
-    ORDER BY created_at ASC
-  `).all(conversationId) as Message[];
-  return rows;
-}
-
-export function addMessage(conversationId: string, role: "user" | "assistant" | "system", content: string): Message {
-  const id = generateId();
-  const now = Date.now();
-
-  db.prepare(`
-    INSERT INTO messages (id, conversation_id, role, content, created_at)
-    VALUES (?, ?, ?, ?, ?)
-  `).run(id, conversationId, role, content, now);
-
-  db.prepare(`UPDATE conversations SET updated_at = ? WHERE id = ?`).run(now, conversationId);
+  const [row] = await db.select().from(conversations).where(eq(conversations.id, id))
 
   return {
+    id: row.id,
+    title: row.title,
+    model: row.model,
+    mode: row.mode,
+    createdAt: row.createdAt.getTime(),
+    updatedAt: row.updatedAt.getTime(),
+  }
+}
+
+export async function getConversations(): Promise<Conversation[]> {
+  const rows = await db.select().from(conversations)
+  return rows.map(row => ({
+    id: row.id,
+    title: row.title,
+    model: row.model,
+    mode: row.mode,
+    createdAt: row.createdAt.getTime(),
+    updatedAt: row.updatedAt.getTime(),
+  }))
+}
+
+export async function getConversation(id: string): Promise<Conversation | null> {
+  const [row] = await db.select().from(conversations).where(eq(conversations.id, id))
+  if (!row) return null
+  return {
+    id: row.id,
+    title: row.title,
+    model: row.model,
+    mode: row.mode,
+    createdAt: row.createdAt.getTime(),
+    updatedAt: row.updatedAt.getTime(),
+  }
+}
+
+export async function updateConversation(id: string, data: Partial<Pick<Conversation, "title" | "model" | "mode">>): Promise<void> {
+  const updateData: Record<string, unknown> = {}
+
+  if (data.title !== undefined) {
+    updateData.title = data.title
+  }
+  if (data.model !== undefined) {
+    updateData.model = data.model
+  }
+  if (data.mode !== undefined) {
+    updateData.mode = data.mode
+  }
+
+  if (Object.keys(updateData).length > 0) {
+    await db.update(conversations).set(updateData).where(eq(conversations.id, id))
+  }
+}
+
+export async function deleteConversation(id: string): Promise<void> {
+  await db.delete(messages).where(eq(messages.conversationId, id))
+  await db.delete(conversations).where(eq(conversations.id, id))
+}
+
+export async function getMessages(conversationId: string): Promise<Message[]> {
+  const rows = await db.select()
+    .from(messages)
+    .where(eq(messages.conversationId, conversationId))
+    .orderBy(asc(messages.createdAt))
+  return rows.map(row => ({
+    id: row.id,
+    conversationId: row.conversationId,
+    role: row.role,
+    content: row.content,
+    createdAt: row.createdAt.getTime(),
+  }))
+}
+
+export async function addMessage(conversationId: string, role: "user" | "assistant" | "system", content: string): Promise<Message> {
+  const id = generateId()
+
+  await db.insert(messages).values({
     id,
     conversationId,
     role,
     content,
-    createdAt: now,
-  };
+  })
+
+  const [row] = await db.select().from(messages).where(eq(messages.id, id))
+
+  return {
+    id: row.id,
+    conversationId: row.conversationId,
+    role: row.role,
+    content: row.content,
+    createdAt: row.createdAt.getTime(),
+  }
 }
 
-export function clearMessages(conversationId: string): void {
-  db.prepare("DELETE FROM messages WHERE conversation_id = ?").run(conversationId);
-  db.prepare(`UPDATE conversations SET updated_at = ? WHERE id = ?`).run(Date.now(), conversationId);
+export async function clearMessages(conversationId: string): Promise<void> {
+  await db.delete(messages).where(eq(messages.conversationId, conversationId))
 }
 
 export async function generateTitle(userMessage: string): Promise<string> {
+  const { generateText } = await import('ai')
   const { text } = await generateText({
     model: "deepseek/deepseek-chat",
     messages: [
@@ -122,14 +128,14 @@ export async function generateTitle(userMessage: string): Promise<string> {
       }
     ],
     maxOutputTokens: 50,
-  });
+  })
 
-  return text.trim().slice(0, 50);
+  return text.trim().slice(0, 50)
 }
 
-export function convertToUIMessages(messages: Message[]): ModelMessage[] {
-  return messages.map((msg) => ({
-    role: msg.role as "user" | "assistant" | "system",
+export function convertToUIMessages(msgs: Message[]): { role: "user" | "assistant" | "system"; content: string }[] {
+  return msgs.map((msg) => ({
+    role: msg.role,
     content: msg.content,
-  }));
+  }))
 }

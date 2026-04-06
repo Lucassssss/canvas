@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express'
 import { sendVerificationCode } from '../services/sms/index.js'
 import { loginWithCode, logout, getUserById } from '../services/auth/index.js'
-import { authMiddleware } from '../middleware/auth.js'
+import { authMiddleware, setAuthCookies, clearAuthCookies } from '../middleware/auth.js'
 
 const router = Router()
 
@@ -26,7 +26,7 @@ router.post('/send-code', async (req: Request, res: Response) => {
   }
 })
 
-router.post('/verify-code', (req: Request, res: Response) => {
+router.post('/verify-code', async (req: Request, res: Response) => {
   try {
     const { phone, code } = req.body
     
@@ -34,10 +34,11 @@ router.post('/verify-code', (req: Request, res: Response) => {
       return res.status(400).json({ success: false, error: '手机号和验证码不能为空' })
     }
     
-    const result = loginWithCode(phone, code)
+    const result = await loginWithCode(phone, code)
     
     if (result.success) {
-      res.json(result)
+      setAuthCookies(res, result.token!, result.refreshToken!)
+      res.json({ success: true, user: result.user })
     } else {
       res.status(401).json(result)
     }
@@ -52,6 +53,7 @@ router.post('/logout', authMiddleware, (req: Request, res: Response) => {
     if (req.user) {
       logout(req.user.jti, req.user.exp)
     }
+    clearAuthCookies(res)
     res.json({ success: true })
   } catch (error) {
     console.error('[Auth] Logout error:', error)
@@ -59,13 +61,13 @@ router.post('/logout', authMiddleware, (req: Request, res: Response) => {
   }
 })
 
-router.get('/me', authMiddleware, (req: Request, res: Response) => {
+router.get('/me', authMiddleware, async (req: Request, res: Response) => {
   try {
     if (!req.user) {
       return res.status(401).json({ error: '未授权' })
     }
     
-    const user = getUserById(req.user.userId)
+    const user = await getUserById(req.user.userId)
     
     if (!user) {
       return res.status(404).json({ error: '用户不存在' })

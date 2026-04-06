@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useState, useCallback } from 'react'
+import React, { useEffect, useState, useCallback, useRef } from 'react'
 import { LeftSidebar } from '@/components/LeftSidebar'
 import { PageHeader } from '@/components/PageHeader'
 import { useAuth } from '@/features/auth/useAuth'
@@ -37,17 +37,18 @@ const ACTION_LABELS: Record<string, string> = {
 }
 
 export default function ProfilePage() {
-  const { user, isAuthenticated, isLoading: authLoading, token, fetchUser } = useAuth()
+  const { user, isAuthenticated, isLoading: authLoading, fetchUser } = useAuth()
   const router = useRouter()
   const [isEditing, setIsEditing] = useState(false)
   const [nickname, setNickname] = useState('')
   const [isSaving, setIsSaving] = useState(false)
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [isLoadingData, setIsLoadingData] = useState(false)
+  const hasFetchedData = useRef(false)
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
-      router.push('/')
+      router.push('/login')
     }
   }, [isAuthenticated, authLoading, router])
 
@@ -58,16 +59,14 @@ export default function ProfilePage() {
   }, [user])
 
   const fetchData = useCallback(async () => {
-    if (!token) return
+    if (hasFetchedData.current) return
+    hasFetchedData.current = true
     
     setIsLoadingData(true)
     try {
-      const headers = {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      }
-
-      const res = await fetch(`${API_BASE}/api/users/transactions`, { headers })
+      const res = await fetch(`${API_BASE}/api/users/transactions`, {
+        credentials: 'include',
+      })
 
       if (res.ok) {
         const data = await res.json()
@@ -78,7 +77,7 @@ export default function ProfilePage() {
     } finally {
       setIsLoadingData(false)
     }
-  }, [token])
+  }, [])
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -87,16 +86,14 @@ export default function ProfilePage() {
   }, [isAuthenticated, fetchData])
 
   const handleSaveNickname = async () => {
-    if (!token || !nickname.trim()) return
+    if (!nickname.trim()) return
 
     setIsSaving(true)
     try {
       const res = await fetch(`${API_BASE}/api/users/profile`, {
         method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ nickname: nickname.trim() }),
       })
 

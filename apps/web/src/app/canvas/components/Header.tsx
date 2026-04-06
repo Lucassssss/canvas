@@ -8,7 +8,7 @@ import { UserMenu } from '@/components/UserMenu'
 import Link from 'next/link'
 
 export const Header: React.FC = () => {
-  const { isAuthenticated, openLoginModal, token } = useAuth()
+  const { isAuthenticated, token } = useAuth()
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
@@ -47,13 +47,13 @@ export const Header: React.FC = () => {
             <UserMenu />
           </>
         ) : (
-          <button
-            onClick={openLoginModal}
+          <Link
+            href="/login"
             className="flex items-center gap-2 px-3 py-1.5 bg-neutral-900 rounded-lg hover:bg-neutral-800 transition-all text-sm font-medium text-white"
           >
             <User className="w-4 h-4" />
             <span>登录 / 注册</span>
-          </button>
+          </Link>
         )}
       </div>
     </header>

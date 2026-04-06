@@ -28,6 +28,7 @@ class DetailImageService {
     try {
       const response = await fetch(`${API_BASE_URL}/api/detail-image/ai-write`, {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(params),
       })
@@ -69,6 +70,7 @@ class DetailImageService {
     try {
       const response = await fetch(`${API_BASE_URL}/api/detail-image/generate`, {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(params),
       })
@@ -96,7 +98,7 @@ class DetailImageService {
 
       `**目标平台：** 未明确\n\n**风格名称：** 街头潮流风\n\n## 视觉风格\n锐利、立体、视觉冲击力强的先锋艺术影栅风格，强调现代感与个性化表达。\n\n## 整组图统一场景\n专业摄影棚，利用硬朗的侧光勾勒产品轮廓，搭配抽象的几何道具，强调3D立体感。\n\n## 产品信息\n**产品名称：** 待定\n**核心卖点：** 突破平面的视觉艺术\n**适用人群：** 时尚先锋`,
 
-      `**目标平台：** 未明确\n\n**风格名称：** 自然生活美学\n\n## 视觉风格\n温暖、自然、生活化的美学风格，运用自然光线与有机材质，传递品质生活感受。\n\n## 整组图统一场景\n北欧简约家居环境，搭配原木家具与绿植，打造温暖宜人的生活场景。\n\n## 产品信息\n**产品名称：** 待定\n**核心卖点：** 自然材质，舒适体验\n**适用人群：** 注重品质生活的现代人`,
+      `**目标平台：** 未明确\n\n**风格名称：** 自然生活美学\n\n## 视觉风格\n温暖，自然、生活化的美学风格，运用自然光线与有机材质，传递品质生活感受。\n\n## 整组图统一场景\n北欧简约家居环境，搭配原木家具与绿植，打造温暖宜人的生活场景。\n\n## 产品信息\n**产品名称：** 待定\n**核心卖点：** 自然材质，舒适体验\n**适用人群：** 注重品质生活的现代人`,
     ]
     return suggestions[index - 1] || suggestions[0]
   }
@@ -115,6 +117,7 @@ export async function getAIWritingOptions(
   try {
     const response = await fetch(`${API_BASE_URL}/api/detail-image/writing-options`, {
       method: 'POST',
+      credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         field,

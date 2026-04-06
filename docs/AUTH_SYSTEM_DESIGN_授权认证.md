@@ -181,8 +181,9 @@ BASE_URL="your_base_url"
 
 | 变量名               | 说明           | 配置位置        |
 | ----------------- | ------------ | ----------- |
-| `JWT_SECRET`      | JWT 签名密钥     | 待添加到 `.env` |
+| `JWT_SECRET`      | JWT 签名密钥     | `apps/api/.env` |
 | `SMS_CODE_LENGTH` | 验证码长度 (默认 6) | 可选配置        |
+| `FRONTEND_URL`    | 前端 URL（用于 CORS） | `apps/api/.env` |
 
 ***
 
@@ -645,11 +646,37 @@ interface VerificationCode {
 
 | 措施            | 说明               |
 | ------------- | ---------------- |
+| **HttpOnly Cookie** | Token 存储在 HttpOnly Cookie 中，JavaScript 无法访问，防止 XSS 攻击 |
+| **Secure Cookie** | 生产环境强制使用 Secure flag，仅在 HTTPS 下传输 |
+| **SameSite=Lax** | Cookie 设置 SameSite=Lax，防止 CSRF 攻击 |
 | JWT 有效期       | Access Token 7 天 |
 | Refresh Token | 有效期 30 天，只能使用一次  |
 | Token 黑名单     | 登出时加入黑名单         |
-| Token 窃取检测    | 敏感操作需重新验证        |
 | HTTPS 强制      | 生产环境强制 HTTPS     |
+
+#### Cookie 配置详情
+
+```javascript
+// Access Token Cookie
+{
+  name: 'auth_token',
+  httpOnly: true,
+  secure: process.env.NODE_ENV === 'production',
+  sameSite: 'lax',
+  maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+  path: '/'
+}
+
+// Refresh Token Cookie
+{
+  name: 'refresh_token', 
+  httpOnly: true,
+  secure: process.env.NODE_ENV === 'production',
+  sameSite: 'lax',
+  maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+  path: '/'
+}
+```
 
 ### 8.4 业务安全
 
@@ -797,6 +824,7 @@ apps/web/src/
 
 | 版本     | 日期         | 修改人       | 修改内容                        |
 | ------ | ---------- | --------- | --------------------------- |
+| v1.4.0 | 2026-04-06 | AI Agent  | 认证改为 HttpOnly Cookie 方案，增强安全性      |
 | v1.3.0 | 2026-04-06 | AI Agent  | 完成MVP后端API实现：认证、用户、积分系统      |
 | v1.2.0 | 2026-04-05 | AI Agent  | 更新实施进度，完成前端登录UI与个人中心模块      |
 | v1.1.0 | 2026-04-05 | Joii Team | UI部分前置，环境变量已配置说明，MVP与P1阶段分离 |

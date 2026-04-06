@@ -1,9 +1,10 @@
-import db from '../database.js'
+import { db, users } from '../../db/index.js'
+import { eq } from 'drizzle-orm'
 import { getUserById } from '../auth/index.js'
 import type { UserProfile } from '../../types/auth.js'
 
-export function getUserProfile(userId: string): UserProfile | null {
-  const user = getUserById(userId)
+export async function getUserProfile(userId: string): Promise<UserProfile | null> {
+  const user = await getUserById(userId)
   if (!user) return null
   
   return {
@@ -14,24 +15,24 @@ export function getUserProfile(userId: string): UserProfile | null {
   }
 }
 
-export function updateUserProfile(
+export async function updateUserProfile(
   userId: string,
   data: { nickname?: string; avatarUrl?: string }
-): UserProfile | null {
-  const user = getUserById(userId)
+): Promise<UserProfile | null> {
+  const user = await getUserById(userId)
   if (!user) return null
   
-  const now = Date.now()
-  
   if (data.nickname !== undefined) {
-    db.prepare('UPDATE users SET nickname = ?, updated_at = ? WHERE id = ?')
-      .run(data.nickname, now, userId)
+    await db.update(users)
+      .set({ nickname: data.nickname })
+      .where(eq(users.id, userId))
   }
   
   if (data.avatarUrl !== undefined) {
-    db.prepare('UPDATE users SET avatar_url = ?, updated_at = ? WHERE id = ?')
-      .run(data.avatarUrl, now, userId)
+    await db.update(users)
+      .set({ avatarUrl: data.avatarUrl })
+      .where(eq(users.id, userId))
   }
   
-  return getUserProfile(userId)
+  return await getUserProfile(userId)
 }
