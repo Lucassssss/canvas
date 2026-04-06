@@ -44,8 +44,13 @@ export async function createProject(params: CreateProjectParams = {}): Promise<P
       version: row.version,
       canvasData: row.canvasData,
       thumbnail: row.thumbnail ?? undefined,
+<<<<<<< HEAD
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
+=======
+      createdAt: row.createdAt.getTime(),
+      updatedAt: row.updatedAt.getTime(),
+>>>>>>> f7e873ab38e83ee7e1a16d1443497857c815bc76
     }
   } catch (error) {
     console.error(`[Project Service] Failed to create project:`, error)
@@ -75,8 +80,13 @@ export async function getProjects(): Promise<ProjectMetadata[]> {
       id: row.id,
       name: row.name,
       thumbnail: row.thumbnail ?? undefined,
+<<<<<<< HEAD
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
+=======
+      createdAt: row.createdAt.getTime(),
+      updatedAt: row.updatedAt.getTime(),
+>>>>>>> f7e873ab38e83ee7e1a16d1443497857c815bc76
       conversationCount: Number(row.conversationCount),
     }))
   } catch (error) {
@@ -117,8 +127,13 @@ export async function getProject(id: string): Promise<Project | null> {
       version: row.version,
       canvasData: row.canvasData,
       thumbnail: row.thumbnail ?? undefined,
+<<<<<<< HEAD
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
+=======
+      createdAt: row.createdAt.getTime(),
+      updatedAt: row.updatedAt.getTime(),
+>>>>>>> f7e873ab38e83ee7e1a16d1443497857c815bc76
       conversations: convRows,
     }
   } catch (error) {
