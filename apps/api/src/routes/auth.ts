@@ -1,53 +1,19 @@
+/**
+ * 认证 API 路由 (需要认证的端点)
+ * 
+ * 公开端点 (/api/auth/send-code, /api/auth/verify-code) 
+ * 已移至 routes/index.ts 中直接处理
+ */
 import { Router, Request, Response } from 'express'
-import { sendVerificationCode } from '../services/sms/index.js'
-import { loginWithCode, logout, getUserById } from '../services/auth/index.js'
+import { logout, getUserById } from '../services/auth/index.js'
 import { authMiddleware, setAuthCookies, clearAuthCookies } from '../middleware/auth.js'
 
 const router = Router()
 
-router.post('/send-code', async (req: Request, res: Response) => {
-  try {
-    const { phone } = req.body
-    
-    if (!phone) {
-      return res.status(400).json({ success: false, message: '手机号不能为空' })
-    }
-    
-    const result = await sendVerificationCode(phone)
-    
-    if (result.success) {
-      res.json(result)
-    } else {
-      res.status(400).json(result)
-    }
-  } catch (error) {
-    console.error('[Auth] Send code error:', error)
-    res.status(500).json({ success: false, message: '发送验证码失败' })
-  }
-})
-
-router.post('/verify-code', async (req: Request, res: Response) => {
-  try {
-    const { phone, code } = req.body
-    
-    if (!phone || !code) {
-      return res.status(400).json({ success: false, error: '手机号和验证码不能为空' })
-    }
-    
-    const result = await loginWithCode(phone, code)
-    
-    if (result.success) {
-      setAuthCookies(res, result.token!, result.refreshToken!)
-      res.json({ success: true, user: result.user })
-    } else {
-      res.status(401).json(result)
-    }
-  } catch (error) {
-    console.error('[Auth] Verify code error:', error)
-    res.status(500).json({ success: false, error: '登录失败' })
-  }
-})
-
+/**
+ * POST /api/auth/logout
+ * 退出登录 (需要认证)
+ */
 router.post('/logout', authMiddleware, (req: Request, res: Response) => {
   try {
     if (req.user) {
@@ -61,6 +27,10 @@ router.post('/logout', authMiddleware, (req: Request, res: Response) => {
   }
 })
 
+/**
+ * GET /api/auth/me
+ * 获取当前用户信息 (需要认证)
+ */
 router.get('/me', authMiddleware, async (req: Request, res: Response) => {
   try {
     if (!req.user) {

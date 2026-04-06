@@ -1,21 +1,23 @@
 /**
  * 项目管理 API 路由
  * 
+ * 注意：此路由模块已挂载在 /api/projects 前缀下
+ * 认证由主路由统一处理
+ * 
  * 端点列表：
- * - GET    /api/projects              获取用户的所有项目列表
- * - GET    /api/projects/:id          获取单个项目详情
- * - POST   /api/projects              创建新项目
- * - PUT    /api/projects/:id          更新项目
- * - DELETE /api/projects/:id          删除项目
- * - PUT    /api/projects/:id/canvas   保存画布数据
- * - GET    /api/projects/:id/conversations              获取项目的会话列表
- * - POST   /api/projects/:id/conversations             为项目创建新会话
- * - POST   /api/projects/:id/conversations/:convId     关联现有会话到项目
- * - DELETE /api/projects/:id/conversations/:convId     取消会话关联
+ * - GET    /projects              获取用户的所有项目列表
+ * - GET    /projects/:id          获取单个项目详情
+ * - POST   /projects              创建新项目
+ * - PUT    /projects/:id          更新项目
+ * - DELETE /projects/:id          删除项目
+ * - PUT    /projects/:id/canvas   保存画布数据
+ * - GET    /projects/:id/conversations              获取项目的会话列表
+ * - POST   /projects/:id/conversations             为项目创建新会话
+ * - POST   /projects/:id/conversations/:convId     关联现有会话到项目
+ * - DELETE /projects/:id/conversations/:convId     取消会话关联
  */
 
 import { Router, Request, Response, NextFunction } from 'express'
-import { authMiddleware } from '../middleware/auth.js'
 import * as projectService from '../services/project.js'
 
 const router = Router()
@@ -26,14 +28,12 @@ function asyncHandler<T extends (...args: any[]) => Promise<any>>(fn: T) {
   }
 }
 
-router.use(authMiddleware)
-
 /**
- * GET /api/projects
+ * GET /projects
  * 获取当前用户的所有项目列表（元数据）
  */
-router.get('/projects', asyncHandler(async (req: Request, res: Response) => {
-  console.log('[API] GET /api/projects')
+router.get('/', asyncHandler(async (req: Request, res: Response) => {
+  console.log('[API] GET /projects')
   
   const userId = req.user!.userId
   
@@ -50,13 +50,13 @@ router.get('/projects', asyncHandler(async (req: Request, res: Response) => {
 }))
 
 /**
- * GET /api/projects/:id
+ * GET /projects/:id
  * 获取单个项目详情（包含画布数据和会话列表）
  */
-router.get('/projects/:id', asyncHandler(async (req: Request, res: Response) => {
+router.get('/:id', asyncHandler(async (req: Request, res: Response) => {
   const { id } = req.params
   const userId = req.user!.userId
-  console.log(`[API] GET /api/projects/${id}`)
+  console.log(`[API] GET /projects/${id}`)
 
   try {
     const project = await projectService.getProject(userId, id)
@@ -79,13 +79,13 @@ router.get('/projects/:id', asyncHandler(async (req: Request, res: Response) => 
 }))
 
 /**
- * POST /api/projects
+ * POST /projects
  * 创建新项目
  * 
  * Body: { name?: string, canvasData?: CanvasData }
  */
-router.post('/projects', asyncHandler(async (req: Request, res: Response) => {
-  console.log('[API] POST /api/projects', req.body)
+router.post('/', asyncHandler(async (req: Request, res: Response) => {
+  console.log('[API] POST /projects', req.body)
 
   const userId = req.user!.userId
 
@@ -104,15 +104,15 @@ router.post('/projects', asyncHandler(async (req: Request, res: Response) => {
 }))
 
 /**
- * PUT /api/projects/:id
+ * PUT /projects/:id
  * 更新项目
  * 
  * Body: { name?: string, canvasData?: CanvasData, thumbnail?: string }
  */
-router.put('/projects/:id', asyncHandler(async (req: Request, res: Response) => {
+router.put('/:id', asyncHandler(async (req: Request, res: Response) => {
   const { id } = req.params
   const userId = req.user!.userId
-  console.log(`[API] PUT /api/projects/${id}`, {
+  console.log(`[API] PUT /projects/${id}`, {
     hasName: !!req.body.name,
     hasCanvasData: !!req.body.canvasData,
     hasThumbnail: !!req.body.thumbnail
@@ -140,13 +140,13 @@ router.put('/projects/:id', asyncHandler(async (req: Request, res: Response) => 
 }))
 
 /**
- * DELETE /api/projects/:id
+ * DELETE /projects/:id
  * 删除项目
  */
-router.delete('/projects/:id', asyncHandler(async (req: Request, res: Response) => {
+router.delete('/:id', asyncHandler(async (req: Request, res: Response) => {
   const { id } = req.params
   const userId = req.user!.userId
-  console.log(`[API] DELETE /api/projects/${id}`)
+  console.log(`[API] DELETE /projects/${id}`)
 
   try {
     await projectService.deleteProject(userId, id)
@@ -169,15 +169,15 @@ router.delete('/projects/:id', asyncHandler(async (req: Request, res: Response) 
 }))
 
 /**
- * PUT /api/projects/:id/canvas
+ * PUT /projects/:id/canvas
  * 保存画布数据（快速保存接口）
  * 
  * Body: { canvasData: CanvasData }
  */
-router.put('/projects/:id/canvas', asyncHandler(async (req: Request, res: Response) => {
+router.put('/:id/canvas', asyncHandler(async (req: Request, res: Response) => {
   const { id } = req.params
   const userId = req.user!.userId
-  console.log(`[API] PUT /api/projects/${id}/canvas`)
+  console.log(`[API] PUT /projects/${id}/canvas`)
 
   try {
     const { canvasData } = req.body
@@ -208,13 +208,13 @@ router.put('/projects/:id/canvas', asyncHandler(async (req: Request, res: Respon
 }))
 
 /**
- * GET /api/projects/:id/conversations
+ * GET /projects/:id/conversations
  * 获取项目的会话列表
  */
-router.get('/projects/:id/conversations', asyncHandler(async (req: Request, res: Response) => {
+router.get('/:id/conversations', asyncHandler(async (req: Request, res: Response) => {
   const { id } = req.params
   const userId = req.user!.userId
-  console.log(`[API] GET /api/projects/${id}/conversations`)
+  console.log(`[API] GET /projects/${id}/conversations`)
 
   try {
     const conversations = await projectService.getProjectConversations(userId, id)
@@ -233,15 +233,15 @@ router.get('/projects/:id/conversations', asyncHandler(async (req: Request, res:
 }))
 
 /**
- * POST /api/projects/:id/conversations
+ * POST /projects/:id/conversations
  * 为项目创建新会话
  * 
  * Body: { title?: string, model?: string }
  */
-router.post('/projects/:id/conversations', asyncHandler(async (req: Request, res: Response) => {
+router.post('/:id/conversations', asyncHandler(async (req: Request, res: Response) => {
   const { id } = req.params
   const userId = req.user!.userId
-  console.log(`[API] POST /api/projects/${id}/conversations`, req.body)
+  console.log(`[API] POST /projects/${id}/conversations`, req.body)
 
   try {
     const { title, model } = req.body
@@ -262,13 +262,13 @@ router.post('/projects/:id/conversations', asyncHandler(async (req: Request, res
 }))
 
 /**
- * POST /api/projects/:id/conversations/:convId
+ * POST /projects/:id/conversations/:convId
  * 关联现有会话到项目
  */
-router.post('/projects/:id/conversations/:convId', asyncHandler(async (req: Request, res: Response) => {
+router.post('/:id/conversations/:convId', asyncHandler(async (req: Request, res: Response) => {
   const { id, convId } = req.params
   const userId = req.user!.userId
-  console.log(`[API] POST /api/projects/${id}/conversations/${convId}`)
+  console.log(`[API] POST /projects/${id}/conversations/${convId}`)
 
   try {
     await projectService.linkConversationToProject(userId, id, convId)
@@ -292,13 +292,13 @@ router.post('/projects/:id/conversations/:convId', asyncHandler(async (req: Requ
 }))
 
 /**
- * DELETE /api/projects/:id/conversations/:convId
+ * DELETE /projects/:id/conversations/:convId
  * 取消会话与项目的关联
  */
-router.delete('/projects/:id/conversations/:convId', asyncHandler(async (req: Request, res: Response) => {
+router.delete('/:id/conversations/:convId', asyncHandler(async (req: Request, res: Response) => {
   const { id, convId } = req.params
   const userId = req.user!.userId
-  console.log(`[API] DELETE /api/projects/${id}/conversations/${convId}`)
+  console.log(`[API] DELETE /projects/${id}/conversations/${convId}`)
 
   try {
     await projectService.unlinkConversationFromProject(userId, id, convId)
