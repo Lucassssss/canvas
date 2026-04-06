@@ -33,6 +33,8 @@ export interface CanvasData {
 export interface Project {
   /** 项目唯一标识 */
   id: string
+  /** 用户ID */
+  userId: string
   /** 项目名称 */
   name: string
   /** 项目版本号 */
@@ -55,6 +57,8 @@ export interface Project {
 export interface ProjectMetadata {
   /** 项目唯一标识 */
   id: string
+  /** 用户ID */
+  userId: string
   /** 项目名称 */
   name: string
   /** 缩略图 */

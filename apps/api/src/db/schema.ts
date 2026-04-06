@@ -37,12 +37,14 @@ export const users = pgTable('users', {
 
 export const conversations = pgTable('conversations', {
   id: text('id').primaryKey(),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   title: text('title').notNull().default('New Conversation'),
   model: text('model').notNull().default('deepseek/deepseek-chat'),
   mode: projectModeEnum('mode').default('agent').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 }, (table) => ({
+  userIdIdx: index('idx_conversations_user_id').on(table.userId),
   updatedAtIdx: index('idx_conversations_updated_at').on(table.updatedAt),
 }))
 
@@ -58,6 +60,7 @@ export const messages = pgTable('messages', {
 
 export const projects = pgTable('projects', {
   id: text('id').primaryKey(),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   name: text('name').notNull().default('Untitled Project'),
   version: text('version').notNull().default('1.0.0'),
   canvasData: json('canvas_data').$type<CanvasData>().notNull(),
@@ -65,6 +68,7 @@ export const projects = pgTable('projects', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 }, (table) => ({
+  userIdIdx: index('idx_projects_user_id').on(table.userId),
   updatedAtIdx: index('idx_projects_updated_at').on(table.updatedAt),
 }))
 

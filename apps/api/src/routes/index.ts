@@ -1,6 +1,5 @@
-import { Router } from "express";
-import { generateText } from "ai";
-import { deepseek } from "@ai-sdk/deepseek";
+import { Router, Request, Response, NextFunction } from "express";
+import { authMiddleware } from "../middleware/auth.js";
 import { runChat } from "../services/llm.js";
 import { imageGenerationService, s3UploadService } from "../services/image/index.js";
 import {
@@ -35,45 +34,72 @@ router.get("/models", (req, res) => {
   res.json({ models: [] });
 });
 
-router.get("/conversations", (req, res) => {
-  const conversations = getConversations();
-  res.json({ conversations });
-});
-
-router.get("/conversations/:id", (req, res) => {
-  const conversation = getConversation(req.params.id);
-  if (!conversation) {
-    return res.status(404).json({ error: "Conversation not found" });
+function asyncHandler<T extends (...args: any[]) => Promise<any>>(fn: T) {
+  return (req: Request, res: Response, next: NextFunction) => {
+    Promise.resolve(fn(req, res, next)).catch(next)
   }
-  res.json({ conversation });
-});
+}
 
-router.post("/conversations", async (req, res) => {
-  const { title, model, mode } = req.body;
-  const conversation = createConversation(title, model, mode);
-  res.status(201).json({ conversation });
-});
+router.get("/conversations", authMiddleware, asyncHandler(async (req: Request, res: Response) => {
+  const userId = req.user!.userId
+  const conversations = await getConversations(userId)
+  res.json({ conversations })
+}))
 
-router.put("/conversations/:id", (req, res) => {
-  const { title, model, mode } = req.body;
-  updateConversation(req.params.id, { title, model, mode });
-  res.json({ success: true });
-});
+router.get("/conversations/:id", authMiddleware, asyncHandler(async (req: Request, res: Response) => {
+  const userId = req.user!.userId
+  const conversation = await getConversation(userId, req.params.id)
+  if (!conversation) {
+    return res.status(404).json({ error: "Conversation not found" })
+  }
+  res.json({ conversation })
+}))
 
-router.delete("/conversations/:id", (req, res) => {
-  deleteConversation(req.params.id);
-  res.json({ success: true });
-});
+router.post("/conversations", authMiddleware, asyncHandler(async (req: Request, res: Response) => {
+  const userId = req.user!.userId
+  const { title, model, mode } = req.body
+  const conversation = await createConversation(userId, title, model, mode)
+  res.status(201).json({ conversation })
+}))
 
-router.get("/conversations/:id/messages", (req, res) => {
-  const messages = getMessages(req.params.id);
-  res.json({ conversationId: req.params.id, messages });
-});
+router.put("/conversations/:id", authMiddleware, asyncHandler(async (req: Request, res: Response) => {
+  const userId = req.user!.userId
+  const { title, model, mode } = req.body
+  try {
+    await updateConversation(userId, req.params.id, { title, model, mode })
+    res.json({ success: true })
+  } catch (error: any) {
+    if (error.message === 'Conversation not found') {
+      res.status(404).json({ error: 'Conversation not found' })
+    } else {
+      throw error
+    }
+  }
+}))
 
-router.delete("/conversations/:id/messages", (req, res) => {
-  clearMessages(req.params.id);
-  res.json({ success: true });
-});
+router.delete("/conversations/:id", authMiddleware, asyncHandler(async (req: Request, res: Response) => {
+  const userId = req.user!.userId
+  try {
+    await deleteConversation(userId, req.params.id)
+    res.json({ success: true })
+  } catch (error: any) {
+    if (error.message === 'Conversation not found') {
+      res.status(404).json({ error: 'Conversation not found' })
+    } else {
+      throw error
+    }
+  }
+}))
+
+router.get("/conversations/:id/messages", authMiddleware, asyncHandler(async (req: Request, res: Response) => {
+  const messages = await getMessages(req.params.id)
+  res.json({ conversationId: req.params.id, messages })
+}))
+
+router.delete("/conversations/:id/messages", authMiddleware, asyncHandler(async (req: Request, res: Response) => {
+  await clearMessages(req.params.id)
+  res.json({ success: true })
+}))
 
 router.post("/api/image/generate", async (req, res) => {
   try {
@@ -100,8 +126,9 @@ router.post("/api/image/generate", async (req, res) => {
   }
 });
 
-router.post("/api/chat", async (req, res) => {
+router.post("/api/chat", authMiddleware, async (req, res) => {
   try {
+    const userId = req.user!.userId
     res.setHeader("Content-Type", "text/event-stream");
     res.setHeader("Cache-Control", "no-cache");
     res.setHeader("Connection", "keep-alive");
@@ -120,12 +147,12 @@ router.post("/api/chat", async (req, res) => {
     let currentConversationId = conversationId;
 
     if (!currentConversationId) {
-      const newConversation = await createConversation(undefined, modelName, mode);
+      const newConversation = await createConversation(userId, undefined, modelName, mode);
       currentConversationId = newConversation.id;
       res.write(`data: ${JSON.stringify({ type: "conversation_created", id: newConversation.id })}\n\n`);
     }
 
-    const conversation = await getConversation(currentConversationId);
+    const conversation = await getConversation(userId, currentConversationId);
     if (!conversation) {
       return res.status(404).json({ error: "Conversation not found" });
     }
@@ -177,7 +204,7 @@ router.post("/api/chat", async (req, res) => {
       const currentMessages = await getMessages(currentConversationId);
       if (currentMessages.length === 2) {
         const title = await generateTitle(lastUserMessage);
-        await updateConversation(currentConversationId, { title });
+        await updateConversation(userId, currentConversationId, { title });
         res.write(`data: ${JSON.stringify({ type: "title_generated", title })}\n\n`);
       }
     } catch (error) {
