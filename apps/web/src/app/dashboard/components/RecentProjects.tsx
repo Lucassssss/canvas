@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { ChevronRight } from 'lucide-react'
 import { ProjectCard } from '@/components/ProjectCard'
@@ -9,6 +9,7 @@ import { useProjectStore } from '@/store/project-store'
 export function RecentProjects() {
   const router = useRouter()
   const [isCreating, setIsCreating] = useState(false)
+  const hasLoaded = useRef(false)
   
   const projects = useProjectStore((state) => state.projects)
   const loadProjects = useProjectStore((state) => state.loadProjects)
@@ -17,6 +18,8 @@ export function RecentProjects() {
   const updateProjectName = useProjectStore((state) => state.updateProjectName)
 
   useEffect(() => {
+    if (hasLoaded.current) return
+    hasLoaded.current = true
     loadProjects()
   }, [loadProjects])
 

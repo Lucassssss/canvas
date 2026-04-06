@@ -1,4 +1,5 @@
-import db from '../database.js'
+import { db, verificationCodes } from '../../db/index.js'
+import { eq, and, gt, isNull, sql } from 'drizzle-orm'
 import { nanoid } from 'nanoid'
 
 const SMS_CODE_LENGTH = parseInt(process.env.SMS_CODE_LENGTH || '6')
@@ -15,13 +16,19 @@ export async function sendVerificationCode(phone: string): Promise<SendCodeResul
     return { success: false, message: '手机号格式不正确' }
   }
   
-  const now = Date.now()
-  const oneMinuteAgo = now - 60 * 1000
-  const recentCodes = db.prepare(
-    'SELECT COUNT(*) as count FROM verification_codes WHERE phone = ? AND created_at > ?'
-  ).get(phone, oneMinuteAgo) as { count: number }
+  const oneMinuteAgo = new Date(Date.now() - 60 * 1000)
   
-  if (recentCodes.count >= 3) {
+  const recentCodes = await db.select({ count: sql<number>`count(*)` })
+    .from(verificationCodes)
+    .where(
+      and(
+        eq(verificationCodes.phone, phone),
+        gt(verificationCodes.createdAt, oneMinuteAgo)
+      )
+    )
+    .limit(1)
+  
+  if (recentCodes[0] && recentCodes[0].count >= 3) {
     return { success: false, message: '发送过于频繁，请稍后再试' }
   }
   
@@ -29,16 +36,24 @@ export async function sendVerificationCode(phone: string): Promise<SendCodeResul
     Math.floor(Math.random() * 10).toString()
   ).join('')
   
-  db.prepare(
-    'UPDATE verification_codes SET used_at = ? WHERE phone = ? AND used_at IS NULL'
-  ).run(now, phone)
+  await db.update(verificationCodes)
+    .set({ usedAt: new Date() })
+    .where(
+      and(
+        eq(verificationCodes.phone, phone),
+        isNull(verificationCodes.usedAt)
+      )
+    )
   
   const id = `vc_${nanoid(12)}`
-  const expiresAt = now + SMS_CODE_EXPIRY_MS
+  const expiresAt = new Date(Date.now() + SMS_CODE_EXPIRY_MS)
   
-  db.prepare(
-    'INSERT INTO verification_codes (id, phone, code, expires_at) VALUES (?, ?, ?, ?)'
-  ).run(id, phone, code, expiresAt)
+  await db.insert(verificationCodes).values({
+    id,
+    phone,
+    code,
+    expiresAt,
+  })
   
   if (process.env.SMS_PROVIDER === 'aliyun') {
     await sendViaAliyun(phone, code)
@@ -63,25 +78,41 @@ async function sendViaAliyun(phone: string, code: string): Promise<void> {
   console.log(`[SMS] Sending via Aliyun to ${phone} with code ${code}`)
 }
 
-export function verifyCode(phone: string, code: string): boolean {
-  const now = Date.now()
+export async function verifyCode(phone: string, code: string): Promise<boolean> {
+  const now = new Date()
   
-  const record = db.prepare(
-    'SELECT * FROM verification_codes WHERE phone = ? AND code = ? AND expires_at > ? AND used_at IS NULL ORDER BY created_at DESC LIMIT 1'
-  ).get(phone, code, now) as { id: string; attempts?: number } | undefined
+  const [record] = await db.select()
+    .from(verificationCodes)
+    .where(
+      and(
+        eq(verificationCodes.phone, phone),
+        eq(verificationCodes.code, code),
+        gt(verificationCodes.expiresAt, now),
+        isNull(verificationCodes.usedAt)
+      )
+    )
+    .orderBy(verificationCodes.createdAt)
+    .limit(1)
   
   if (!record) {
     return false
   }
   
-  db.prepare('UPDATE verification_codes SET used_at = ? WHERE id = ?').run(now, record.id)
+  await db.update(verificationCodes)
+    .set({ usedAt: now })
+    .where(eq(verificationCodes.id, record.id))
   
   return true
 }
 
-export function invalidateCode(phone: string): void {
-  const now = Date.now()
-  db.prepare(
-    'UPDATE verification_codes SET used_at = ? WHERE phone = ? AND used_at IS NULL'
-  ).run(now, phone)
+export async function invalidateCode(phone: string): Promise<void> {
+  const now = new Date()
+  await db.update(verificationCodes)
+    .set({ usedAt: now })
+    .where(
+      and(
+        eq(verificationCodes.phone, phone),
+        isNull(verificationCodes.usedAt)
+      )
+    )
 }

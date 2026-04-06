@@ -12,7 +12,7 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (isAuthenticated) {
-      router.push('/')
+      router.push('/dashboard')
     }
   }, [isAuthenticated, router])
 
@@ -44,7 +44,7 @@ export default function LoginPage() {
           </div>
 
           <div className="bg-white border border-neutral-200 p-8">
-            <LoginForm onSuccess={() => router.push('/')} />
+            <LoginForm onSuccess={() => router.push('/dashboard')} />
           </div>
 
           <p className="font-sans-zh text-xs text-neutral-400 text-center mt-6">

@@ -8,7 +8,7 @@ import { CreditsBadge } from '@/components/CreditsBadge'
 import { UserMenu } from '@/components/UserMenu'
 
 export function NavbarCN() {
-  const { isAuthenticated, openLoginModal } = useAuth()
+  const { isAuthenticated } = useAuth()
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
@@ -37,12 +37,12 @@ export function NavbarCN() {
             </>
           ) : (
             <>
-              <button 
-                onClick={openLoginModal}
+              <Link 
+                href="/login"
                 className="font-sans-zh text-sm text-neutral-500 hover:text-neutral-950 transition-colors hidden md:block"
               >
                 登录 / 注册
-              </button>
+              </Link>
               <Link href="/dashboard" className="inline-flex items-center gap-2 px-5 py-2.5 bg-neutral-950 text-white font-sans-zh text-sm hover:bg-neutral-800 transition-colors">
                 <span>开始免费使用</span>
                 <ArrowRight className="w-3 h-3" />

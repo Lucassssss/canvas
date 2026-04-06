@@ -17,10 +17,10 @@ export function addToHistory(
 ): void {
   let history = conversationHistories.get(sessionId);
   if (!history) {
-    history = { messages: [], lastUpdated: Date.now() };
+    history = { messages: [], lastUpdated: new Date() };
     conversationHistories.set(sessionId, history);
   }
-  history.messages.push({ role, content, timestamp: Date.now() });
+  history.messages.push({ role, content, timestamp: new Date() });
   if (history.messages.length > MAX_HISTORY_LENGTH) {
     history.messages = history.messages.slice(-MAX_HISTORY_LENGTH);
   }

@@ -1,4 +1,5 @@
-import db from '../database.js'
+import { db, users, creditTransactions } from '../../db/index.js'
+import { eq } from 'drizzle-orm'
 import { nanoid } from 'nanoid'
 import { generateToken, blacklistToken } from '../../middleware/auth.js'
 import { verifyCode, invalidateCode } from '../sms/index.js'
@@ -6,93 +7,72 @@ import type { User, VerifyCodeResponse } from '../../types/auth.js'
 
 const SIGNUP_CREDITS = 100
 
-export function getUserById(userId: string): User | null {
-  const row = db.prepare('SELECT * FROM users WHERE id = ?').get(userId) as {
-    id: string
-    phone: string
-    nickname: string | null
-    avatar_url: string | null
-    credits: number
-    credits_used: number
-    vip_level: 'free' | 'pro' | 'enterprise'
-    vip_expires_at: number | null
-    created_at: number
-    updated_at: number
-  } | undefined
+export async function getUserById(userId: string): Promise<User | null> {
+  const [row] = await db.select().from(users).where(eq(users.id, userId))
   
   if (!row) return null
   
   return {
     id: row.id,
     phone: row.phone,
-    nickname: row.nickname || undefined,
-    avatarUrl: row.avatar_url || undefined,
+    nickname: row.nickname ?? undefined,
+    avatarUrl: row.avatarUrl ?? undefined,
     credits: row.credits,
-    creditsUsed: row.credits_used,
-    vipLevel: row.vip_level,
-    vipExpiresAt: row.vip_expires_at || undefined,
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
+    creditsUsed: row.creditsUsed,
+    vipLevel: row.vipLevel,
+    vipExpiresAt: row.vipExpiresAt?.getTime() ?? undefined,
+    createdAt: row.createdAt.getTime(),
+    updatedAt: row.updatedAt.getTime(),
   }
 }
 
-export function getUserByPhone(phone: string): User | null {
-  const row = db.prepare('SELECT * FROM users WHERE phone = ?').get(phone) as {
-    id: string
-    phone: string
-    nickname: string | null
-    avatar_url: string | null
-    credits: number
-    credits_used: number
-    vip_level: 'free' | 'pro' | 'enterprise'
-    vip_expires_at: number | null
-    created_at: number
-    updated_at: number
-  } | undefined
+export async function getUserByPhone(phone: string): Promise<User | null> {
+  const [row] = await db.select().from(users).where(eq(users.phone, phone))
   
   if (!row) return null
   
   return {
     id: row.id,
     phone: row.phone,
-    nickname: row.nickname || undefined,
-    avatarUrl: row.avatar_url || undefined,
+    nickname: row.nickname ?? undefined,
+    avatarUrl: row.avatarUrl ?? undefined,
     credits: row.credits,
-    creditsUsed: row.credits_used,
-    vipLevel: row.vip_level,
-    vipExpiresAt: row.vip_expires_at || undefined,
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
+    creditsUsed: row.creditsUsed,
+    vipLevel: row.vipLevel,
+    vipExpiresAt: row.vipExpiresAt?.getTime() ?? undefined,
+    createdAt: row.createdAt.getTime(),
+    updatedAt: row.updatedAt.getTime(),
   }
 }
 
-export function createUser(phone: string): User {
+export async function createUser(phone: string): Promise<User> {
   const id = `usr_${nanoid(12)}`
-  const now = Date.now()
   
-  db.prepare(
-    'INSERT INTO users (id, phone, credits, created_at, updated_at) VALUES (?, ?, ?, ?, ?)'
-  ).run(id, phone, SIGNUP_CREDITS, now, now)
+  await db.insert(users).values({
+    id,
+    phone,
+    credits: SIGNUP_CREDITS,
+  })
   
-  addCreditTransaction(id, 'signup', SIGNUP_CREDITS, 0, SIGNUP_CREDITS, '新用户注册赠送')
+  await addCreditTransaction(id, 'signup', SIGNUP_CREDITS, 0, SIGNUP_CREDITS, '新用户注册赠送')
   
-  return getUserById(id)!
+  return (await getUserById(id))!
 }
 
-export function loginWithCode(phone: string, code: string): VerifyCodeResponse {
-  if (!verifyCode(phone, code)) {
+export async function loginWithCode(phone: string, code: string): Promise<VerifyCodeResponse> {
+  if (!await verifyCode(phone, code)) {
     return { success: false, error: '验证码错误或已过期' }
   }
   
-  invalidateCode(phone)
+  await invalidateCode(phone)
   
-  let user = getUserByPhone(phone)
+  let user = await getUserByPhone(phone)
   
   if (!user) {
-    user = createUser(phone)
+    user = await createUser(phone)
   }
   
-  const { token, refreshToken, jti } = generateToken(user.id, user.phone)
+  const { token, refreshToken } = generateToken(user.id, user.phone)
   
   return {
     success: true,
@@ -103,21 +83,26 @@ export function loginWithCode(phone: string, code: string): VerifyCodeResponse {
 }
 
 export function logout(jti: string, exp: number): void {
-  blacklistToken(jti, exp * 1000)
+  blacklistToken(jti, new Date(exp * 1000))
 }
 
-function addCreditTransaction(
+async function addCreditTransaction(
   userId: string,
   type: 'purchase' | 'consume' | 'refund' | 'gift' | 'admin' | 'signup',
   amount: number,
   balanceBefore: number,
   balanceAfter: number,
   description: string
-): void {
+): Promise<void> {
   const id = `ct_${nanoid(12)}`
-  const now = Date.now()
   
-  db.prepare(
-    'INSERT INTO credit_transactions (id, user_id, type, amount, balance_before, balance_after, description, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
-  ).run(id, userId, type, amount, balanceBefore, balanceAfter, description, now)
+  await db.insert(creditTransactions).values({
+    id,
+    userId,
+    type,
+    amount,
+    balanceBefore,
+    balanceAfter,
+    description,
+  })
 }

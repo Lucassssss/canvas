@@ -5,13 +5,13 @@ import { authMiddleware } from '../middleware/auth.js'
 
 const router = Router()
 
-router.get('/profile', authMiddleware, (req: Request, res: Response) => {
+router.get('/profile', authMiddleware, async (req: Request, res: Response) => {
   try {
     if (!req.user) {
       return res.status(401).json({ error: '未授权' })
     }
     
-    const profile = getUserProfile(req.user.userId)
+    const profile = await getUserProfile(req.user.userId)
     
     if (!profile) {
       return res.status(404).json({ error: '用户不存在' })
@@ -24,7 +24,7 @@ router.get('/profile', authMiddleware, (req: Request, res: Response) => {
   }
 })
 
-router.put('/profile', authMiddleware, (req: Request, res: Response) => {
+router.put('/profile', authMiddleware, async (req: Request, res: Response) => {
   try {
     if (!req.user) {
       return res.status(401).json({ error: '未授权' })
@@ -32,7 +32,7 @@ router.put('/profile', authMiddleware, (req: Request, res: Response) => {
     
     const { nickname, avatarUrl } = req.body
     
-    const profile = updateUserProfile(req.user.userId, { nickname, avatarUrl })
+    const profile = await updateUserProfile(req.user.userId, { nickname, avatarUrl })
     
     if (!profile) {
       return res.status(404).json({ error: '用户不存在' })
@@ -45,13 +45,13 @@ router.put('/profile', authMiddleware, (req: Request, res: Response) => {
   }
 })
 
-router.get('/credits', authMiddleware, (req: Request, res: Response) => {
+router.get('/credits', authMiddleware, async (req: Request, res: Response) => {
   try {
     if (!req.user) {
       return res.status(401).json({ error: '未授权' })
     }
     
-    const credits = getCreditsInfo(req.user.userId)
+    const credits = await getCreditsInfo(req.user.userId)
     
     if (!credits) {
       return res.status(404).json({ error: '用户不存在' })
@@ -64,7 +64,7 @@ router.get('/credits', authMiddleware, (req: Request, res: Response) => {
   }
 })
 
-router.get('/transactions', authMiddleware, (req: Request, res: Response) => {
+router.get('/transactions', authMiddleware, async (req: Request, res: Response) => {
   try {
     if (!req.user) {
       return res.status(401).json({ error: '未授权' })
@@ -73,7 +73,7 @@ router.get('/transactions', authMiddleware, (req: Request, res: Response) => {
     const limit = parseInt(req.query.limit as string) || 50
     const offset = parseInt(req.query.offset as string) || 0
     
-    const transactions = getTransactions(req.user.userId, limit, offset)
+    const transactions = await getTransactions(req.user.userId, limit, offset)
     
     res.json({ transactions })
   } catch (error) {
@@ -82,7 +82,7 @@ router.get('/transactions', authMiddleware, (req: Request, res: Response) => {
   }
 })
 
-router.get('/usage-logs', authMiddleware, (req: Request, res: Response) => {
+router.get('/usage-logs', authMiddleware, async (req: Request, res: Response) => {
   try {
     if (!req.user) {
       return res.status(401).json({ error: '未授权' })
@@ -91,7 +91,7 @@ router.get('/usage-logs', authMiddleware, (req: Request, res: Response) => {
     const limit = parseInt(req.query.limit as string) || 50
     const offset = parseInt(req.query.offset as string) || 0
     
-    const logs = getUsageLogs(req.user.userId, limit, offset)
+    const logs = await getUsageLogs(req.user.userId, limit, offset)
     
     res.json({ logs })
   } catch (error) {
