@@ -4,7 +4,7 @@ import { authMiddleware } from '../middleware/auth.js'
 
 const router = Router()
 
-router.post('/consume', authMiddleware, (req: Request, res: Response) => {
+router.post('/consume', authMiddleware, async (req: Request, res: Response) => {
   try {
     if (!req.user) {
       return res.status(401).json({ success: false, error: '未授权' })
@@ -20,7 +20,7 @@ router.post('/consume', authMiddleware, (req: Request, res: Response) => {
       return res.status(400).json({ success: false, error: '操作类型不能为空' })
     }
     
-    const result = consumeCredits(
+    const result = await consumeCredits(
       req.user.userId,
       amount,
       action,

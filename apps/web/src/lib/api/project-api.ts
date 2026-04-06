@@ -56,7 +56,8 @@ export const projectApi = {
   async getProjects(): Promise<ProjectMetadata[]> {
     console.log('[Project API] Fetching projects')
     const response = await fetch(`${API_BASE_URL}/api/projects`, {
-      cache: 'no-store', // Next.js 不缓存
+      cache: 'no-store',
+      credentials: 'include',
     })
     return handleResponse<ProjectMetadata[]>(response)
   },
@@ -68,6 +69,7 @@ export const projectApi = {
     console.log(`[Project API] Fetching project: ${id}`)
     const response = await fetch(`${API_BASE_URL}/api/projects/${id}`, {
       cache: 'no-store',
+      credentials: 'include',
     })
     return handleResponse<Project>(response)
   },
@@ -79,6 +81,7 @@ export const projectApi = {
     console.log('[Project API] Creating project:', params.name || 'Untitled')
     const response = await fetch(`${API_BASE_URL}/api/projects`, {
       method: 'POST',
+      credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(params),
     })
@@ -92,6 +95,7 @@ export const projectApi = {
     console.log(`[Project API] Updating project: ${id}`)
     const response = await fetch(`${API_BASE_URL}/api/projects/${id}`, {
       method: 'PUT',
+      credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(params),
     })
@@ -105,6 +109,7 @@ export const projectApi = {
     console.log(`[Project API] Deleting project: ${id}`)
     const response = await fetch(`${API_BASE_URL}/api/projects/${id}`, {
       method: 'DELETE',
+      credentials: 'include',
     })
     return handleResponse(response)
   },
@@ -116,6 +121,7 @@ export const projectApi = {
     console.log(`[Project API] Saving canvas data for project: ${projectId}`)
     const response = await fetch(`${API_BASE_URL}/api/projects/${projectId}/canvas`, {
       method: 'PUT',
+      credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ canvasData }),
     })
@@ -129,6 +135,7 @@ export const projectApi = {
     console.log(`[Project API] Fetching conversations for project: ${projectId}`)
     const response = await fetch(`${API_BASE_URL}/api/projects/${projectId}/conversations`, {
       cache: 'no-store',
+      credentials: 'include',
     })
     return handleResponse<Conversation[]>(response)
   },
@@ -140,6 +147,7 @@ export const projectApi = {
     console.log(`[Project API] Creating conversation for project: ${projectId}`)
     const response = await fetch(`${API_BASE_URL}/api/projects/${projectId}/conversations`, {
       method: 'POST',
+      credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ title, model }),
     })
@@ -153,6 +161,7 @@ export const projectApi = {
     console.log(`[Project API] Linking conversation ${conversationId} to project ${projectId}`)
     const response = await fetch(`${API_BASE_URL}/api/projects/${projectId}/conversations/${conversationId}`, {
       method: 'POST',
+      credentials: 'include',
     })
     return handleResponse(response)
   },
@@ -164,6 +173,7 @@ export const projectApi = {
     console.log(`[Project API] Unlinking conversation ${conversationId} from project ${projectId}`)
     const response = await fetch(`${API_BASE_URL}/api/projects/${projectId}/conversations/${conversationId}`, {
       method: 'DELETE',
+      credentials: 'include',
     })
     return handleResponse(response)
   },
@@ -175,6 +185,7 @@ export const projectApi = {
     console.log(`[Project API] Fetching messages for conversation: ${conversationId}`)
     const response = await fetch(`${API_BASE_URL}/conversations/${conversationId}/messages`, {
       cache: 'no-store',
+      credentials: 'include',
     })
     const data = await handleResponse<{ conversationId: string; messages: any[] }>(response)
     return data.messages

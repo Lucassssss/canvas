@@ -166,6 +166,105 @@ psql -U postgres -p 1232
 
 ---
 
+## PostgreSQL 远程连接配置
+
+### 当前状态
+- 远程连接: **已启用** ✅
+- 监听地址: `0.0.0.0` (接受所有 IP)
+- 认证方式: `scram-sha-256`
+
+### 连接信息
+```
+主机: 101.37.235.131
+端口: 1232
+用户: postgres
+密码: [当前密码]
+```
+
+### 启用远程连接
+
+**1. 修改 postgresql.conf**
+```bash
+sudo nano /etc/postgresql/18/main/postgresql.conf
+```
+找到并修改:
+```
+#listen_addresses = 'localhost'
+listen_addresses = '*'
+```
+
+**2. 修改 pg_hba.conf**
+```bash
+sudo nano /etc/postgresql/18/main/pg_hba.conf
+```
+在文件末尾添加:
+```
+host    all             all             0.0.0.0/0                scram-sha-256
+host    all             all             ::/0                     scram-sha-256
+```
+
+**3. 开放防火墙端口**
+```bash
+sudo ufw allow 1232/tcp
+```
+
+**4. 重启 PostgreSQL**
+```bash
+sudo systemctl restart postgresql
+```
+
+### 禁用远程连接
+
+**方法一: 只允许本地连接 (推荐)**
+
+修改 pg_hba.conf，删除远程连接规则:
+```bash
+sudo nano /etc/postgresql/18/main/pg_hba.conf
+```
+删除这两行:
+```
+host    all             all             0.0.0.0/0                scram-sha-256
+host    all             all             ::/0                     scram-sha-256
+```
+
+重启 PostgreSQL:
+```bash
+sudo systemctl restart postgresql
+```
+
+**方法二: 禁止所有外部 IP**
+```bash
+sudo ufw deny 1232/tcp
+```
+
+**方法三: 恢复仅监听本地**
+```bash
+sudo nano /etc/postgresql/18/main/postgresql.conf
+```
+改回:
+```
+listen_addresses = 'localhost'
+```
+重启 PostgreSQL:
+```bash
+sudo systemctl restart postgresql
+```
+
+### 常用远程连接命令
+
+```bash
+# 从外部连接 PostgreSQL
+psql -U postgres -p 1232 -h 101.37.235.131
+
+# 测试连接
+pg_isready -h 101.37.235.131 -p 1232
+
+# 使用密码连接
+PGPASSWORD='your_password' psql -U postgres -p 1232 -h 101.37.235.131
+```
+
+---
+
 ## Docker 镜像加速
 
 已配置阿里云镜像源

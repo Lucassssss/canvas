@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { LeftSidebar } from '@/components/LeftSidebar'
 import { PageHeader } from '@/components/PageHeader'
@@ -13,6 +13,7 @@ export default function ProjectsPage() {
   const [isCreating, setIsCreating] = useState(false)
   const [showNewProjectDialog, setShowNewProjectDialog] = useState(false)
   const [newProjectName, setNewProjectName] = useState('')
+  const hasLoaded = useRef(false)
 
   const projects = useProjectStore((state) => state.projects)
   const isLoadingProjects = useProjectStore((state) => state.isLoadingProjects)
@@ -25,6 +26,8 @@ export default function ProjectsPage() {
   const updateProjectName = useProjectStore((state) => state.updateProjectName)
 
   useEffect(() => {
+    if (hasLoaded.current) return
+    hasLoaded.current = true
     loadProjects()
   }, [loadProjects])
 

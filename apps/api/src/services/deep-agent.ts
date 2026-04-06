@@ -28,15 +28,15 @@
 //     const weatherData = await weatherResponse.json();
 
 //     const weatherCodes: Record<number, string> = {
-//       0: "☀️ Clear",
-//       1: "🌤️ Mainly clear",
-//       2: "⛅ Partly cloudy",
+//       0: "☀�?Clear",
+//       1: "🌤�?Mainly clear",
+//       2: "�?Partly cloudy",
 //       3: "☁️ Overcast",
-//       45: "🌫️ Foggy",
-//       51: "🌧️ Light drizzle",
-//       61: "🌧️ Rain",
+//       45: "🌫�?Foggy",
+//       51: "🌧�?Light drizzle",
+//       61: "🌧�?Rain",
 //       71: "❄️ Snow",
-//       80: "🌦️ Showers",
+//       80: "🌦�?Showers",
 //       95: "⛈️ Thunderstorm",
 //     };
 
