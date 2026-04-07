@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useCallback, useState, useRef, useEffect } from 'react'
+import React, { useCallback, useState, useRef, useEffect, memo } from 'react'
 import { useCanvasStore } from '../store'
 import { aiCombinationService } from '@/ai-combination/service'
 import { Plus, Loader2, Play, Equal, Image as ImageIcon } from 'lucide-react'
@@ -27,14 +27,14 @@ const LABEL_HEIGHT = 20
 interface InputSlotRendererProps {
   slot: CustomCombinationSlot
   combinationShapeId: string
-  onFileSelect: (slotId: string, file: File) => void
+  onFileSelect: (slotId: string, file: File | string) => void
   onClear: (slotId: string) => void
   onDelete: (slotId: string) => void
   onLabelChange: (slotId: string, label: string) => void
   canDelete: boolean
 }
 
-const InputSlotRenderer: React.FC<InputSlotRendererProps> = ({
+const InputSlotRenderer = memo<InputSlotRendererProps>(({
   slot,
   combinationShapeId,
   onFileSelect,
@@ -48,12 +48,57 @@ const InputSlotRenderer: React.FC<InputSlotRendererProps> = ({
   const [isEditingLabel, setIsEditingLabel] = useState(false)
   const [editedLabel, setEditedLabel] = useState(slot.label)
 
-  const handleLabelSubmit = () => {
+  useEffect(() => {
+    if (slot.imageUrl) {
+      setImageLoaded(false)
+      setImageError(false)
+    }
+  }, [slot.imageUrl])
+
+  const handleLabelSubmit = useCallback(() => {
     setIsEditingLabel(false)
     if (editedLabel !== slot.label) {
       onLabelChange(slot.id, editedLabel)
     }
-  }
+  }, [editedLabel, slot.id, slot.label, onLabelChange])
+
+  const handleClick = useCallback(() => {
+    if (!slot.imageUrl) {
+      const input = document.createElement('input')
+      input.type = 'file'
+      input.accept = 'image/*'
+      input.onchange = (e) => {
+        const file = (e.target as HTMLInputElement).files?.[0]
+        if (file) onFileSelect(slot.id, file)
+      }
+      input.click()
+    }
+  }, [slot.imageUrl, slot.id, onFileSelect])
+
+  const handleDelete = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation()
+    onDelete(slot.id)
+  }, [slot.id, onDelete])
+
+  const handleClearClick = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation()
+    setImageLoaded(false)
+    setImageError(false)
+    onClear(slot.id)
+  }, [slot.id, onClear])
+
+  const handleDoubleClick = useCallback(() => {
+    setIsEditingLabel(true)
+    setEditedLabel(slot.label)
+  }, [slot.label])
+
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') handleLabelSubmit()
+    if (e.key === 'Escape') {
+      setEditedLabel(slot.label)
+      setIsEditingLabel(false)
+    }
+  }, [handleLabelSubmit, slot.label])
 
   return (
     <div className="flex flex-col items-center" style={{ gap: 4 }}>
@@ -65,23 +110,14 @@ const InputSlotRenderer: React.FC<InputSlotRendererProps> = ({
             value={editedLabel}
             onChange={(e) => setEditedLabel(e.target.value)}
             onBlur={handleLabelSubmit}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') handleLabelSubmit()
-              if (e.key === 'Escape') {
-                setEditedLabel(slot.label)
-                setIsEditingLabel(false)
-              }
-            }}
+            onKeyDown={handleKeyDown}
             className="w-20 bg-transparent border-b border-gray-300 outline-none text-xs"
             autoFocus
           />
         ) : (
           <span
             className="cursor-pointer hover:text-gray-700"
-            onDoubleClick={() => {
-              setIsEditingLabel(true)
-              setEditedLabel(slot.label)
-            }}
+            onDoubleClick={handleDoubleClick}
           >
             {slot.label}
           </span>
@@ -92,26 +128,12 @@ const InputSlotRenderer: React.FC<InputSlotRendererProps> = ({
         data-combination-shape-id={combinationShapeId}
         className="group relative bg-gray-200 border-3 border-white overflow-hidden shadow-md transition-all duration-150 cursor-pointer drop-slot"
         style={{ width: SLOT_WIDTH, height: SLOT_HEIGHT }}
-        onClick={() => {
-          if (!slot.imageUrl) {
-            const input = document.createElement('input')
-            input.type = 'file'
-            input.accept = 'image/*'
-            input.onchange = (e) => {
-              const file = (e.target as HTMLInputElement).files?.[0]
-              if (file) onFileSelect(slot.id, file)
-            }
-            input.click()
-          }
-        }}
+        onClick={handleClick}
       >
         {canDelete && (
           <button
             className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors shadow z-20 opacity-0 group-hover:opacity-100"
-            onClick={(e) => {
-              e.stopPropagation()
-              onDelete(slot.id)
-            }}
+            onClick={handleDelete}
           >
             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M18 6L6 18M6 6l12 12" />
@@ -140,12 +162,7 @@ const InputSlotRenderer: React.FC<InputSlotRendererProps> = ({
             />
             <button
               className="absolute bottom-2 right-2 p-1.5 bg-gray-500 text-white rounded-full hover:bg-gray-600 transition-all shadow opacity-0 group-hover:opacity-100"
-              onClick={(e) => {
-                e.stopPropagation()
-                setImageLoaded(false)
-                setImageError(false)
-                onClear(slot.id)
-              }}
+              onClick={handleClearClick}
             >
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
@@ -163,24 +180,55 @@ const InputSlotRenderer: React.FC<InputSlotRendererProps> = ({
       </div>
     </div>
   )
-}
+}, (prevProps, nextProps) => {
+  return (
+    prevProps.slot.id === nextProps.slot.id &&
+    prevProps.slot.imageUrl === nextProps.slot.imageUrl &&
+    prevProps.slot.label === nextProps.slot.label &&
+    prevProps.combinationShapeId === nextProps.combinationShapeId &&
+    prevProps.canDelete === nextProps.canDelete &&
+    prevProps.onFileSelect === nextProps.onFileSelect &&
+    prevProps.onClear === nextProps.onClear &&
+    prevProps.onDelete === nextProps.onDelete &&
+    prevProps.onLabelChange === nextProps.onLabelChange
+  )
+})
 
 interface OutputSlotRendererProps {
   slot: CustomCombinationSlot
   onLabelChange: (slotId: string, label: string) => void
 }
 
-const OutputSlotRenderer: React.FC<OutputSlotRendererProps> = ({ slot, onLabelChange }) => {
+const OutputSlotRenderer = memo<OutputSlotRendererProps>(({ slot, onLabelChange }) => {
   const [imageLoaded, setImageLoaded] = useState(false)
   const [isEditingLabel, setIsEditingLabel] = useState(false)
   const [editedLabel, setEditedLabel] = useState(slot.label)
 
-  const handleLabelSubmit = () => {
+  useEffect(() => {
+    if (slot.imageUrl) {
+      setImageLoaded(false)
+    }
+  }, [slot.imageUrl])
+
+  const handleLabelSubmit = useCallback(() => {
     setIsEditingLabel(false)
     if (editedLabel !== slot.label) {
       onLabelChange(slot.id, editedLabel)
     }
-  }
+  }, [editedLabel, slot.id, slot.label, onLabelChange])
+
+  const handleDoubleClick = useCallback(() => {
+    setIsEditingLabel(true)
+    setEditedLabel(slot.label)
+  }, [slot.label])
+
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') handleLabelSubmit()
+    if (e.key === 'Escape') {
+      setEditedLabel(slot.label)
+      setIsEditingLabel(false)
+    }
+  }, [handleLabelSubmit, slot.label])
 
   return (
     <div className="flex flex-col items-center" style={{ gap: 4 }}>
@@ -192,23 +240,14 @@ const OutputSlotRenderer: React.FC<OutputSlotRendererProps> = ({ slot, onLabelCh
             value={editedLabel}
             onChange={(e) => setEditedLabel(e.target.value)}
             onBlur={handleLabelSubmit}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') handleLabelSubmit()
-              if (e.key === 'Escape') {
-                setEditedLabel(slot.label)
-                setIsEditingLabel(false)
-              }
-            }}
+            onKeyDown={handleKeyDown}
             className="w-20 bg-transparent border-b border-gray-300 outline-none text-xs"
             autoFocus
           />
         ) : (
           <span
             className="cursor-pointer hover:text-gray-700"
-            onDoubleClick={() => {
-              setIsEditingLabel(true)
-              setEditedLabel(slot.label)
-            }}
+            onDoubleClick={handleDoubleClick}
           >
             {slot.label}
           </span>
@@ -241,11 +280,18 @@ const OutputSlotRenderer: React.FC<OutputSlotRendererProps> = ({ slot, onLabelCh
       </div>
     </div>
   )
-}
+}, (prevProps, nextProps) => {
+  return (
+    prevProps.slot.id === nextProps.slot.id &&
+    prevProps.slot.imageUrl === nextProps.slot.imageUrl &&
+    prevProps.slot.label === nextProps.slot.label &&
+    prevProps.onLabelChange === nextProps.onLabelChange
+  )
+})
 
 export const CustomCombination: React.FC<CustomCombinationProps> = ({ shape }) => {
   const containerRef = useRef<HTMLDivElement>(null)
-  const { updateShape } = useCanvasStore()
+  const updateShape = useCanvasStore((state) => state.updateShape)
 
   const inputSlots = shape.customInputSlots || [{ id: `${shape.id}-input-1`, label: '输入1', imageUrl: undefined }]
   const outputSlots = shape.customOutputSlots || [{ id: `${shape.id}-output-1`, label: '输出', imageUrl: undefined }]
@@ -295,6 +341,9 @@ export const CustomCombination: React.FC<CustomCombinationProps> = ({ shape }) =
     }
   }, [shape.id, shape.width, shape.height, updateShape])
 
+  const shapeIdRef = useRef(shape.id)
+  shapeIdRef.current = shape.id
+
   const handleFileSelect = useCallback(async (slotId: string, fileOrUrl: File | string) => {
     let imageUrl: string | undefined
 
@@ -308,71 +357,94 @@ export const CustomCombination: React.FC<CustomCombinationProps> = ({ shape }) =
     }
 
     if (imageUrl) {
-      const newSlots = inputSlots.map(s =>
+      const currentShape = useCanvasStore.getState().shapes.find(s => s.id === shapeIdRef.current)
+      const currentSlots = currentShape?.customInputSlots || []
+      const newSlots = currentSlots.map(s =>
         s.id === slotId ? { ...s, imageUrl } : s
       )
-      updateShape(shape.id, { customInputSlots: newSlots })
+      useCanvasStore.getState().updateShape(shapeIdRef.current, { customInputSlots: newSlots })
     }
-  }, [shape.id, inputSlots, updateShape])
+  }, [])
 
   const handleClear = useCallback((slotId: string) => {
-    const newSlots = inputSlots.map(s =>
+    const currentShape = useCanvasStore.getState().shapes.find(s => s.id === shapeIdRef.current)
+    const currentSlots = currentShape?.customInputSlots || []
+    const newSlots = currentSlots.map(s =>
       s.id === slotId ? { ...s, imageUrl: undefined } : s
     )
-    updateShape(shape.id, { customInputSlots: newSlots })
-  }, [shape.id, inputSlots, updateShape])
+    useCanvasStore.getState().updateShape(shapeIdRef.current, { customInputSlots: newSlots })
+  }, [])
 
   const handleAddSlot = useCallback(() => {
+    const currentShape = useCanvasStore.getState().shapes.find(s => s.id === shapeIdRef.current)
+    const currentSlots = currentShape?.customInputSlots || []
     const newSlot: CustomCombinationSlot = {
-      id: `${shape.id}-input-${Date.now()}`,
-      label: `输入${inputSlots.length + 1}`,
+      id: `${shapeIdRef.current}-input-${Date.now()}`,
+      label: `输入${currentSlots.length + 1}`,
       imageUrl: undefined,
     }
-    updateShape(shape.id, {
-      customInputSlots: [...inputSlots, newSlot],
+    useCanvasStore.getState().updateShape(shapeIdRef.current, {
+      customInputSlots: [...currentSlots, newSlot],
     })
-  }, [shape.id, inputSlots, updateShape])
+  }, [])
 
   const handleRemoveSlot = useCallback((slotId: string) => {
-    if (inputSlots.length <= 1) return
-    const newSlots = inputSlots.filter(s => s.id !== slotId)
-    updateShape(shape.id, { customInputSlots: newSlots })
-  }, [shape.id, inputSlots, updateShape])
+    const currentShape = useCanvasStore.getState().shapes.find(s => s.id === shapeIdRef.current)
+    const currentSlots = currentShape?.customInputSlots || []
+    if (currentSlots.length <= 1) return
+    const newSlots = currentSlots.filter(s => s.id !== slotId)
+    useCanvasStore.getState().updateShape(shapeIdRef.current, { customInputSlots: newSlots })
+  }, [])
 
   const handleLabelChange = useCallback((slotId: string, label: string, isInput: boolean) => {
-    const slots = isInput ? inputSlots : outputSlots
+    const currentShape = useCanvasStore.getState().shapes.find(s => s.id === shapeIdRef.current)
+    const slots = isInput 
+      ? (currentShape?.customInputSlots || [])
+      : (currentShape?.customOutputSlots || [])
     const key = isInput ? 'customInputSlots' : 'customOutputSlots'
     const newSlots = slots.map(s =>
       s.id === slotId ? { ...s, label } : s
     )
-    updateShape(shape.id, { [key]: newSlots })
-  }, [shape.id, inputSlots, outputSlots, updateShape])
+    useCanvasStore.getState().updateShape(shapeIdRef.current, { [key]: newSlots })
+  }, [])
 
   const handleGenerate = useCallback(() => {
-    updateShape(shape.id, {
+    useCanvasStore.getState().updateShape(shapeIdRef.current, {
       customStatus: 'generating',
       customError: undefined,
     })
 
     setTimeout(() => {
-      const hasAllInputs = inputSlots.every(s => s.imageUrl)
+      const currentShape = useCanvasStore.getState().shapes.find(s => s.id === shapeIdRef.current)
+      const currentInputSlots = currentShape?.customInputSlots || []
+      const currentOutputSlots = currentShape?.customOutputSlots || []
+      
+      const hasAllInputs = currentInputSlots.every(s => s.imageUrl)
       if (!hasAllInputs) {
-        updateShape(shape.id, {
+        useCanvasStore.getState().updateShape(shapeIdRef.current, {
           customStatus: 'error',
           customError: '请上传所有输入图片',
         })
         return
       }
 
-      updateShape(shape.id, {
+      useCanvasStore.getState().updateShape(shapeIdRef.current, {
         customStatus: 'completed',
-        customOutputSlots: outputSlots.map(s => ({
+        customOutputSlots: currentOutputSlots.map(s => ({
           ...s,
           imageUrl: 'https://picsum.photos/seed/output/1024/1024',
         })),
       })
     }, 2000)
-  }, [shape.id, inputSlots, outputSlots, updateShape])
+  }, [])
+
+  const handleInputLabelChange = useCallback((id: string, label: string) => {
+    handleLabelChange(id, label, true)
+  }, [handleLabelChange])
+
+  const handleOutputLabelChange = useCallback((id: string, label: string) => {
+    handleLabelChange(id, label, false)
+  }, [handleLabelChange])
 
   return (
     <div
@@ -393,7 +465,7 @@ export const CustomCombination: React.FC<CustomCombinationProps> = ({ shape }) =
                 onFileSelect={handleFileSelect}
                 onClear={handleClear}
                 onDelete={handleRemoveSlot}
-                onLabelChange={(id, label) => handleLabelChange(id, label, true)}
+                onLabelChange={handleInputLabelChange}
                 canDelete={inputSlots.length > 1}
               />
             </React.Fragment>
@@ -437,7 +509,7 @@ export const CustomCombination: React.FC<CustomCombinationProps> = ({ shape }) =
             <OutputSlotRenderer
               key={slot.id}
               slot={slot}
-              onLabelChange={(id, label) => handleLabelChange(id, label, false)}
+              onLabelChange={handleOutputLabelChange}
             />
           ))}
         </div>
