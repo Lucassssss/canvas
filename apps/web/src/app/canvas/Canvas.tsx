@@ -7,6 +7,7 @@ import { ToolType, ShapeProps, SHAPE_MIN_SIZE } from './shapes/types'
 import { LogoEditorLayer } from './components/LogoEditorLayer'
 import { LogoMaterialPanel } from './components/LogoMaterialPanel'
 import { FloatingConfigPanel } from './config-panel'
+import { AlignmentGuides } from './components/AlignmentGuides'
 import { aiCombinationService } from '@/ai-combination/service'
 import { TransformMatrix } from '@/lib/canvas/transform'
 
@@ -543,17 +544,36 @@ export const Canvas: React.FC = () => {
     updateShape,
     saveHistory,
     screenToCanvas,
+    scheduleAutoSave,
+    batchUpdateShapes,
   } = useCanvasStore()
 
   const effectiveTool = isSpacePressed ? 'hand' : activeTool
   const showCrosshair = false
 
   const viewportDragStartRef = useRef<{ x: number; y: number; viewportX: number; viewportY: number } | null>(null)
+  const viewportRafRef = useRef<number | null>(null)
+  const pendingViewportRef = useRef<{ x: number; y: number; zoom: number } | null>(null)
+  const wheelRafRef = useRef<number | null>(null)
+  const pendingWheelRef = useRef<{ zoom: number; x: number; y: number } | null>(null)
   const resizeStartRef = useRef<{ startMouseX: number; startMouseY: number; startWidth: number; startHeight: number; startPosX: number; startPosY: number; handle: string; shapeId: string } | null>(null)
   const rotateStartRef = useRef<{ x: number; y: number; startAngle: number; initialRotation: number; centerX: number; centerY: number; shapeId: string } | null>(null)
-  const multiSelectDragStartRef = useRef<{ x: number; y: number; shapePositions: Map<string, { x: number; y: number }> } | null>(null)
   const multiSelectResizeStartRef = useRef<MultiSelectResizeStart | null>(null)
   const multiSelectRotateStartRef = useRef<MultiSelectRotateStart | null>(null)
+
+  const rafIdRef = useRef<number | null>(null)
+  const pendingShapeUpdatesRef = useRef<Map<string, Partial<ShapeProps>>>(new Map())
+  const latestMouseEventRef = useRef<{
+    clientX: number
+    clientY: number
+    viewportDrag: boolean
+    selectionRect: boolean
+    multiSelectDrag: boolean
+    multiSelectResize: boolean
+    multiSelectRotate: boolean
+    resize: boolean
+    rotate: boolean
+  } | null>(null)
 
   const getShapesInRect = (rect: SelectionRect): string[] => {
     const minX = Math.min(rect.startX, rect.endX)
@@ -596,35 +616,6 @@ export const Canvas: React.FC = () => {
     if (effectiveTool === 'select') {
       const canvasPoint = screenToCanvas(e.clientX, e.clientY)
 
-      if (isShapeElement) {
-        const shapeId = isShapeElement.getAttribute('data-id')
-        if (shapeId) {
-          if (e.shiftKey) {
-            if (selectedIds.includes(shapeId)) {
-              setSelectedIds(selectedIds.filter((id) => id !== shapeId))
-            } else {
-              addToSelection(shapeId)
-            }
-          } else {
-            if (!selectedIds.includes(shapeId)) {
-              setSelectedIds([shapeId])
-            }
-            multiSelectDragStartRef.current = {
-              x: e.clientX,
-              y: e.clientY,
-              shapePositions: new Map(
-                (selectedIds.includes(shapeId) ? selectedIds : [shapeId]).map((id) => {
-                  const shape = shapes.find((s) => s.id === id)
-                  return [id, { x: shape?.x || 0, y: shape?.y || 0 }]
-                })
-              ),
-            }
-            setIsDragging(true)
-          }
-          return
-        }
-      }
-
       if (isCanvasBackground) {
         if (e.shiftKey) {
           setSelectionRect({
@@ -647,7 +638,17 @@ export const Canvas: React.FC = () => {
         return
       }
     }
-  }, [effectiveTool, viewport, screenToCanvas, shapes, selectedIds, addToSelection, setSelectedIds, clearSelection, setIsDragging, setActiveTool])
+  }, [effectiveTool, viewport, screenToCanvas, clearSelection, setIsDragging])
+
+  const processShapeUpdates = useCallback(() => {
+    rafIdRef.current = null
+    const updates = pendingShapeUpdatesRef.current
+    if (updates.size === 0) return
+
+    const updatesArray = Array.from(updates.entries()).map(([id, props]) => ({ id, props }))
+    batchUpdateShapes(updatesArray)
+    updates.clear()
+  }, [batchUpdateShapes])
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     if (!isDragging) return
@@ -656,27 +657,25 @@ export const Canvas: React.FC = () => {
       const { x, y, viewportX, viewportY } = viewportDragStartRef.current
       const dx = e.clientX - x
       const dy = e.clientY - y
-      setViewport({
-        x: viewportX + dx,
-        y: viewportY + dy,
-      })
+      const newX = viewportX + dx
+      const newY = viewportY + dy
+
+      pendingViewportRef.current = { x: newX, y: newY, zoom: viewport.zoom }
+      if (viewportRafRef.current === null) {
+        viewportRafRef.current = requestAnimationFrame(() => {
+          viewportRafRef.current = null
+          if (pendingViewportRef.current && viewportRef.current) {
+            const { x: px, y: py, zoom: pz } = pendingViewportRef.current
+            viewportRef.current.style.transform = `matrix(${pz}, 0, 0, ${pz}, ${px}, ${py})`
+          }
+        })
+      }
       return
     }
 
     if (selectionRect) {
       const canvasPoint = screenToCanvas(e.clientX, e.clientY)
       setSelectionRect((prev) => prev ? { ...prev, endX: canvasPoint.x, endY: canvasPoint.y } : null)
-      return
-    }
-
-    if (multiSelectDragStartRef.current) {
-      const { x: startX, y: startY, shapePositions } = multiSelectDragStartRef.current
-      const dx = (e.clientX - startX) / viewport.zoom
-      const dy = (e.clientY - startY) / viewport.zoom
-
-      shapePositions.forEach((pos, id) => {
-        updateShape(id, { x: pos.x + dx, y: pos.y + dy })
-      })
       return
     }
 
@@ -726,13 +725,17 @@ export const Canvas: React.FC = () => {
       shapePositions.forEach((pos, id) => {
         const relX = pos.x - minX
         const relY = pos.y - minY
-        updateShape(id, {
+        pendingShapeUpdatesRef.current.set(id, {
           x: minX + offsetX + relX * scaleX,
           y: minY + offsetY + relY * scaleY,
           width: pos.width * scaleX,
           height: pos.height * scaleY,
         })
       })
+
+      if (rafIdRef.current === null) {
+        rafIdRef.current = requestAnimationFrame(processShapeUpdates)
+      }
       return
     }
 
@@ -747,7 +750,6 @@ export const Canvas: React.FC = () => {
       const angleDelta = currentAngle - startAngle
 
       initialPositions.forEach((initialPos, id) => {
-        // Convert canvas coordinates to screen coordinates for rotation math
         const screenInitialCenterX = initialPos.centerX * viewport.zoom + viewport.x
         const screenInitialCenterY = initialPos.centerY * viewport.zoom + viewport.y
 
@@ -763,7 +765,6 @@ export const Canvas: React.FC = () => {
         const newScreenCenterX = centerX + newOffsetX
         const newScreenCenterY = centerY + newOffsetY
 
-        // Convert back to canvas coordinates
         const newCanvasCenterX = (newScreenCenterX - viewport.x) / viewport.zoom
         const newCanvasCenterY = (newScreenCenterY - viewport.y) / viewport.zoom
 
@@ -772,12 +773,16 @@ export const Canvas: React.FC = () => {
 
         const newRotation = (initialRotations.get(id) || 0) + (angleDelta * 180) / Math.PI
 
-        updateShape(id, {
+        pendingShapeUpdatesRef.current.set(id, {
           rotation: newRotation,
           x: newCanvasCenterX - shape.width / 2,
           y: newCanvasCenterY - shape.height / 2,
         })
       })
+
+      if (rafIdRef.current === null) {
+        rafIdRef.current = requestAnimationFrame(processShapeUpdates)
+      }
       return
     }
 
@@ -839,7 +844,11 @@ export const Canvas: React.FC = () => {
         newWidth = startWidth + dx
       }
 
-      updateShape(shapeId, { width: newWidth, height: newHeight, x: newX, y: newY })
+      pendingShapeUpdatesRef.current.set(shapeId, { width: newWidth, height: newHeight, x: newX, y: newY })
+
+      if (rafIdRef.current === null) {
+        rafIdRef.current = requestAnimationFrame(processShapeUpdates)
+      }
       return
     }
 
@@ -854,11 +863,24 @@ export const Canvas: React.FC = () => {
       const angleDelta = currentAngle - startAngle
       const newRotation = initialRotation + (angleDelta * 180) / Math.PI
 
-      updateShape(shapeId, { rotation: newRotation })
+      pendingShapeUpdatesRef.current.set(shapeId, { rotation: newRotation })
+
+      if (rafIdRef.current === null) {
+        rafIdRef.current = requestAnimationFrame(processShapeUpdates)
+      }
     }
-  }, [isDragging, viewport, setViewport, screenToCanvas, shapes, selectionRect, updateShape])
+  }, [isDragging, viewport.zoom, screenToCanvas, shapes, selectionRect, processShapeUpdates])
 
   const handleMouseUp = useCallback(() => {
+    if (rafIdRef.current !== null) {
+      cancelAnimationFrame(rafIdRef.current)
+      rafIdRef.current = null
+    }
+
+    if (pendingShapeUpdatesRef.current.size > 0) {
+      processShapeUpdates()
+    }
+
     if (selectionRect) {
       const shapesInRect = getShapesInRect(selectionRect)
       if (shapesInRect.length > 0) {
@@ -867,34 +889,45 @@ export const Canvas: React.FC = () => {
       setSelectionRect(null)
     }
 
-    if (multiSelectDragStartRef.current) {
-      saveHistory()
-      multiSelectDragStartRef.current = null
-    }
-
     if (multiSelectResizeStartRef.current) {
       multiSelectResizeStartRef.current = null
       saveHistory()
+      scheduleAutoSave()
     }
 
     if (multiSelectRotateStartRef.current) {
       multiSelectRotateStartRef.current = null
       saveHistory()
+      scheduleAutoSave()
     }
 
     if (viewportDragStartRef.current) {
+      if (viewportRafRef.current !== null) {
+        cancelAnimationFrame(viewportRafRef.current)
+        viewportRafRef.current = null
+      }
+      if (pendingViewportRef.current) {
+        setViewport({
+          x: pendingViewportRef.current.x,
+          y: pendingViewportRef.current.y,
+          zoom: pendingViewportRef.current.zoom,
+        })
+        pendingViewportRef.current = null
+      }
       viewportDragStartRef.current = null
     }
     if (resizeStartRef.current) {
       resizeStartRef.current = null
       saveHistory()
+      scheduleAutoSave()
     }
     if (rotateStartRef.current) {
       rotateStartRef.current = null
       saveHistory()
+      scheduleAutoSave()
     }
     setIsDragging(false)
-  }, [selectionRect, setSelectedIds, saveHistory, setIsDragging])
+  }, [selectionRect, setSelectedIds, saveHistory, setIsDragging, scheduleAutoSave, processShapeUpdates])
 
   const handleSingleResizeStart = useCallback((e: React.MouseEvent, handle: string, shapeId: string) => {
     e.stopPropagation()
@@ -1014,35 +1047,83 @@ export const Canvas: React.FC = () => {
     const container = containerRef.current
     if (!container) return
 
+    let wheelTimeoutId: NodeJS.Timeout | null = null
+
+    const flushWheelState = () => {
+      if (pendingWheelRef.current) {
+        setViewport(pendingWheelRef.current)
+        pendingWheelRef.current = null
+      }
+    }
+
     const wheelHandler = (e: WheelEvent) => {
       e.preventDefault()
 
       if (e.metaKey || e.ctrlKey) {
         const delta = e.deltaY > 0 ? 0.9 : 1.1
-        const newZoom = Math.max(0.1, Math.min(10, viewport.zoom * delta))
+        const currentZoom = pendingWheelRef.current?.zoom ?? viewport.zoom
+        const currentX = pendingWheelRef.current?.x ?? viewport.x
+        const currentY = pendingWheelRef.current?.y ?? viewport.y
+        const newZoom = Math.max(0.1, Math.min(10, currentZoom * delta))
 
         const rect = container.getBoundingClientRect()
         const mouseX = e.clientX - rect.left
         const mouseY = e.clientY - rect.top
 
-        const canvasX = (mouseX - viewport.x) / viewport.zoom
-        const canvasY = (mouseY - viewport.y) / viewport.zoom
+        const canvasX = (mouseX - currentX) / currentZoom
+        const canvasY = (mouseY - currentY) / currentZoom
 
-        setViewport({
-          zoom: newZoom,
-          x: mouseX - canvasX * newZoom,
-          y: mouseY - canvasY * newZoom,
-        })
+        const newX = mouseX - canvasX * newZoom
+        const newY = mouseY - canvasY * newZoom
+
+        pendingWheelRef.current = { zoom: newZoom, x: newX, y: newY }
+
+        if (wheelRafRef.current === null) {
+          wheelRafRef.current = requestAnimationFrame(() => {
+            wheelRafRef.current = null
+            if (pendingWheelRef.current && viewportRef.current) {
+              const { zoom, x, y } = pendingWheelRef.current
+              viewportRef.current.style.transform = `matrix(${zoom}, 0, 0, ${zoom}, ${x}, ${y})`
+            }
+          })
+        }
       } else {
-        setViewport({
-          x: viewport.x - e.deltaX,
-          y: viewport.y - e.deltaY,
-        })
+        const currentX = pendingWheelRef.current?.x ?? viewport.x
+        const currentY = pendingWheelRef.current?.y ?? viewport.y
+        const currentZoom = pendingWheelRef.current?.zoom ?? viewport.zoom
+
+        const newX = currentX - e.deltaX
+        const newY = currentY - e.deltaY
+
+        pendingWheelRef.current = { zoom: currentZoom, x: newX, y: newY }
+
+        if (wheelRafRef.current === null) {
+          wheelRafRef.current = requestAnimationFrame(() => {
+            wheelRafRef.current = null
+            if (pendingWheelRef.current && viewportRef.current) {
+              const { zoom, x, y } = pendingWheelRef.current
+              viewportRef.current.style.transform = `matrix(${zoom}, 0, 0, ${zoom}, ${x}, ${y})`
+            }
+          })
+        }
       }
+
+      if (wheelTimeoutId !== null) {
+        clearTimeout(wheelTimeoutId)
+      }
+      wheelTimeoutId = setTimeout(flushWheelState, 150)
     }
 
     container.addEventListener('wheel', wheelHandler, { passive: false })
-    return () => container.removeEventListener('wheel', wheelHandler)
+    return () => {
+      container.removeEventListener('wheel', wheelHandler)
+      if (wheelTimeoutId !== null) {
+        clearTimeout(wheelTimeoutId)
+      }
+      if (wheelRafRef.current !== null) {
+        cancelAnimationFrame(wheelRafRef.current)
+      }
+    }
   }, [viewport, setViewport])
 
   useEffect(() => {
@@ -1332,6 +1413,8 @@ export const Canvas: React.FC = () => {
       <LogoMaterialPanel />
 
       <FloatingConfigPanel containerRef={containerRef} />
+
+      <AlignmentGuides />
 
       {renderSelectionRect()}
     </div>

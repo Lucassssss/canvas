@@ -110,3 +110,16 @@ export interface HistoryEntry {
   shapes: ShapeProps[]
   selectedIds: string[]
 }
+
+export interface AlignmentGuide {
+  type: 'vertical' | 'horizontal'
+  position: number
+  targetPosition: number
+  start: number
+  end: number
+}
+
+export interface AlignmentGuidesState {
+  vertical: AlignmentGuide[]
+  horizontal: AlignmentGuide[]
+}
