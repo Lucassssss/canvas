@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { ShapeProps, ViewportState, ToolType, HistoryEntry } from './shapes/types'
+import { ShapeProps, ViewportState, ToolType, HistoryEntry, AlignmentGuide } from './shapes/types'
 import { nanoid } from 'nanoid'
 import { localStorageManager } from '@/lib/storage/local'
 import { jsonExporter, jsonImporter } from '@/lib/import-export/json'
@@ -42,6 +42,7 @@ interface CanvasStore {
   isDragging: boolean
   isResizing: boolean
   isRotating: boolean
+  alignmentGuides: AlignmentGuide[]
   clipboard: ShapeProps[]
   logoEditingState: {
     isEditing: boolean
@@ -61,6 +62,7 @@ interface CanvasStore {
   setShapes: (shapes: ShapeProps[]) => void
   addShape: (shape: Omit<ShapeProps, 'id'>) => ShapeProps
   updateShape: (id: string, props: Partial<ShapeProps>) => void
+  batchUpdateShapes: (updates: Array<{ id: string; props: Partial<ShapeProps> }>) => void
   deleteShape: (id: string) => void
   deleteSelectedShapes: () => void
 
@@ -84,6 +86,8 @@ interface CanvasStore {
   setIsDragging: (isDragging: boolean) => void
   setIsResizing: (isResizing: boolean) => void
   setIsRotating: (isRotating: boolean) => void
+  setAlignmentGuides: (guides: AlignmentGuide[]) => void
+  clearAlignmentGuides: () => void
   dragData: { shapeId: string; imageUrl: string } | null
   setDragData: (data: { shapeId: string; imageUrl: string } | null) => void
 
@@ -128,6 +132,7 @@ const initialState = {
   isDragging: false,
   isResizing: false,
   isRotating: false,
+  alignmentGuides: [] as AlignmentGuide[],
   clipboard: [] as ShapeProps[],
   logoEditingState: {
     isEditing: false,
@@ -174,7 +179,18 @@ export const useCanvasStore = create<CanvasStore>()(
           ),
           isDirty: true
         }))
-        get().scheduleAutoSave()
+      },
+
+      batchUpdateShapes: (updates) => {
+        if (updates.length === 0) return
+        const updatesMap = new Map(updates.map(u => [u.id, roundProps(u.props)]))
+        set((state) => ({
+          shapes: state.shapes.map((s) => {
+            const props = updatesMap.get(s.id)
+            return props ? { ...s, ...props } : s
+          }),
+          isDirty: true
+        }))
       },
 
       deleteShape: (id) => {
@@ -368,6 +384,8 @@ export const useCanvasStore = create<CanvasStore>()(
   setIsDragging: (isDragging) => set({ isDragging }),
   setIsResizing: (isResizing) => set({ isResizing }),
   setIsRotating: (isRotating) => set({ isRotating }),
+  setAlignmentGuides: (guides) => set({ alignmentGuides: guides }),
+  clearAlignmentGuides: () => set({ alignmentGuides: [] }),
   setDragData: (data) => set({ dragData: data }),
 
   undo: () => {

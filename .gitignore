@@ -46,4 +46,7 @@ apps/*/.next
 # LangGraph API
 .langgraph_api
 
+# temp files
+tmp/
+
 friend-g
