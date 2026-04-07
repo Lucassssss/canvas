@@ -9,6 +9,7 @@ import { LogoMaterialPanel } from './components/LogoMaterialPanel'
 import { FloatingConfigPanel } from './config-panel'
 import { AlignmentGuides } from './components/AlignmentGuides'
 import { aiCombinationService } from '@/ai-combination/service'
+import { combinationRegistry } from '@/ai-combination/registry'
 import { TransformMatrix } from '@/lib/canvas/transform'
 
 function getRotatedBoundingBox(
@@ -311,6 +312,78 @@ const SelectionBoxLayer: React.FC<{
         }}
         onMouseDown={onMultiRotateStart}
       />
+    </div>
+  )
+}
+
+const SHAPE_TYPE_NAMES: Record<ShapeType, string> = {
+  rect: '矩形',
+  circle: '圆形',
+  text: '文本',
+  note: '便签',
+  image: '图片',
+  arrow: '箭头',
+  draw: '画笔',
+  clothing: '服装',
+  'ai-combination': 'AI组合',
+  'image-slot': '图片槽',
+  'custom-combination': '自定义组合',
+  'detail-image': '详情图片',
+}
+
+const ShapeInfoLayer: React.FC<{
+  shapes: ShapeProps[]
+  selectedIds: string[]
+  viewport: { x: number; y: number; zoom: number }
+}> = ({ shapes, selectedIds, viewport }) => {
+  const selectedShape = shapes.find((s) => selectedIds.includes(s.id))
+  
+  if (!selectedShape || selectedIds.length !== 1) return null
+
+  const bounds = getRotatedBoundingBox(
+    selectedShape.x, 
+    selectedShape.y, 
+    selectedShape.width, 
+    selectedShape.height, 
+    selectedShape.rotation
+  )
+  const screenX = bounds.minX * viewport.zoom + viewport.x
+  const screenY = bounds.minY * viewport.zoom + viewport.y
+  const screenWidth = (bounds.maxX - bounds.minX) * viewport.zoom
+
+  const isImage = selectedShape.type === 'image'
+  const isAICombination = selectedShape.type === 'ai-combination'
+  const hasImage = !!selectedShape.imageUrl
+  
+  const shapeName = useMemo(() => {
+    if (isImage) {
+      return selectedShape.imageName || '图片'
+    }
+    if (isAICombination && selectedShape.combinationTypeId) {
+      const combinationType = combinationRegistry.get(selectedShape.combinationTypeId)
+      return combinationType?.name || 'AI组合'
+    }
+    return SHAPE_TYPE_NAMES[selectedShape.type]
+  }, [isImage, isAICombination, selectedShape.imageName, selectedShape.combinationTypeId, selectedShape.type])
+
+  const shapeInfo = isImage && hasImage && selectedShape.imageWidth && selectedShape.imageHeight 
+    ? `${selectedShape.imageWidth} × ${selectedShape.imageHeight}` 
+    : null
+
+  return (
+    <div
+      className="fixed flex items-center justify-between text-[10px] z-50"
+      style={{
+        left: screenX,
+        top: screenY - 16,
+        width: screenWidth,
+        color: 'var(--canvas-primary)',
+      }}
+    >
+      <span className="truncate">{shapeName}</span>
+      {shapeInfo && (
+        <span>{shapeInfo}</span>
+      )}
     </div>
   )
 }
@@ -1128,7 +1201,7 @@ export const Canvas: React.FC = () => {
 
   useEffect(() => {
     const handleImagesUploaded = (e: CustomEvent<{
-      images: Array<{ url: string; width: number; height: number }>
+      images: Array<{ url: string; width: number; height: number; name: string }>
       startX: number
       startY: number
       placeholderId?: string
@@ -1165,6 +1238,9 @@ export const Canvas: React.FC = () => {
           strokeWidth: 0,
           opacity: 1,
           imageUrl: img.url,
+          imageName: img.name,
+          imageWidth: img.width,
+          imageHeight: img.height,
         })
         newIds.push(newId.id)
 
@@ -1332,13 +1408,18 @@ export const Canvas: React.FC = () => {
             if (result.success && result.url) {
               let width = 0
               let height = 0
+              let naturalWidth = 0
+              let naturalHeight = 0
 
               const img = new Image()
               img.src = result.url
+              const fileName = file.name.replace(/\.[^/.]+$/, '')
               await new Promise<void>((resolve) => {
                 img.onload = () => {
                   width = img.naturalWidth
                   height = img.naturalHeight
+                  naturalWidth = img.naturalWidth
+                  naturalHeight = img.naturalHeight
                   resolve()
                 }
                 img.onerror = () => resolve()
@@ -1363,6 +1444,9 @@ export const Canvas: React.FC = () => {
                   strokeWidth: 0,
                   opacity: 1,
                   imageUrl: result.url,
+                  imageName: fileName,
+                  imageWidth: naturalWidth,
+                  imageHeight: naturalHeight,
                 })
                 newIds.push(newId.id)
                 currentX += width + GAP
@@ -1403,6 +1487,14 @@ export const Canvas: React.FC = () => {
           onSingleRotateStart={handleSingleRotateStart}
           onMultiResizeStart={handleMultiResizeStart}
           onMultiRotateStart={handleMultiRotateStart}
+        />
+      )}
+
+      {!isDragging && (
+        <ShapeInfoLayer
+          shapes={shapes}
+          selectedIds={selectedIds}
+          viewport={viewport}
         />
       )}
 

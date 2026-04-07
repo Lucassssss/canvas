@@ -418,7 +418,7 @@ const ShapeComponent: React.FC<ShapeComponentProps> = ({ shape }) => {
                   const files = e.target.files
                   if (!files || files.length === 0) return
 
-                  const images: Array<{ url: string; width: number; height: number }> = []
+                  const images: Array<{ url: string; width: number; height: number; name: string }> = []
                   let uploadedCount = 0
 
                   for (const file of Array.from(files)) {
@@ -426,12 +426,14 @@ const ShapeComponent: React.FC<ShapeComponentProps> = ({ shape }) => {
                     if (result.success && result.url) {
                       const img = new Image()
                       img.src = result.url
+                      const fileName = file.name.replace(/\.[^/.]+$/, '')
                       await new Promise<void>((resolve) => {
                         img.onload = () => {
                           images.push({
                             url: result.url!,
                             width: img.naturalWidth,
                             height: img.naturalHeight,
+                            name: fileName,
                           })
                           resolve()
                         }
@@ -652,6 +654,9 @@ const arePropsEqual = (prevProps: ShapeComponentProps, nextProps: ShapeComponent
     prevShape.stroke === nextShape.stroke &&
     prevShape.text === nextShape.text &&
     prevShape.imageUrl === nextShape.imageUrl &&
+    prevShape.imageName === nextShape.imageName &&
+    prevShape.imageWidth === nextShape.imageWidth &&
+    prevShape.imageHeight === nextShape.imageHeight &&
     prevProps.isSelected === nextProps.isSelected
   )
 
