@@ -637,20 +637,41 @@ const ShapeComponent: React.FC<ShapeComponentProps> = ({ shape }) => {
 }
 
 const arePropsEqual = (prevProps: ShapeComponentProps, nextProps: ShapeComponentProps) => {
-  return (
-    prevProps.shape.id === nextProps.shape.id &&
-    prevProps.shape.x === nextProps.shape.x &&
-    prevProps.shape.y === nextProps.shape.y &&
-    prevProps.shape.width === nextProps.shape.width &&
-    prevProps.shape.height === nextProps.shape.height &&
-    prevProps.shape.rotation === nextProps.shape.rotation &&
-    prevProps.shape.opacity === nextProps.shape.opacity &&
-    prevProps.shape.fill === nextProps.shape.fill &&
-    prevProps.shape.stroke === nextProps.shape.stroke &&
-    prevProps.shape.text === nextProps.shape.text &&
-    prevProps.shape.imageUrl === nextProps.shape.imageUrl &&
+  const prevShape = prevProps.shape
+  const nextShape = nextProps.shape
+
+  const baseEqual = (
+    prevShape.id === nextShape.id &&
+    prevShape.x === nextShape.x &&
+    prevShape.y === nextShape.y &&
+    prevShape.width === nextShape.width &&
+    prevShape.height === nextShape.height &&
+    prevShape.rotation === nextShape.rotation &&
+    prevShape.opacity === nextShape.opacity &&
+    prevShape.fill === nextShape.fill &&
+    prevShape.stroke === nextShape.stroke &&
+    prevShape.text === nextShape.text &&
+    prevShape.imageUrl === nextShape.imageUrl &&
     prevProps.isSelected === nextProps.isSelected
   )
+
+  if (!baseEqual) return false
+
+  const customSlotsEqual = (
+    JSON.stringify(prevShape.customInputSlots) === JSON.stringify(nextShape.customInputSlots) &&
+    JSON.stringify(prevShape.customOutputSlots) === JSON.stringify(nextShape.customOutputSlots) &&
+    prevShape.customStatus === nextShape.customStatus &&
+    prevShape.customError === nextShape.customError
+  )
+
+  const combinationEqual = (
+    prevShape.combinationStatus === nextShape.combinationStatus &&
+    prevShape.combinationError === nextShape.combinationError &&
+    JSON.stringify(prevShape.combinationResults) === JSON.stringify(nextShape.combinationResults) &&
+    JSON.stringify(prevShape.slotContents) === JSON.stringify(nextShape.slotContents)
+  )
+
+  return customSlotsEqual && combinationEqual
 }
 
 export const Shape = memo(ShapeComponent, arePropsEqual)
