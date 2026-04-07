@@ -38,18 +38,18 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip'
 
-const baseTools: { type: ToolType; icon: React.ReactNode; label: string; shortcut: string }[] = [
+const baseTools: { type: ToolType; icon: React.ReactNode; label: string; shortcut: string; requiresAlt?: boolean }[] = [
   { type: 'select', icon: <MousePointer2 size={20} />, label: '选择', shortcut: 'V' },
-  { type: 'hand', icon: <Hand size={20} />, label: '手型', shortcut: 'H' },
-  { type: 'pen', icon: <Pencil size={20} />, label: '画笔', shortcut: 'P' },
-  { type: 'eraser', icon: <Eraser size={20} />, label: '橡皮擦', shortcut: 'E' },
-  { type: 'arrow', icon: <ArrowRight size={20} />, label: '箭头', shortcut: 'A' },
-  { type: 'text', icon: <Type size={20} />, label: '文本', shortcut: 'T' },
-  { type: 'note', icon: <StickyNote size={20} />, label: '便签', shortcut: 'N' },
-  { type: 'image', icon: <ImageIcon size={20} />, label: '图片', shortcut: 'I' },
-  { type: 'shape', icon: <Square size={20} />, label: '形状', shortcut: 'S' },
-  { type: 'clothing', icon: <Shirt size={20} />, label: '服装', shortcut: 'C' },
-  { type: 'detail-image', icon: <Wand2 size={20} />, label: '详情图', shortcut: 'D' },
+  { type: 'hand', icon: <Hand size={20} />, label: '移动画布', shortcut: 'H' },
+  { type: 'pen', icon: <Pencil size={20} />, label: '画笔', shortcut: 'P', requiresAlt: true },
+  { type: 'eraser', icon: <Eraser size={20} />, label: '橡皮擦', shortcut: 'E', requiresAlt: true },
+  { type: 'arrow', icon: <ArrowRight size={20} />, label: '箭头', shortcut: 'A', requiresAlt: true },
+  { type: 'text', icon: <Type size={20} />, label: '文本', shortcut: 'T', requiresAlt: true },
+  { type: 'note', icon: <StickyNote size={20} />, label: '便签', shortcut: 'N', requiresAlt: true },
+  { type: 'image', icon: <ImageIcon size={20} />, label: '图片', shortcut: 'I', requiresAlt: true },
+  { type: 'shape', icon: <Square size={20} />, label: '形状', shortcut: 'S', requiresAlt: true },
+  { type: 'clothing', icon: <Shirt size={20} />, label: '服装', shortcut: 'C', requiresAlt: true },
+  { type: 'detail-image', icon: <Wand2 size={20} />, label: '详情图', shortcut: 'D', requiresAlt: true },
 ]
 
 interface ShapeSize {
@@ -366,9 +366,11 @@ function createCustomCombination(): void {
 }
 
 export const Toolbar: React.FC = () => {
-  const { activeTool, setActiveTool, activeAICategory, setActiveAICategory, undo, redo, historyIndex, history } = useCanvasStore()
+  const { activeTool, setActiveTool, activeAICategory, setActiveAICategory, undo, redo, historyIndex, history, isSpacePressed } = useCanvasStore()
   const [aiTypes, setAITypes] = useState<CombinationType[]>([])
   const [dropdownOpen, setDropdownOpen] = useState(false)
+
+  const effectiveTool = isSpacePressed ? 'hand' : activeTool
 
   const canUndo = historyIndex > 0
   const canRedo = historyIndex < history.length - 1
@@ -426,12 +428,15 @@ export const Toolbar: React.FC = () => {
       const key = e.key.toLowerCase()
       const baseTool = baseTools.find((t) => t.shortcut.toLowerCase() === key)
       if (baseTool) {
+        if (baseTool.requiresAlt && !e.altKey) {
+          return
+        }
         e.preventDefault()
         handleBaseToolClick(baseTool.type)
         return
       }
 
-      if (key === 'u' && aiTypes.length > 0) {
+      if (key === 'u' && e.altKey && aiTypes.length > 0) {
         if (activeAICategory) {
           createAICombinationShape(activeAICategory)
         } else {
@@ -444,7 +449,7 @@ export const Toolbar: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [setActiveTool, aiTypes, activeAICategory, handleAITypeSelect, handleBaseToolClick, undo, redo, canUndo, canRedo])
 
-  const isAIToolActive = activeTool === 'ai-combination'
+  const isAIToolActive = effectiveTool === 'ai-combination'
 
   return (
     <div className="toolbar">
@@ -452,7 +457,7 @@ export const Toolbar: React.FC = () => {
         <Tooltip key={tool.type}>
           <TooltipTrigger asChild>
             <button
-              className={`toolbar-btn ${activeTool === tool.type ? 'active' : ''}`}
+              className={`toolbar-btn ${effectiveTool === tool.type ? 'active' : ''}`}
               onClick={(e) => {
                 e.stopPropagation()
                 handleBaseToolClick(tool.type)
@@ -462,7 +467,7 @@ export const Toolbar: React.FC = () => {
             </button>
           </TooltipTrigger>
           <TooltipContent>
-            <p>{tool.label} ({tool.shortcut})</p>
+            <p>{tool.label} ({tool.requiresAlt ? `Alt+${tool.shortcut}` : tool.shortcut})</p>
           </TooltipContent>
         </Tooltip>
       ))}
