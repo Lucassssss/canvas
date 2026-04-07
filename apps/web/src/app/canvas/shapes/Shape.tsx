@@ -11,6 +11,8 @@ import { aiCombinationService } from '@/ai-combination/service'
 import { Loader2, Copy, Clipboard, Trash2, BringToFront, SendToBack, CopyPlus, Download } from 'lucide-react'
 import { TransformMatrix } from '@/lib/canvas/transform'
 import { calculateAlignmentGuides, snapToAlignment } from '../utils/alignmentGuides'
+import { detectDropTarget } from '../utils/dropZone'
+import { updateDropTarget, clearDropTarget, getDropTarget } from '../utils/dropTargetManager'
 import { updateGuidesData } from '../components/AlignmentGuides'
 import type { AlignmentGuide } from '../shapes/types'
 import {
@@ -32,7 +34,7 @@ const ShapeComponent: React.FC<ShapeComponentProps> = ({ shape }) => {
   const [isEditing, setIsEditing] = useState(false)
   const [imageLoaded, setImageLoaded] = useState(false)
   const [imageError, setImageError] = useState(false)
-  const [isMouseDragging, setIsMouseDragging] = useState(false)
+  const isMouseDraggingRef = useRef(false)
 
   const {
     updateShape,
@@ -60,9 +62,10 @@ const ShapeComponent: React.FC<ShapeComponentProps> = ({ shape }) => {
   const shapeDataRef = useRef<Map<string, { width: number; height: number; rotation: number; scaleX: number; scaleY: number }>>(new Map())
   const isDraggingStartedRef = useRef(false)
   const alignmentRafRef = useRef<number | null>(null)
-  const pendingAlignmentRef = useRef<{ dx: number; dy: number } | null>(null)
+  const pendingAlignmentRef = useRef<{ dx: number; dy: number; clientX: number; clientY: number } | null>(null)
   const snapOffsetRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 })
   const currentGuidesRef = useRef<AlignmentGuide[]>([])
+  const isImageDragRef = useRef(false)
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     if (e.button !== 0) return
@@ -103,6 +106,7 @@ const ShapeComponent: React.FC<ShapeComponentProps> = ({ shape }) => {
       dragElementsRef.current.clear()
       shapeDataRef.current.clear()
       isDraggingStartedRef.current = false
+      isImageDragRef.current = false
       idsToDrag.forEach((id) => {
         const el = document.querySelector(`[data-shape-id="${id}"]`) as HTMLElement
         if (el) {
@@ -117,6 +121,9 @@ const ShapeComponent: React.FC<ShapeComponentProps> = ({ shape }) => {
             scaleX: s.scaleX ?? 1,
             scaleY: s.scaleY ?? 1
           })
+          if (s.type === 'image' && s.imageUrl && idsToDrag.length === 1) {
+            isImageDragRef.current = true
+          }
         }
       })
 
@@ -130,7 +137,8 @@ const ShapeComponent: React.FC<ShapeComponentProps> = ({ shape }) => {
         if (!isDraggingStartedRef.current) {
           isDraggingStartedRef.current = true
           state.setIsDragging(true)
-          setIsMouseDragging(true)
+          isMouseDraggingRef.current = true
+          elementRef.current?.classList.add('dragging')
         }
 
         const { x: snapX, y: snapY } = snapOffsetRef.current
@@ -155,13 +163,25 @@ const ShapeComponent: React.FC<ShapeComponentProps> = ({ shape }) => {
           el.style.transform = TransformMatrix.toCssString(matrix)
         })
 
-        pendingAlignmentRef.current = { dx, dy }
+        pendingAlignmentRef.current = { dx, dy, clientX: moveEvent.clientX, clientY: moveEvent.clientY }
         if (alignmentRafRef.current === null) {
           alignmentRafRef.current = requestAnimationFrame(() => {
             alignmentRafRef.current = null
             if (!pendingAlignmentRef.current || !dragStartRef.current) return
 
-            const { dx: pdx, dy: pdy } = pendingAlignmentRef.current
+            const { dx: pdx, dy: pdy, clientX, clientY } = pendingAlignmentRef.current
+            const draggedShapeIds = Array.from(dragElementsRef.current.keys())
+
+            if (isImageDragRef.current) {
+              const dropTarget = detectDropTarget(
+                clientX,
+                clientY,
+                state.shapes,
+                draggedShapeIds
+              )
+              updateDropTarget(dropTarget)
+            }
+
             const draggedShapes: ShapeProps[] = []
 
             dragStartRef.current.shapePositions.forEach((pos, id) => {
@@ -188,7 +208,7 @@ const ShapeComponent: React.FC<ShapeComponentProps> = ({ shape }) => {
               const guides = calculateAlignmentGuides(
                 draggedShapes,
                 state.shapes,
-                Array.from(dragElementsRef.current.keys())
+                draggedShapeIds
               )
               currentGuidesRef.current = guides
               updateGuidesData(guides, state.viewport)
@@ -237,10 +257,51 @@ const ShapeComponent: React.FC<ShapeComponentProps> = ({ shape }) => {
         }
         pendingAlignmentRef.current = null
 
-        if (dragStartRef.current && lastDragEventRef.current) {
+        const latestState = useCanvasStore.getState()
+        const currentDropTarget = getDropTarget()
+        clearDropTarget()
+
+        if (currentDropTarget && dragStartRef.current) {
+          const draggedShapeIds = Array.from(dragElementsRef.current.keys())
+          if (draggedShapeIds.length === 1) {
+            const draggedShape = latestState.shapes.find(s => s.id === draggedShapeIds[0])
+            if (draggedShape?.type === 'image' && draggedShape.imageUrl) {
+              const combinationShape = latestState.shapes.find(s => s.id === currentDropTarget.combinationShapeId)
+              if (combinationShape?.type === 'custom-combination' && combinationShape.customInputSlots) {
+                const newSlots = combinationShape.customInputSlots.map(slot =>
+                  slot.id === currentDropTarget.slotId
+                    ? { ...slot, imageUrl: draggedShape.imageUrl }
+                    : slot
+                )
+                latestState.updateShape(currentDropTarget.combinationShapeId, { customInputSlots: newSlots })
+                latestState.saveHistory()
+                latestState.scheduleAutoSave()
+              }
+            }
+          }
+
+          dragStartRef.current.shapePositions.forEach((pos, id) => {
+            const el = dragElementsRef.current.get(id)
+            if (!el) return
+            const shapeData = shapeDataRef.current.get(id)
+            if (!shapeData) return
+            const cx = pos.x + shapeData.width / 2
+            const cy = pos.y + shapeData.height / 2
+            const matrix = TransformMatrix.compose(
+              cx,
+              cy,
+              shapeData.width,
+              shapeData.height,
+              shapeData.rotation,
+              shapeData.scaleX,
+              shapeData.scaleY
+            )
+            el.style.transform = TransformMatrix.toCssString(matrix)
+          })
+        } else if (dragStartRef.current && lastDragEventRef.current) {
           const updates: Array<{ id: string; props: Partial<ShapeProps> }> = []
-          const dx = (lastDragEventRef.current.clientX - dragStartRef.current.x) / state.viewport.zoom
-          const dy = (lastDragEventRef.current.clientY - dragStartRef.current.y) / state.viewport.zoom
+          const dx = (lastDragEventRef.current.clientX - dragStartRef.current.x) / latestState.viewport.zoom
+          const dy = (lastDragEventRef.current.clientY - dragStartRef.current.y) / latestState.viewport.zoom
           const { x: snapX, y: snapY } = snapOffsetRef.current
           
           dragStartRef.current.shapePositions.forEach((pos, id) => {
@@ -254,22 +315,24 @@ const ShapeComponent: React.FC<ShapeComponentProps> = ({ shape }) => {
           })
 
           if (updates.length > 0) {
-            state.batchUpdateShapes(updates)
+            latestState.batchUpdateShapes(updates)
           }
+          latestState.saveHistory()
+          latestState.scheduleAutoSave()
         }
 
         snapOffsetRef.current = { x: 0, y: 0 }
         currentGuidesRef.current = []
-        updateGuidesData([], state.viewport)
+        updateGuidesData([], latestState.viewport)
         dragStartRef.current = null
         dragElementsRef.current.clear()
         shapeDataRef.current.clear()
         lastDragEventRef.current = null
         isDraggingStartedRef.current = false
-        state.setIsDragging(false)
-        setIsMouseDragging(false)
-        state.saveHistory()
-        state.scheduleAutoSave()
+        isImageDragRef.current = false
+        isMouseDraggingRef.current = false
+        elementRef.current?.classList.remove('dragging')
+        latestState.setIsDragging(false)
         window.removeEventListener('mousemove', handleMouseMove)
         window.removeEventListener('mouseup', handleMouseUp)
       }
@@ -322,20 +385,7 @@ const ShapeComponent: React.FC<ShapeComponentProps> = ({ shape }) => {
 
       case 'image':
         return shape.imageUrl ? (
-          <div
-            className="relative w-full h-full"
-            draggable={!isMouseDragging}
-            onDragStart={(e) => {
-              e.dataTransfer.effectAllowed = 'copy'
-              e.dataTransfer.setData('text/plain', shape.id)
-              if (shape.imageUrl) {
-                setDragData({ shapeId: shape.id, imageUrl: shape.imageUrl })
-              }
-            }}
-            onDragEnd={() => {
-              setDragData(null)
-            }}
-          >
+          <div className="relative w-full h-full">
             {!imageLoaded && !imageError && (
               <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
                 <Loader2 size={24} className="animate-spin text-gray-400" />
@@ -531,7 +581,7 @@ const ShapeComponent: React.FC<ShapeComponentProps> = ({ shape }) => {
       <ContextMenuTrigger asChild>
         <div
           ref={elementRef}
-          className={`canvas-shape ${isMouseDragging ? 'dragging' : ''} ${shape.type === 'ai-combination' || shape.type === 'detail-image' ? 'pointer-events-auto' : ''} ${shape.type === 'image' && shape.imageUrl ? 'has-image' : ''}`}
+          className={`canvas-shape ${shape.type === 'ai-combination' || shape.type === 'detail-image' ? 'pointer-events-auto' : ''} ${shape.type === 'image' && shape.imageUrl ? 'has-image' : ''}`}
           data-type={shape.type}
           data-shape-id={shape.id}
           style={style}

@@ -26,53 +26,27 @@ const LABEL_HEIGHT = 20
 
 interface InputSlotRendererProps {
   slot: CustomCombinationSlot
+  combinationShapeId: string
   onFileSelect: (slotId: string, file: File) => void
   onClear: (slotId: string) => void
   onDelete: (slotId: string) => void
   onLabelChange: (slotId: string, label: string) => void
   canDelete: boolean
-  isDragOver: boolean
-  onDragEnter: () => void
-  onDragLeave: () => void
 }
 
 const InputSlotRenderer: React.FC<InputSlotRendererProps> = ({
   slot,
+  combinationShapeId,
   onFileSelect,
   onClear,
   onDelete,
   onLabelChange,
   canDelete,
-  isDragOver,
-  onDragEnter,
-  onDragLeave,
 }) => {
   const [imageLoaded, setImageLoaded] = useState(false)
   const [imageError, setImageError] = useState(false)
   const [isEditingLabel, setIsEditingLabel] = useState(false)
   const [editedLabel, setEditedLabel] = useState(slot.label)
-
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault()
-    onDragEnter()
-  }
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    onDragLeave()
-
-    const dragData = useCanvasStore.getState().dragData
-    if (dragData) {
-      onFileSelect(slot.id, dragData.imageUrl as unknown as File)
-      return
-    }
-
-    const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'))
-    if (files.length > 0) {
-      onFileSelect(slot.id, files[0])
-    }
-  }
 
   const handleLabelSubmit = () => {
     setIsEditingLabel(false)
@@ -114,13 +88,10 @@ const InputSlotRenderer: React.FC<InputSlotRendererProps> = ({
         )}
       </div>
       <div
-        className={`group relative bg-gray-200 border-3 overflow-hidden shadow-md transition-colors cursor-pointer ${
-          isDragOver ? 'border-blue-500 bg-blue-50' : 'border-white hover:border-white'
-        }`}
+        data-slot-id={slot.id}
+        data-combination-shape-id={combinationShapeId}
+        className="group relative bg-gray-200 border-3 border-white overflow-hidden shadow-md transition-all duration-150 cursor-pointer drop-slot"
         style={{ width: SLOT_WIDTH, height: SLOT_HEIGHT }}
-        onDragOver={handleDragOver}
-        onDragLeave={onDragLeave}
-        onDrop={handleDrop}
         onClick={() => {
           if (!slot.imageUrl) {
             const input = document.createElement('input')
@@ -273,7 +244,6 @@ const OutputSlotRenderer: React.FC<OutputSlotRendererProps> = ({ slot, onLabelCh
 }
 
 export const CustomCombination: React.FC<CustomCombinationProps> = ({ shape }) => {
-  const [isDragOver, setIsDragOver] = useState<string | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const { updateShape } = useCanvasStore()
 
@@ -419,14 +389,12 @@ export const CustomCombination: React.FC<CustomCombinationProps> = ({ shape }) =
               )}
               <InputSlotRenderer
                 slot={slot}
+                combinationShapeId={shape.id}
                 onFileSelect={handleFileSelect}
                 onClear={handleClear}
                 onDelete={handleRemoveSlot}
                 onLabelChange={(id, label) => handleLabelChange(id, label, true)}
                 canDelete={inputSlots.length > 1}
-                isDragOver={isDragOver === slot.id}
-                onDragEnter={() => setIsDragOver(slot.id)}
-                onDragLeave={() => setIsDragOver(null)}
               />
             </React.Fragment>
           ))}
