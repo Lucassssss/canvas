@@ -42,6 +42,7 @@ interface CanvasStore {
   isDragging: boolean
   isResizing: boolean
   isRotating: boolean
+  isSpacePressed: boolean
   alignmentGuides: AlignmentGuide[]
   clipboard: ShapeProps[]
   logoEditingState: {
@@ -86,6 +87,7 @@ interface CanvasStore {
   setIsDragging: (isDragging: boolean) => void
   setIsResizing: (isResizing: boolean) => void
   setIsRotating: (isRotating: boolean) => void
+  setIsSpacePressed: (isSpacePressed: boolean) => void
   setAlignmentGuides: (guides: AlignmentGuide[]) => void
   clearAlignmentGuides: () => void
   dragData: { shapeId: string; imageUrl: string } | null
@@ -135,6 +137,7 @@ const initialState = {
   isDragging: false,
   isResizing: false,
   isRotating: false,
+  isSpacePressed: false,
   alignmentGuides: [] as AlignmentGuide[],
   clipboard: [] as ShapeProps[],
   logoEditingState: {
@@ -388,6 +391,7 @@ export const useCanvasStore = create<CanvasStore>()(
   setIsDragging: (isDragging) => set({ isDragging }),
   setIsResizing: (isResizing) => set({ isResizing }),
   setIsRotating: (isRotating) => set({ isRotating }),
+  setIsSpacePressed: (isSpacePressed) => set({ isSpacePressed }),
   setAlignmentGuides: (guides) => set({ alignmentGuides: guides }),
   clearAlignmentGuides: () => set({ alignmentGuides: [] }),
   setDragData: (data) => set({ dragData: data }),

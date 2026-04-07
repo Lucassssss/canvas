@@ -3,7 +3,7 @@
 import React, { useRef, useEffect, useCallback, useState, useMemo } from 'react'
 import { useCanvasStore } from './store'
 import { Shape } from './shapes/Shape'
-import { ToolType, ShapeProps, SHAPE_MIN_SIZE } from './shapes/types'
+import { ToolType, ShapeProps, SHAPE_MIN_SIZE, ShapeType } from './shapes/types'
 import { LogoEditorLayer } from './components/LogoEditorLayer'
 import { LogoMaterialPanel } from './components/LogoMaterialPanel'
 import { FloatingConfigPanel } from './config-panel'
@@ -599,7 +599,7 @@ export const Canvas: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null)
   const viewportRef = useRef<HTMLDivElement>(null)
   const [previousTool, setPreviousTool] = useState<ToolType>('select')
-  const [isSpacePressed, setIsSpacePressed] = useState(false)
+  const [isSpaceDragging, setIsSpaceDragging] = useState(false)
   const [selectionRect, setSelectionRect] = useState<SelectionRect | null>(null)
 
   const {
@@ -608,11 +608,13 @@ export const Canvas: React.FC = () => {
     viewport,
     activeTool,
     isDragging,
+    isSpacePressed,
     setViewport,
     setSelectedIds,
     addToSelection,
     clearSelection,
     setIsDragging,
+    setIsSpacePressed,
     setActiveTool,
     updateShape,
     saveHistory,
@@ -1325,6 +1327,8 @@ export const Canvas: React.FC = () => {
       if (e.key === ' ') {
         e.preventDefault()
         setIsSpacePressed(false)
+        setIsSpaceDragging(false)
+        viewportDragStartRef.current = null
         if (activeTool === 'hand') {
           setActiveTool(previousTool)
         }
@@ -1511,6 +1515,56 @@ export const Canvas: React.FC = () => {
       <AlignmentGuides />
 
       {renderSelectionRect()}
+
+      {isSpacePressed && (
+        <div
+          className="absolute inset-0 z-[9999]"
+          style={{ cursor: isSpaceDragging ? 'grabbing' : 'grab' }}
+          onMouseDown={(e) => {
+            if (e.button !== 0) return
+            viewportDragStartRef.current = {
+              x: e.clientX,
+              y: e.clientY,
+              viewportX: viewport.x,
+              viewportY: viewport.y,
+            }
+            setIsSpaceDragging(true)
+          }}
+          onMouseMove={(e) => {
+            if (!isSpaceDragging || !viewportDragStartRef.current) return
+            const { x, y, viewportX, viewportY } = viewportDragStartRef.current
+            const dx = e.clientX - x
+            const dy = e.clientY - y
+            const newX = viewportX + dx
+            const newY = viewportY + dy
+
+            pendingViewportRef.current = { x: newX, y: newY, zoom: viewport.zoom }
+            if (viewportRafRef.current === null) {
+              viewportRafRef.current = requestAnimationFrame(() => {
+                viewportRafRef.current = null
+                if (pendingViewportRef.current && viewportRef.current) {
+                  const { x: px, y: py, zoom: pz } = pendingViewportRef.current
+                  viewportRef.current.style.transform = `matrix(${pz}, 0, 0, ${pz}, ${px}, ${py})`
+                }
+              })
+            }
+          }}
+          onMouseUp={() => {
+            if (pendingViewportRef.current) {
+              setViewport(pendingViewportRef.current)
+            }
+            viewportDragStartRef.current = null
+            setIsSpaceDragging(false)
+          }}
+          onMouseLeave={() => {
+            if (pendingViewportRef.current) {
+              setViewport(pendingViewportRef.current)
+            }
+            viewportDragStartRef.current = null
+            setIsSpaceDragging(false)
+          }}
+        />
+      )}
     </div>
   )
 }
