@@ -91,6 +91,9 @@ interface CanvasStore {
   dragData: { shapeId: string; imageUrl: string } | null
   setDragData: (data: { shapeId: string; imageUrl: string } | null) => void
 
+  dropTarget: { combinationShapeId: string; slotId: string } | null
+  setDropTarget: (target: { combinationShapeId: string; slotId: string } | null) => void
+
   undo: () => void
   redo: () => void
   saveHistory: (operationType?: OperationType, description?: string) => void
@@ -148,6 +151,7 @@ const initialState = {
   autoSaveTimer: null as NodeJS.Timeout | null,
   isSaving: false,
   dragData: null as { shapeId: string; imageUrl: string } | null,
+  dropTarget: null as { combinationShapeId: string; slotId: string } | null,
 }
 
 export const useCanvasStore = create<CanvasStore>()(
@@ -387,6 +391,8 @@ export const useCanvasStore = create<CanvasStore>()(
   setAlignmentGuides: (guides) => set({ alignmentGuides: guides }),
   clearAlignmentGuides: () => set({ alignmentGuides: [] }),
   setDragData: (data) => set({ dragData: data }),
+
+  setDropTarget: (target) => set({ dropTarget: target }),
 
   undo: () => {
     const { history, historyIndex } = get()
