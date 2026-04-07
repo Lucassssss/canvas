@@ -30,6 +30,7 @@ class AICombinationService {
       const response = await fetch(`${API_BASE_URL}/api/image/generate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify(instance),
       })
       const data = await response.json()
@@ -46,6 +47,7 @@ class AICombinationService {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify({
           filename: file.name,
           contentType: file.type,
@@ -100,6 +102,7 @@ class AICombinationService {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify({
           imageUrl,
           folder,
@@ -131,7 +134,9 @@ class AICombinationService {
 
   async getClothingTemplates(): Promise<{ success: boolean; templates?: unknown[]; error?: string }> {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/clothing/templates`)
+      const response = await fetch(`${API_BASE_URL}/api/clothing/templates`, {
+        credentials: 'include',
+      })
       const data = await response.json()
       return { success: true, templates: data.templates }
     } catch (error) {
