@@ -76,6 +76,9 @@ export interface ShapeProps {
   opacity: number
   text?: string
   imageUrl?: string
+  imageName?: string
+  imageWidth?: number
+  imageHeight?: number
   points?: Array<{ x: number; y: number }>
   clothingView?: ClothingView
   clothingColors?: ClothingColors
