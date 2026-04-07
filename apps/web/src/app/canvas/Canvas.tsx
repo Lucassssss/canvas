@@ -1394,15 +1394,17 @@ export const Canvas: React.FC = () => {
         ))}
       </div>
 
-      <SelectionBoxLayer
-        shapes={shapes}
-        selectedIds={selectedIds}
-        viewport={viewport}
-        onSingleResizeStart={handleSingleResizeStart}
-        onSingleRotateStart={handleSingleRotateStart}
-        onMultiResizeStart={handleMultiResizeStart}
-        onMultiRotateStart={handleMultiRotateStart}
-      />
+      {!isDragging && (
+        <SelectionBoxLayer
+          shapes={shapes}
+          selectedIds={selectedIds}
+          viewport={viewport}
+          onSingleResizeStart={handleSingleResizeStart}
+          onSingleRotateStart={handleSingleRotateStart}
+          onMultiResizeStart={handleMultiResizeStart}
+          onMultiRotateStart={handleMultiRotateStart}
+        />
+      )}
 
       <LogoEditorLayer
         shapes={shapes}
@@ -1412,7 +1414,7 @@ export const Canvas: React.FC = () => {
 
       <LogoMaterialPanel />
 
-      <FloatingConfigPanel containerRef={containerRef} />
+      {!isDragging && <FloatingConfigPanel containerRef={containerRef} />}
 
       <AlignmentGuides />
 
