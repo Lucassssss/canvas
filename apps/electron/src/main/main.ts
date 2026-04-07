@@ -35,7 +35,7 @@ function startApiServer(): Promise<void> {
         ...process.env,
         PORT: API_PORT.toString(),
         NODE_ENV: 'production',
-        ECLAW_DATA_DIR: userDataPath,
+        JOII_DATA_DIR: userDataPath,
       },
       stdio: 'pipe',
     });

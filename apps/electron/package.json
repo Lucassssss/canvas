@@ -1,8 +1,8 @@
 {
-  "name": "eclaw",
+  "name": "joii",
   "version": "1.0.0",
   "private": true,
-  "description": "Eclaw Desktop Application",
+  "description": "joii Desktop Application",
   "main": "dist/main/main.js",
   "scripts": {
     "dev": "concurrently \"npm run dev:main\" \"npm run dev:renderer\"",
@@ -30,8 +30,8 @@
     "typescript": "^5.7.3"
   },
   "build": {
-    "appId": "com.eclaw.desktop",
-    "productName": "Eclaw",
+    "appId": "com.joii.desktop",
+    "productName": "joii",
     "directories": {
       "output": "release"
     },
@@ -54,7 +54,7 @@
     "publish": {
       "provider": "github",
       "owner": "Lucassssss",
-      "repo": "Eclaw"
+      "repo": "joii"
     },
     "mac": {
       "category": "public.app-category.productivity",
