@@ -631,7 +631,7 @@ export const Canvas: React.FC = () => {
   const pendingViewportRef = useRef<{ x: number; y: number; zoom: number } | null>(null)
   const wheelRafRef = useRef<number | null>(null)
   const pendingWheelRef = useRef<{ zoom: number; x: number; y: number } | null>(null)
-  const resizeStartRef = useRef<{ startMouseX: number; startMouseY: number; startWidth: number; startHeight: number; startPosX: number; startPosY: number; handle: string; shapeId: string } | null>(null)
+  const resizeStartRef = useRef<{ startMouseX: number; startMouseY: number; startWidth: number; startHeight: number; startPosX: number; startPosY: number; handle: string; shapeId: string; shapeType: ShapeType } | null>(null)
   const rotateStartRef = useRef<{ x: number; y: number; startAngle: number; initialRotation: number; centerX: number; centerY: number; shapeId: string } | null>(null)
   const multiSelectResizeStartRef = useRef<MultiSelectResizeStart | null>(null)
   const multiSelectRotateStartRef = useRef<MultiSelectRotateStart | null>(null)
@@ -862,7 +862,7 @@ export const Canvas: React.FC = () => {
     }
 
     if (resizeStartRef.current) {
-      const { startMouseX, startMouseY, startWidth, startHeight, startPosX, startPosY, handle, shapeId } = resizeStartRef.current
+      const { startMouseX, startMouseY, startWidth, startHeight, startPosX, startPosY, handle, shapeId, shapeType } = resizeStartRef.current
 
       const shape = shapes.find((s) => s.id === shapeId)
       if (!shape) return
@@ -879,44 +879,91 @@ export const Canvas: React.FC = () => {
       let newX = startPosX
       let newY = startPosY
 
-      if (handle === 'se') {
-        dx = Math.min(Math.max(-startWidth + minWidth, dx), 1000)
-        dy = Math.min(Math.max(-startHeight + minHeight, dy), 1000)
-        newWidth = startWidth + dx
-        newHeight = startHeight + dy
-      } else if (handle === 'nw') {
-        dx = Math.min(Math.max(-startWidth + minWidth, dx), 1000)
-        dy = Math.min(Math.max(-startHeight + minHeight, dy), 1000)
-        newWidth = startWidth - dx
-        newHeight = startHeight - dy
-        newX = startPosX + dx
-        newY = startPosY + dy
-      } else if (handle === 'ne') {
-        dx = Math.min(Math.max(-startWidth + minWidth, dx), 1000)
-        dy = Math.min(Math.max(-startHeight + minHeight, dy), 1000)
-        newWidth = startWidth + dx
-        newHeight = startHeight - dy
-        newY = startPosY + dy
-      } else if (handle === 'sw') {
-        dx = Math.min(Math.max(-startWidth + minWidth, dx), 1000)
-        dy = Math.min(Math.max(-startHeight + minHeight, dy), 1000)
-        newWidth = startWidth - dx
-        newHeight = startHeight + dy
-        newX = startPosX + dx
-      } else if (handle === 'n') {
-        dy = Math.min(Math.max(-startHeight + minHeight, dy), 1000)
-        newHeight = startHeight - dy
-        newY = startPosY + dy
-      } else if (handle === 's') {
-        dy = Math.min(Math.max(-startHeight + minHeight, dy), 1000)
-        newHeight = startHeight + dy
-      } else if (handle === 'w') {
-        dx = Math.min(Math.max(-startWidth + minWidth, dx), 1000)
-        newWidth = startWidth - dx
-        newX = startPosX + dx
-      } else if (handle === 'e') {
-        dx = Math.min(Math.max(-startWidth + minWidth, dx), 1000)
-        newWidth = startWidth + dx
+      const isImage = shapeType === 'image'
+      const aspectRatio = startWidth / startHeight
+
+      if (isImage) {
+        let scale = 1
+        if (handle === 'se') {
+          const scaleX = (startWidth + dx) / startWidth
+          const scaleY = (startHeight + dy) / startHeight
+          scale = Math.max(scaleX, scaleY)
+        } else if (handle === 'nw') {
+          const scaleX = (startWidth - dx) / startWidth
+          const scaleY = (startHeight - dy) / startHeight
+          scale = Math.max(scaleX, scaleY)
+          newX = startPosX + startWidth - startWidth * scale
+          newY = startPosY + startHeight - startHeight * scale
+        } else if (handle === 'ne') {
+          const scaleX = (startWidth + dx) / startWidth
+          const scaleY = (startHeight - dy) / startHeight
+          scale = Math.max(scaleX, scaleY)
+          newY = startPosY + startHeight - startHeight * scale
+        } else if (handle === 'sw') {
+          const scaleX = (startWidth - dx) / startWidth
+          const scaleY = (startHeight + dy) / startHeight
+          scale = Math.max(scaleX, scaleY)
+          newX = startPosX + startWidth - startWidth * scale
+        } else if (handle === 'n' || handle === 's') {
+          const scaleY = handle === 'n' 
+            ? (startHeight - dy) / startHeight 
+            : (startHeight + dy) / startHeight
+          scale = scaleY
+          if (handle === 'n') {
+            newY = startPosY + startHeight - startHeight * scale
+          }
+        } else if (handle === 'w' || handle === 'e') {
+          const scaleX = handle === 'w' 
+            ? (startWidth - dx) / startWidth 
+            : (startWidth + dx) / startWidth
+          scale = scaleX
+          if (handle === 'w') {
+            newX = startPosX + startWidth - startWidth * scale
+          }
+        }
+        
+        newWidth = Math.max(minWidth, startWidth * scale)
+        newHeight = Math.max(minHeight, startHeight * scale)
+      } else {
+        if (handle === 'se') {
+          dx = Math.min(Math.max(-startWidth + minWidth, dx), 1000)
+          dy = Math.min(Math.max(-startHeight + minHeight, dy), 1000)
+          newWidth = startWidth + dx
+          newHeight = startHeight + dy
+        } else if (handle === 'nw') {
+          dx = Math.min(Math.max(-startWidth + minWidth, dx), 1000)
+          dy = Math.min(Math.max(-startHeight + minHeight, dy), 1000)
+          newWidth = startWidth - dx
+          newHeight = startHeight - dy
+          newX = startPosX + dx
+          newY = startPosY + dy
+        } else if (handle === 'ne') {
+          dx = Math.min(Math.max(-startWidth + minWidth, dx), 1000)
+          dy = Math.min(Math.max(-startHeight + minHeight, dy), 1000)
+          newWidth = startWidth + dx
+          newHeight = startHeight - dy
+          newY = startPosY + dy
+        } else if (handle === 'sw') {
+          dx = Math.min(Math.max(-startWidth + minWidth, dx), 1000)
+          dy = Math.min(Math.max(-startHeight + minHeight, dy), 1000)
+          newWidth = startWidth - dx
+          newHeight = startHeight + dy
+          newX = startPosX + dx
+        } else if (handle === 'n') {
+          dy = Math.min(Math.max(-startHeight + minHeight, dy), 1000)
+          newHeight = startHeight - dy
+          newY = startPosY + dy
+        } else if (handle === 's') {
+          dy = Math.min(Math.max(-startHeight + minHeight, dy), 1000)
+          newHeight = startHeight + dy
+        } else if (handle === 'w') {
+          dx = Math.min(Math.max(-startWidth + minWidth, dx), 1000)
+          newWidth = startWidth - dx
+          newX = startPosX + dx
+        } else if (handle === 'e') {
+          dx = Math.min(Math.max(-startWidth + minWidth, dx), 1000)
+          newWidth = startWidth + dx
+        }
       }
 
       pendingShapeUpdatesRef.current.set(shapeId, { width: newWidth, height: newHeight, x: newX, y: newY })
@@ -1020,6 +1067,7 @@ export const Canvas: React.FC = () => {
       startPosY: shape.y,
       handle,
       shapeId,
+      shapeType: shape.type,
     }
     setIsDragging(true)
   }, [shapes, setIsDragging])
