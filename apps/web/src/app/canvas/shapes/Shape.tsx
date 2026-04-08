@@ -7,6 +7,7 @@ import { ClothingComponent } from './ClothingComponent'
 import { AICombinationComponent } from './AICombinationComponent'
 import { CustomCombination } from './CustomCombination'
 import { DetailImageShape } from '../detail-image/DetailImageShape'
+import { OptimizedImage } from './OptimizedImage'
 import { aiCombinationService } from '@/ai-combination/service'
 import { Loader2, Copy, Clipboard, Trash2, BringToFront, SendToBack, CopyPlus, Download } from 'lucide-react'
 import { TransformMatrix } from '@/lib/canvas/transform'
@@ -44,7 +45,6 @@ const ShapeComponent: React.FC<ShapeComponentProps> = ({ shape }) => {
     saveHistory,
     activeTool,
     setIsDragging,
-    viewport,
     setDragData,
     deleteShape,
     copySelectedShapes,
@@ -385,26 +385,13 @@ const ShapeComponent: React.FC<ShapeComponentProps> = ({ shape }) => {
 
       case 'image':
         return shape.imageUrl ? (
-          <div className="relative w-full h-full">
-            {!imageLoaded && !imageError && (
-              <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
-                <Loader2 size={24} className="animate-spin text-gray-400" />
-              </div>
-            )}
-            {imageError && (
-              <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-100 text-gray-400 gap-1">
-                <span className="text-xs">加载失败</span>
-              </div>
-            )}
-            <img
-              src={shape.imageUrl}
-              alt=""
-              draggable={false}
-              className={`w-full h-full object-cover transition-opacity ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
-              onLoad={() => setImageLoaded(true)}
-              onError={() => setImageError(true)}
-            />
-          </div>
+          <OptimizedImage
+            src={shape.imageUrl}
+            width={shape.width}
+            height={shape.height}
+            onLoad={() => setImageLoaded(true)}
+            onError={() => setImageError(true)}
+          />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
             <label className="px-3 py-1.5 bg-blue-500 text-white text-xs rounded-md cursor-pointer hover:bg-blue-600 transition-colors">
