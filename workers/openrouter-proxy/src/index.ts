@@ -18,6 +18,33 @@ export default {
     }
 
     const url = new URL(request.url);
+    
+    // Debug endpoint to check worker's outbound IP
+    if (url.pathname === "/debug/ip") {
+      try {
+        const ipResponse = await fetch("https://api.ipify.org?format=json");
+        const ipData = await ipResponse.json();
+        
+        const geoResponse = await fetch(`http://ip-api.com/json/${ipData.ip}`);
+        const geoData = await geoResponse.json();
+        
+        return new Response(JSON.stringify({
+          worker_ip: ipData.ip,
+          geo: geoData
+        }, null, 2), {
+          headers: { 
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*"
+          },
+        });
+      } catch (error: any) {
+        return new Response(JSON.stringify({ error: error.message }), {
+          status: 500,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+    }
+
     const targetUrl = OPENROUTER_API + url.pathname + url.search;
 
     const headers = new Headers();
