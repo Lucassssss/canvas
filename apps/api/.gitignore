@@ -3,3 +3,4 @@ agent-cache
 .env.local
 .env
 conversations.db
+.env.production

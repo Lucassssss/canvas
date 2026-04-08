@@ -15,7 +15,10 @@
     "desktop": "cd apps/electron && bun run start",
     "desktop:dev": "cd apps/electron && bun run dev",
     "desktop:build": "cd apps/electron && bun run build",
-    "desktop:dist": "cd apps/electron && bun run dist"
+    "desktop:dist": "cd apps/electron && bun run dist",
+    "deploy": "bash server_config/scripts/deploy.sh full",
+    "deploy:frontend": "bash server_config/scripts/deploy.sh frontend",
+    "deploy:backend": "bash server_config/scripts/deploy.sh backend"
   },
   "devDependencies": {
     "@langchain/langgraph-cli": "^1.1.15",

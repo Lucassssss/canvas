@@ -17,8 +17,8 @@ DOMAIN="joii.cc"
 DOMAIN_URL="https://$DOMAIN"
 
 # 远程目录
-REMOTE_BASE_DIR="/var/www/joii"
-REMOTE_WEB_DIR="$REMOTE_BASE_DIR/web"
+REMOTE_BASE_DIR="/var/www/joii.cc"
+REMOTE_WEB_DIR="$REMOTE_BASE_DIR"
 REMOTE_API_DIR="$REMOTE_BASE_DIR/api"
 
 # API 配置
