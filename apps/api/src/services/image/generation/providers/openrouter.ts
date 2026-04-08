@@ -20,11 +20,11 @@ import { s3UploadService } from "../../../s3.js";
 /**
  * OpenRouter 服务商配置
  */
-const OPENROUTER_API_URL = "https://openrouter.ai/api/v1";
+const OPENROUTER_API_URL = process.env.OPENROUTER_API_BASE_URL;
 
-// const image_size = '1k'
+const image_size = '1k'
 // const image_size = '2k'
-const image_size = '4k'
+// const image_size = '4k'
 // ----------------------------------------------------------
 
 
@@ -42,7 +42,7 @@ const image_size = '4k'
  * 价格：￥0.0012-￥0.54-￥1.34(2k)
  * 生成图：https://d-assets-cn.joii.cc/ai-generated/11c14d69-d010-44f5-848d-1bc8228c3d53.png
 **/
-// const DEFAULT_MODEL = "google/gemini-2.5-flash-image";
+const DEFAULT_MODEL = "google/gemini-2.5-flash-image";
 
 /** 
  * 单图 9分，多图9分，完美
@@ -51,7 +51,7 @@ const image_size = '4k'
  * 多图4k: https://d-assets-cn.joii.cc/ai-generated/b4b9b57d-6596-452e-b17d-8fa283bbd5fa.png
  * 单图4k: https://d-assets-cn.joii.cc/ai-generated/7001aabd-18b2-4765-aecd-57cac68e498a.png
 **/
-const DEFAULT_MODEL = "google/gemini-3-pro-image-preview";
+// const DEFAULT_MODEL = "google/gemini-3-pro-image-preview";
 
 
 /** 多图性能一般，不支持4k, 单图发虚
