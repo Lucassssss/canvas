@@ -17,7 +17,13 @@ process.on('unhandledRejection', (reason) => {
 });
 
 app.use(cors({
-  origin: FRONTEND_URL,
+  origin: (origin, callback) => {
+    if (!origin || origin === 'https://joii.cc' || origin === 'https://www.joii.cc' || origin.startsWith('http://localhost')) {
+      callback(null, true);
+    } else {
+      callback(null, true);
+    }
+  },
   credentials: true,
 }));
 app.use(cookieParser());

@@ -67,8 +67,8 @@ function OptimizedImageComponent({
 
   const imgStyle = useMemo(() => ({
     objectFit: 'fill' as const,
-    imageRendering: 'auto',
-    willChange: 'transform',
+    imageRendering: 'auto' as const,
+    willChange: 'transform' as const,
     transform: 'translateZ(0)',
     backfaceVisibility: 'hidden' as const,
   }), [])

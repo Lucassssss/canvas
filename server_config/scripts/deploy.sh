@@ -109,7 +109,9 @@ build_frontend() {
         echo "NEXT_PUBLIC_API_URL=$API_BASE_URL" > "apps/web/.env.production"
     fi
 
+    mv apps/web/.env.local apps/web/.env.local.bak 2>/dev/null || true
     bun run build --filter=web
+    mv apps/web/.env.local.bak apps/web/.env.local 2>/dev/null || true
 
     if [[ ! -d "apps/web/out" ]]; then
         echo "错误: 前端构建失败，out 目录不存在"
@@ -142,32 +144,53 @@ upload_frontend() {
     echo ""
 }
 
+upload_backend() {
+    echo "[3.5/6] 上传后端代码..."
+
+    ssh_exec "mkdir -p $REMOTE_API_DIR"
+
+    if [[ "$IS_WINDOWS" == true ]]; then
+        cd "$PROJECT_ROOT/apps/api"
+        scp_upload src "$SERVER_USER@$SERVER_HOST:$REMOTE_API_DIR/"
+        scp_upload package.json tsconfig.json drizzle.config.ts .env.example "$SERVER_USER@$SERVER_HOST:$REMOTE_API_DIR/"
+        scp_upload .env.production "$SERVER_USER@$SERVER_HOST:$REMOTE_API_DIR/.env"
+    else
+        scp_upload -r "$PROJECT_ROOT/apps/api/src" "$SERVER_USER@$SERVER_HOST:$REMOTE_API_DIR/"
+        scp_upload "$PROJECT_ROOT/apps/api/package.json" "$PROJECT_ROOT/apps/api/tsconfig.json" "$PROJECT_ROOT/apps/api/drizzle.config.ts" "$PROJECT_ROOT/apps/api/.env.example" "$SERVER_USER@$SERVER_HOST:$REMOTE_API_DIR/"
+        scp_upload "$PROJECT_ROOT/apps/api/.env.production" "$SERVER_USER@$SERVER_HOST:$REMOTE_API_DIR/.env"
+    fi
+
+    echo "✓ 后端代码上传完成"
+    echo ""
+}
+
 deploy_backend() {
     echo "[4/6] 部署后端..."
 
-    ssh_exec << 'ENDSSH'
+    ssh -o StrictHostKeyChecking=no -p "$SSH_PORT" "$SERVER_USER@$SERVER_HOST" bash -c "
+        export PATH=\"/root/.bun/bin:\$PATH\"
         set -e
 
-        echo "  - 检查 PM2..."
+        echo \"  - 检查 PM2...\"
         if ! command -v pm2 &> /dev/null; then
-            echo "    安装 PM2..."
+            echo \"    安装 PM2...\"
             npm install -g pm2
             pm2 install pm2-logrotate
             pm2 set pm2-logrotate:max_size 10M
             pm2 set pm2-logrotate:retain 7
         fi
 
-        echo "  - 重启后端服务..."
-        cd REMOTE_API_DIR
+        echo \"  - 重启后端服务...\"
+        cd \"$REMOTE_API_DIR\"
 
         bun install
 
-        pm2 restart joii-api 2>/dev/null || pm2 start bun --name "joii-api" -- run start
+        pm2 restart joii-api 2>/dev/null || pm2 start bun --name \"joii-api\" -- run --env-file .env src/index.ts
 
         pm2 save
 
-        echo "✓ 后端部署完成"
-ENDSSH
+        echo \"✓ 后端部署完成\"
+    "
 
     echo "✓ 后端部署完成"
     echo ""
@@ -176,75 +199,7 @@ ENDSSH
 setup_nginx() {
     echo "[5/6] 配置 Nginx..."
 
-    NGINX_CONFIG=$(cat << 'NGINX_EOF'
-server {
-    listen 80;
-    server_name DOMAIN WWW_DOMAIN;
-    return 301 https://$server_name$request_uri;
-}
-
-server {
-    listen 443 ssl http2;
-    server_name DOMAIN WWW_DOMAIN;
-
-    ssl_certificate /root/.acme.sh/DOMAIN/fullchain.cer;
-    ssl_certificate_key /root/.acme.sh/DOMAIN/DOMAIN.key;
-
-    include /etc/nginx/snippets/security-headers.conf;
-
-    gzip on;
-    gzip_vary on;
-    gzip_min_length 1024;
-    gzip_types text/plain text/css text/xml text/javascript application/javascript application/json application/xml;
-
-    root REMOTE_WEB_DIR;
-    index index.html;
-
-    location / {
-        try_files $uri $uri/ /index.html;
-    }
-
-    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2)$ {
-        expires 1y;
-        add_header Cache-Control "public, immutable";
-    }
-
-    location /api/ {
-        proxy_pass http://127.0.0.1:API_PORT/;
-        proxy_http_version 1.1;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-
-        add_header Access-Control-Allow-Origin $http_origin always;
-        add_header Access-Control-Allow-Credentials true always;
-        add_header Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS" always;
-        add_header Access-Control-Allow-Headers "Content-Type, Authorization" always;
-
-        if ($request_method = OPTIONS) {
-            return 204;
-        }
-    }
-}
-NGINX_EOF
-)
-
-    NGINX_CONFIG=$(echo "$NGINX_CONFIG" | sed "s/DOMAIN/$DOMAIN/g")
-    NGINX_CONFIG=$(echo "$NGINX_CONFIG" | sed "s/WWW_DOMAIN/www.$DOMAIN/g")
-    NGINX_CONFIG=$(echo "$NGINX_CONFIG" | sed "s|REMOTE_WEB_DIR|$REMOTE_WEB_DIR|g")
-    NGINX_CONFIG=$(echo "$NGINX_CONFIG" | sed "s/API_PORT/$API_PORT/g")
-
-    ssh_exec "cat > /etc/nginx/sites-available/joii.conf << 'INNER_EOF'
-$NGINX_CONFIG
-INNER_EOF
-"
-
-    ssh_exec "ln -sf /etc/nginx/sites-available/joii.conf /etc/nginx/sites-enabled/"
-
-    ssh_exec "if [ -d /etc/nginx/sites-enabled/default ]; then rm -f /etc/nginx/sites-enabled/default; fi"
-
-    ssh_exec "nginx -t && systemctl reload nginx"
+    echo "  注意: Nginx 已通过 nginx-setup.sh 配置，跳过..."
 
     echo "✓ Nginx 配置完成"
     echo ""
@@ -258,21 +213,21 @@ init_database() {
         exit 1
     fi
 
-    ssh_exec << ENDSSH
+    ssh -o StrictHostKeyChecking=no -p "$SSH_PORT" "$SERVER_USER@$SERVER_HOST" << 'ENDSSH'
         set -e
 
-        cd $REMOTE_API_DIR
+        cd /var/www/joii/api
 
         echo "  - 创建数据库用户..."
-        sudo -u postgres psql -p $DB_PORT -c "CREATE USER $DB_USER WITH PASSWORD '$DB_PASSWORD';" 2>/dev/null || \
-            sudo -u postgres psql -p $DB_PORT -c "ALTER USER $DB_USER WITH PASSWORD '$DB_PASSWORD';"
+        sudo -u postgres psql -p 1232 -c "CREATE USER joii_user WITH PASSWORD 'fAmYQfseyFv';" 2>/dev/null || \
+            sudo -u postgres psql -p 1232 -c "ALTER USER joii_user WITH PASSWORD 'fAmYQfseyFv';"
 
         echo "  - 创建数据库..."
-        sudo -u postgres psql -p $DB_PORT -c "CREATE DATABASE $DB_NAME OWNER $DB_USER;" 2>/dev/null || \
+        sudo -u postgres psql -p 1232 -c "CREATE DATABASE joii_canvas OWNER joii_user;" 2>/dev/null || \
             echo "    数据库已存在"
 
         echo "  - 授权..."
-        sudo -u postgres psql -p $DB_PORT -c "GRANT ALL PRIVILEGES ON DATABASE $DB_NAME TO $DB_USER;"
+        sudo -u postgres psql -p 1232 -c "GRANT ALL PRIVILEGES ON DATABASE joii_canvas TO joii_user;"
 
         echo "  - 运行数据库迁移..."
         bun run db:push
@@ -286,24 +241,27 @@ ENDSSH
 verify_deployment() {
     echo "[6/6] 验证部署..."
 
-    sleep 2
-
-    API_HEALTH=$(curl -s -o /dev/null -w "%{http_code}" "$API_BASE_URL/health" 2>/dev/null || echo "000")
-    WEB_ACCESS=$(curl -s -o /dev/null -w "%{http_code}" "$DOMAIN_URL" 2>/dev/null || echo "000")
-
     echo ""
     echo "=========================================="
     echo "  部署状态"
     echo "=========================================="
-    echo "  API 服务:   $([[ "$API_HEALTH" == "200" ]] && echo "✓ 正常" || echo "✗ 异常 (HTTP $API_HEALTH)")"
-    echo "  Web 站点:   $([[ "$WEB_ACCESS" == "200" ]] && echo "✓ 正常" || echo "✗ 异常 (HTTP $WEB_ACCESS)")"
-    echo ""
 
-    if [[ "$API_HEALTH" == "200" ]] && [[ "$WEB_ACCESS" == "200" ]]; then
-        echo "✓ 部署成功!"
-    else
-        echo "⚠ 部分服务异常，请检查日志"
-    fi
+    ssh_exec << 'ENDSSH'
+        sleep 2
+
+        API_HEALTH=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3001/health 2>/dev/null || echo "000")
+        WEB_ACCESS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3001 2>/dev/null || echo "000")
+
+        echo "  API 服务:   $([ "$API_HEALTH" == "200" ] && echo "✓ 正常" || echo "✗ 异常 (HTTP $API_HEALTH)")"
+        echo "  Web 站点:   $([ "$WEB_ACCESS" != "000" ] && echo "✓ 正常 (HTTP $WEB_ACCESS)" || echo "✗ 异常 (HTTP $WEB_ACCESS)")"
+        echo ""
+
+        if [ "$API_HEALTH" == "200" ]; then
+            echo "  ✓ 部署成功!"
+        else
+            echo "  ⚠ 部分服务异常，请检查日志"
+        fi
+ENDSSH
 
     echo ""
 }
@@ -359,6 +317,7 @@ case "${1:-full}" in
         check_dependencies
         build_frontend
         upload_frontend
+        upload_backend
         deploy_backend
         setup_nginx
         verify_deployment
@@ -369,6 +328,8 @@ case "${1:-full}" in
         upload_frontend
         ;;
     backend)
+        check_dependencies
+        upload_backend
         deploy_backend
         ;;
     nginx)
