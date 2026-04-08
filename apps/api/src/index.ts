@@ -29,16 +29,30 @@ app.use(cors({
 app.use(cookieParser());
 app.use(express.json());
 
-app.use((req, res, next) => {
-  try {
-    next();
-  } catch (err: any) {
-    console.error('[API] Route error:', err.message);
-    res.status(500).json({ error: err.message || 'Internal server error' });
+app.use(router);
+
+app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  console.error('[API] Error:', err);
+  
+  const isProd = process.env.NODE_ENV === 'production';
+  
+  if (res.headersSent) {
+    return next(err);
+  }
+  
+  const statusCode = err.statusCode || err.status || 500;
+  
+  if (isProd) {
+    res.status(statusCode).json({ 
+      error: statusCode === 500 ? '服务器内部错误' : err.message || '请求失败'
+    });
+  } else {
+    res.status(statusCode).json({ 
+      error: err.message || 'Internal server error',
+      stack: err.stack
+    });
   }
 });
-
-app.use(router);
 
 app.get('/health', (req, res) => {
   res.json({ status: 'ok' });

@@ -30,11 +30,40 @@ function asyncHandler<T extends (...args: any[]) => Promise<any>>(fn: T) {
 }
 
 // ========== 公开接口 (无需认证) ==========
+function validatePhone(phone: unknown): { valid: boolean; error?: string } {
+  if (!phone) {
+    return { valid: false, error: '手机号不能为空' }
+  }
+  if (typeof phone !== 'string') {
+    return { valid: false, error: '手机号格式错误' }
+  }
+  // const phoneRegex = /^1[3-9]\d{9}$/
+  // if (!phoneRegex.test(phone)) {
+  //   return { valid: false, error: '手机号格式错误' }
+  // }
+  return { valid: true }
+}
+
+function validateCode(code: unknown): { valid: boolean; error?: string } {
+  if (!code) {
+    return { valid: false, error: '验证码不能为空' }
+  }
+  if (typeof code !== 'string') {
+    return { valid: false, error: '验证码格式错误' }
+  }
+  // const codeRegex = /^\d{6}$/
+  // if (!codeRegex.test(code)) {
+  //   return { valid: false, error: '验证码格式错误' }
+  // }
+  return { valid: true }
+}
+
 router.post("/api/auth/send-code", asyncHandler(async (req: Request, res: Response) => {
   const { phone } = req.body
   
-  if (!phone) {
-    return res.status(400).json({ success: false, message: '手机号不能为空' })
+  const validation = validatePhone(phone)
+  if (!validation.valid) {
+    return res.status(400).json({ success: false, message: validation.error })
   }
   
   const result = await sendVerificationCode(phone)
@@ -49,8 +78,14 @@ router.post("/api/auth/send-code", asyncHandler(async (req: Request, res: Respon
 router.post("/api/auth/verify-code", asyncHandler(async (req: Request, res: Response) => {
   const { phone, code } = req.body
   
-  if (!phone || !code) {
-    return res.status(400).json({ success: false, error: '手机号和验证码不能为空' })
+  const phoneValidation = validatePhone(phone)
+  if (!phoneValidation.valid) {
+    return res.status(400).json({ success: false, error: phoneValidation.error })
+  }
+  
+  const codeValidation = validateCode(code)
+  if (!codeValidation.valid) {
+    return res.status(400).json({ success: false, error: codeValidation.error })
   }
   
   const result = await loginWithCode(phone, code)
