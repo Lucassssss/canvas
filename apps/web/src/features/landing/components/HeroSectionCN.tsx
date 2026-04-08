@@ -9,13 +9,13 @@ export function HeroSectionCN() {
       <div className="max-w-[1600px] mx-auto px-6 md:px-12 relative">
         <div className="grid grid-cols-12 gap-6 items-start">
           <div className="col-span-12 lg:col-span-7">
-            <div className="text-xs font-sans-zh font-medium text-neutral-400 tracking-[0.3em] uppercase mb-8">
+            <div className="text-xs font-sans-zh font-medium text-neutral-500 tracking-[0.3em] uppercase mb-8">
               电商视觉 AI 革命
             </div>
             
             <h1 className="font-serif-display text-5xl md:text-7xl lg:text-[5.5rem] leading-[1.05] tracking-tight mb-6">
               <span className="block">智能</span>
-              <span className="block font-sans-zh font-extralight text-neutral-400">换装</span>
+              <span className="block font-sans-zh font-extralight text-neutral-500">换装</span>
               <span className="block">无限</span>
             </h1>
             
@@ -31,7 +31,7 @@ export function HeroSectionCN() {
                 <span>开始创作</span>
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </Link>
-              <span className="text-xs font-sans-zh text-neutral-400 tracking-wider">
+              <span className="text-xs font-sans-zh text-neutral-500 tracking-wider">
                 v1.1.0 现已发布
               </span>
             </div>
@@ -61,19 +61,19 @@ export function HeroSectionCN() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             <div>
               <div className="font-serif-display text-3xl md:text-4xl text-neutral-950 mb-2">300%</div>
-              <div className="font-sans-zh text-xs text-neutral-400 tracking-wider">贴合度提升</div>
+              <div className="font-sans-zh text-xs text-neutral-500 tracking-wider">贴合度提升</div>
             </div>
             <div>
               <div className="font-serif-display text-3xl md:text-4xl text-neutral-950 mb-2">4K</div>
-              <div className="font-sans-zh text-xs text-neutral-400 tracking-wider">无损放大输出</div>
+              <div className="font-sans-zh text-xs text-neutral-500 tracking-wider">无损放大输出</div>
             </div>
             <div>
               <div className="font-serif-display text-3xl md:text-4xl text-neutral-950 mb-2">∞</div>
-              <div className="font-sans-zh text-xs text-neutral-400 tracking-wider">无限画布创作</div>
+              <div className="font-sans-zh text-xs text-neutral-500 tracking-wider">无限画布创作</div>
             </div>
             <div>
               <div className="font-serif-display text-3xl md:text-4xl text-neutral-950 mb-2">10x</div>
-              <div className="font-sans-zh text-xs text-neutral-400 tracking-wider">效率倍增</div>
+              <div className="font-sans-zh text-xs text-neutral-500 tracking-wider">效率倍增</div>
             </div>
           </div>
         </div>

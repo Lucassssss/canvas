@@ -8,7 +8,7 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: '*',
         allow: '/',
-        disallow: ['/api/', '/admin/', '/private/'],
+        disallow: ['/api/', '/admin/', '/private/', '/canvas/', '/dashboard/', '/login/', '/profile/', '/projects/'],
       },
     ],
     sitemap: 'https://joii.cc/sitemap.xml',

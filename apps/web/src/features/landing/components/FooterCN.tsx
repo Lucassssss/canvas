@@ -7,7 +7,7 @@ export function FooterCN() {
         <div className="grid grid-cols-12 gap-12 mb-20">
           <div className="col-span-12 md:col-span-5">
             <Link href="/" className="inline-block mb-6">
-              <img src="/joii_logo_fa.svg" alt="Joii" className="h-8" />
+              <img src="/joii_logo_fa.svg" alt="Joii" className="h-8 w-8" width="32" height="32" />
             </Link>
             <p className="font-sans-zh text-neutral-500 max-w-sm text-sm leading-relaxed mb-6">
               Joii 致力于为电商设计师和商家提供基于前沿大模型的视觉创作工具，通过无限画布和智能算法，大幅提升生产效率与视觉质量。
