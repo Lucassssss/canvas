@@ -17,15 +17,17 @@ const notoSans = Noto_Sans_SC({
 });
 
 import { AuthProvider } from '@/features/auth/AuthProvider';
+import { BaiduSEO } from '@/components/BaiduSEO';
+import { Analytics } from '@/components/Analytics';
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://joii.cc'),
   title: {
-    default: 'Joii - 无限画布智能设计平台',
+    default: 'Joii - 无限画布智能设计平台 | AI电商设计工具',
     template: '%s | Joii',
   },
-  description: 'Joii电商AI神器，让爆单轻松发生。基于AI的无限画布设计工具，专为电商场景打造，支持智能设计、批量生成、多平台适配。',
-  keywords: ['AI设计', '电商设计', '无限画布', '智能设计', 'Joii', 'AI画布', '电商作图', '设计工具', '批量生成', 'AI绘图'],
+  description: 'Joii电商AI神器，让爆单轻松发生。基于AI的无限画布设计工具，专为电商场景打造，支持智能换装、批量生成、4K无损输出。一键生成电商主图、详情页、营销海报。',
+  keywords: ['AI设计', '电商设计', '无限画布', '智能设计', 'Joii', 'AI画布', '电商作图', '设计工具', '批量生成', 'AI绘图', '电商主图设计', '详情页设计', 'AI换装', '电商AI工具', '智能作图'],
   authors: [{ name: 'Joii Team' }],
   creator: 'Joii',
   publisher: 'Joii',
@@ -45,7 +47,7 @@ export const metadata: Metadata = {
     locale: 'zh_CN',
     url: 'https://joii.cc',
     siteName: 'Joii',
-    title: 'Joii - 无限画布智能设计平台',
+    title: 'Joii - 无限画布智能设计平台 | AI电商设计工具',
     description: 'Joii电商AI神器，让爆单轻松发生。基于AI的无限画布设计工具，专为电商场景打造。',
     images: [
       {
@@ -71,6 +73,10 @@ export const metadata: Metadata = {
     },
   },
   category: 'Design Tools',
+  other: {
+    'baidu-site-verification': 'codeva-ULkpJAO80W',
+    'applicable-device': 'pc,mobile',
+  },
 }
 
 const jsonLd = {
@@ -128,6 +134,8 @@ export default function RootLayout({
   return (
     <html lang="zh-CN" className={cn("font-sans", geist.variable, notoSerif.variable, notoSans.variable)}>
       <body>
+        <BaiduSEO />
+        <Analytics />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
