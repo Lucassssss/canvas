@@ -90,7 +90,8 @@ DEEPSEEK_BASE_URL=https://api.deepseek.com
 
 # OpenRouter
 OPENROUTER_API_KEY=your_openrouter_api_key
-OPENROUTER_API_BASE_URL=https://openrouter.ai/api/v1
+# OPENROUTER_API_BASE_URL=https://openrouter.ai/api/v1
+OPENROUTER_API_BASE_URL=https://openrouter-proxy.n-a.workers.dev
 
 # Minimax
 MINIMAX_API_KEY=your_minimax_api_key
