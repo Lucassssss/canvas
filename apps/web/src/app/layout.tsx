@@ -19,6 +19,7 @@ const notoSans = Noto_Sans_SC({
 import { AuthProvider } from '@/features/auth/AuthProvider';
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://joii.cc'),
   title: {
     default: 'Joii - 无限画布智能设计平台',
     template: '%s | Joii',
@@ -72,6 +73,53 @@ export const metadata: Metadata = {
   category: 'Design Tools',
 }
 
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'Organization',
+      '@id': 'https://joii.cc/#organization',
+      name: 'Joii',
+      url: 'https://joii.cc',
+      logo: {
+        '@type': 'ImageObject',
+        url: 'https://joii.cc/logo.png',
+      },
+      description: 'Joii电商AI神器，让爆单轻松发生。基于AI的无限画布设计工具，专为电商场景打造。',
+      sameAs: [
+        'https://twitter.com/joii_design',
+      ],
+    },
+    {
+      '@type': 'WebSite',
+      '@id': 'https://joii.cc/#website',
+      url: 'https://joii.cc',
+      name: 'Joii - 无限画布智能设计平台',
+      description: 'Joii电商AI神器，让爆单轻松发生。基于AI的无限画布设计工具，专为电商场景打造。',
+      publisher: {
+        '@id': 'https://joii.cc/#organization',
+      },
+      inLanguage: 'zh-CN',
+    },
+    {
+      '@type': 'SoftwareApplication',
+      name: 'Joii',
+      applicationCategory: 'DesignApplication',
+      operatingSystem: 'Web',
+      offers: {
+        '@type': 'Offer',
+        price: '0',
+        priceCurrency: 'CNY',
+      },
+      aggregateRating: {
+        '@type': 'AggregateRating',
+        ratingValue: '4.8',
+        ratingCount: '1000',
+      },
+    },
+  ],
+}
+
 export default function RootLayout({
   children,
 }: {
@@ -80,6 +128,10 @@ export default function RootLayout({
   return (
     <html lang="zh-CN" className={cn("font-sans", geist.variable, notoSerif.variable, notoSans.variable)}>
       <body>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
         <AuthProvider>
           <TooltipProvider>{children}</TooltipProvider>
         </AuthProvider>

@@ -45,10 +45,10 @@ export function LandingPageCN() {
           <div className="max-w-[1600px] mx-auto px-6 md:px-12 text-center">
             <h2 className="font-serif-display text-4xl md:text-5xl lg:text-7xl tracking-tight mb-8">
               开始<br />
-              <span className="font-sans-zh font-extralight text-neutral-400">创作</span><br />
+              <span className="font-sans-zh font-extralight text-neutral-500">创作</span><br />
               今日
             </h2>
-            <p className="font-sans-zh text-neutral-400 mb-12 max-w-md mx-auto">
+            <p className="font-sans-zh text-neutral-500 mb-12 max-w-md mx-auto">
               体验 Joii 带来的电商视觉革命，让每一帧都成为可能
             </p>
             <Link 
