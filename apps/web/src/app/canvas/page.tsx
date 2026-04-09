@@ -3,7 +3,7 @@
 import React, { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import dynamic from 'next/dynamic'
-import { MessageSquare } from 'lucide-react'
+import { MessageSquare, Loader2 } from 'lucide-react'
 import { LeftSidebar } from '@/components/LeftSidebar'
 import { ClothingSidebar } from './components/ClothingSidebar'
 import { ZoomControls } from './components/ZoomControls'
@@ -20,7 +20,7 @@ const CHAT_OPEN_STORAGE_KEY = 'right-sidebar-open'
 const CanvasPageFallback: React.FC = () => (
   <div className="w-full h-full flex items-center justify-center bg-neutral-50">
     <div className="text-center">
-      <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-neutral-900 mb-4"></div>
+      <Loader2 className="w-8 h-8 animate-spin text-neutral-900 mx-auto mb-4" />
       <p className="text-neutral-600 text-sm">加载中...</p>
     </div>
   </div>
@@ -160,7 +160,7 @@ const CanvasPageContent: React.FC = () => {
     return (
       <div className="w-full h-full flex items-center justify-center bg-neutral-50">
         <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-neutral-900 mb-4"></div>
+          <Loader2 className="w-8 h-8 animate-spin text-neutral-900 mx-auto mb-4" />
           <p className="text-neutral-600 text-sm">加载项目中...</p>
         </div>
       </div>

@@ -396,9 +396,7 @@ export const DetailImageShape: React.FC<DetailImageShapeProps> = ({ shape }) => 
     if (step === 'generating') {
       return (
         <div className="flex flex-col items-center justify-center h-full gap-3">
-          <div className="w-8 h-8 rounded-full border-2 border-neutral-200 border-t-black animate-spin">
-            <Loader2 size={32} className="animate-spin text-neutral-400" />
-          </div>
+          <Loader2 size={32} className="animate-spin text-neutral-400" />
           <div className="text-sm font-medium text-neutral-800">AI 正在生成中...</div>
           <div className="text-xs text-neutral-400">请稍候，这将需要几秒钟</div>
           <div className="w-48 h-1 bg-neutral-200 rounded-full overflow-hidden mt-2">
