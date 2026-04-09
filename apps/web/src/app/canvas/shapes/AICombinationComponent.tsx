@@ -5,6 +5,7 @@ import { useCanvasStore } from '../store'
 import { combinationRegistry } from '@/ai-combination/registry'
 import { aiCombinationService } from '@/ai-combination/service'
 import { useAuth } from '@/features/auth/useAuth'
+import { useCredits } from '@/features/credits/useCredits'
 import { Upload, Play, X, Loader2, User, Shirt, Image as ImageIcon, Plus, Equal, Trash2 } from 'lucide-react'
 import type { SlotDefinition, SlotContent } from '@/ai-combination/types'
 
@@ -253,6 +254,7 @@ export const AICombinationComponent: React.FC<AICombinationComponentProps> = ({ 
   const [isDragOver, setIsDragOver] = useState<string | null>(null)
   const { updateShape } = useCanvasStore()
   const { fetchUser } = useAuth()
+  const { openInsufficientModal } = useCredits()
 
   const combinationType = combinationRegistry.get(shape.combinationTypeId || 'simple-tryon')
 
@@ -316,6 +318,7 @@ export const AICombinationComponent: React.FC<AICombinationComponentProps> = ({ 
 
     updateShape(shape.id, { combinationStatus: 'generating', combinationError: undefined })
 
+    const modelId = shape.imageConfig?.model || 'gemini-2.5-flash-image'
     const resolutionMap: Record<string, { width: number; height: number }> = {
       '1K': { width: 1024, height: 1024 },
       '2K': { width: 2048, height: 2048 },
@@ -325,6 +328,7 @@ export const AICombinationComponent: React.FC<AICombinationComponentProps> = ({ 
     const settings = {
       prompt: shape.imageConfig?.prompt || '',
       resolution: resolutionMap[shape.imageConfig?.resolution || '2K'] || { width: 2048, height: 2048 },
+      model: modelId,
     }
 
     const result = await aiCombinationService.generate({
@@ -340,13 +344,16 @@ export const AICombinationComponent: React.FC<AICombinationComponentProps> = ({ 
         combinationResults: [result.imageUrl],
       })
       fetchUser()
+    } else if (result.error === '积分不足') {
+      openInsufficientModal()
+      updateShape(shape.id, { combinationStatus: 'idle' })
     } else {
       updateShape(shape.id, {
         combinationStatus: 'error',
         combinationError: result.error,
       })
     }
-  }, [shape, updateShape, fetchUser])
+  }, [shape, updateShape, fetchUser, openInsufficientModal])
 
   const clearSlot = useCallback((slotId: string) => {
     if (!combinationType) return

@@ -6,6 +6,8 @@ interface GenerationResult {
   success: boolean
   imageUrl?: string
   error?: string
+  required?: number
+  current?: number
 }
 
 interface GenerateInput {
@@ -34,7 +36,17 @@ class AICombinationService {
         body: JSON.stringify(instance),
       })
       const data = await response.json()
-      return { success: true, imageUrl: data.imageUrl }
+      
+      if (data.success) {
+        return { success: true, imageUrl: data.imageUrl }
+      } else {
+        return { 
+          success: false, 
+          error: data.error,
+          required: data.required,
+          current: data.current
+        }
+      }
     } catch (error) {
       return { success: false, error: String(error) }
     }
