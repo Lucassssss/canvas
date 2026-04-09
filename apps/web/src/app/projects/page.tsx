@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { LeftSidebar } from '@/components/LeftSidebar'
 import { PageHeader } from '@/components/PageHeader'
 import { ProjectCard } from '@/components/ProjectCard'
-import { Plus } from 'lucide-react'
+import { Plus, Loader2 } from 'lucide-react'
 import { useProjectStore } from '@/store/project-store'
 
 export default function ProjectsPage() {
@@ -83,7 +83,7 @@ export default function ProjectsPage() {
           <div className="max-w-[1600px] mx-auto px-6 md:px-12 py-12">
             <div className="flex items-center justify-center min-h-[400px]">
               <div className="text-center">
-                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-neutral-900"></div>
+                <Loader2 className="w-8 h-8 animate-spin text-neutral-900 mx-auto" />
                 <p className="mt-4 font-sans-zh text-sm text-neutral-500">加载项目中...</p>
               </div>
             </div>

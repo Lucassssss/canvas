@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { Home, Folder, User, HelpCircle, Plus, Newspaper, Menu, X } from 'lucide-react'
+import { Home, Folder, User, HelpCircle, Plus, Newspaper, Menu, X, Loader2 } from 'lucide-react'
 import { useProjectStore } from '@/store/project-store'
 import {
   Tooltip,
@@ -64,7 +64,7 @@ export function LeftSidebar() {
                 disabled={isCreating}
                 className="sidebar-left-btn disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <Plus size={20} className={isCreating ? 'animate-spin' : ''} />
+                {isCreating ? <Loader2 size={20} className="animate-spin" /> : <Plus size={20} />}
               </button>
             </TooltipTrigger>
             <TooltipContent side='right'>
@@ -120,7 +120,7 @@ export function LeftSidebar() {
               disabled={isCreating}
               className="flex items-center gap-3 px-3 py-2.5 bg-neutral-950 text-white text-sm font-medium rounded hover:bg-neutral-800 transition-colors disabled:opacity-50 w-full text-left"
             >
-              <Plus size={18} className={isCreating ? 'animate-spin' : ''} />
+              {isCreating ? <Loader2 size={18} className="animate-spin" /> : <Plus size={18} />}
               <span>{isCreating ? '创建中...' : '新建项目'}</span>
             </button>
 
