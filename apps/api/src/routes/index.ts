@@ -21,6 +21,8 @@ import projectRoutes from "./projects.js";
 import authRoutes from "./auth.js";
 import userRoutes from "./users.js";
 import creditRoutes from "./credits.js";
+import paymentRoutes from "./payments.js";
+import { handlePaymentCallback } from "../services/payment/index.js";
 
 const router = Router();
 
@@ -108,6 +110,18 @@ router.post("/api/auth/verify-code", asyncHandler(async (req: Request, res: Resp
     res.status(401).json(result)
   }
 }))
+
+router.post("/api/pay/wechat/notify", async (req: Request, res: Response) => {
+  try {
+    console.log('[Payment] WeChat notify received:', JSON.stringify(req.body, null, 2))
+    const result = await handlePaymentCallback(req.body)
+    console.log('[Payment] WeChat notify result:', result)
+    res.json(result)
+  } catch (error) {
+    console.error('[Payment] WeChat notify error:', error)
+    res.json({ code: 'FAIL', message: '处理失败' })
+  }
+})
 
 // ========== 上传和生成 API (需要认证) ==========
 router.post("/api/image/generate", authMiddleware, async (req, res) => {
@@ -238,6 +252,7 @@ router.use('/api/auth', authRoutes);
 router.use('/api/projects', authMiddleware, projectRoutes);
 router.use('/api/users', authMiddleware, userRoutes);
 router.use('/api/credits', authMiddleware, creditRoutes);
+router.use('/api/payments', paymentRoutes);
 
 // ========== 需要认证的路由 ==========
 router.get("/conversations", authMiddleware, asyncHandler(async (req: Request, res: Response) => {

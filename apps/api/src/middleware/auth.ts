@@ -8,6 +8,8 @@ const JWT_SECRET = process.env.JWT_SECRET || 'your-jwt-secret-change-in-producti
 const TOKEN_COOKIE_NAME = 'auth_token'
 const REFRESH_TOKEN_COOKIE_NAME = 'refresh_token'
 
+export type AuthRequest = Request & { user: JWTPayload }
+
 export function generateToken(userId: string, phone: string): { token: string; refreshToken: string; jti: string } {
   const jti = `jti_${Date.now()}_${Math.random().toString(36).substring(2)}`
   

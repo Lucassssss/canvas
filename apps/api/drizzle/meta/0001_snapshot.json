@@ -1,6 +1,6 @@
 {
-  "id": "e2de9b82-275a-4b59-95c1-d4e7fdd12139",
-  "prevId": "d6b32a79-9584-48d3-8b8e-b2dbdc90a20f",
+  "id": "995cab4d-be6d-4fc2-8b6f-f179b9864f42",
+  "prevId": "e2de9b82-275a-4b59-95c1-d4e7fdd12139",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -353,6 +353,19 @@
         },
         "paid_at": {
           "name": "paid_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "poll_count": {
+          "name": "poll_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "last_polled_at": {
+          "name": "last_polled_at",
           "type": "timestamp",
           "primaryKey": false,
           "notNull": false
