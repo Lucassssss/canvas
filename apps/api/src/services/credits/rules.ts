@@ -69,6 +69,15 @@ export const MODEL_PRICING: ModelPricing[] = [
     enabled: true,
   },
   {
+    id: 'minimax/MiniMax-M2.7',
+    name: 'MiniMax M2.7',
+    provider: 'minimax',
+    credits: 15,
+    category: 'chat',
+    description: '智能对话助手',
+    enabled: true,
+  },
+  {
     id: 'video-gen-standard',
     name: '标准视频生成',
     provider: 'internal',
@@ -94,7 +103,11 @@ export function getModelPricing(modelId: string): ModelPricing | undefined {
 
 export function getCreditsForModel(modelId: string): number {
   const pricing = getModelPricing(modelId)
-  return pricing?.credits ?? 100
+  if (!pricing) {
+    console.warn(`[积分定价警告] 未找到模型定价配置: modelId="${modelId}", 使用默认值 100 积分。请在 MODEL_PRICING 中添加该模型的定价配置。`)
+    return 100
+  }
+  return pricing.credits
 }
 
 export function getEnabledImageModels(): ModelPricing[] {
