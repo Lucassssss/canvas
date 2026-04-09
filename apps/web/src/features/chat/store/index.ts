@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import type { Message, ChatThread, MessageBlock } from '../types'
 import { streamChat } from '../services/api'
 import { projectApi } from '@/lib/api/project-api'
+import { useAuth } from '@/features/auth/useAuth'
 
 function generateId(): string {
   return Math.random().toString(36).substring(2, 11)
@@ -387,6 +388,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
       }
     } finally {
       setLoading(false)
+      useAuth.getState().fetchUser()
     }
   },
 }))

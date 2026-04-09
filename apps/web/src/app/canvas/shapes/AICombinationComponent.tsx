@@ -4,6 +4,7 @@ import React, { useState, useCallback, useEffect } from 'react'
 import { useCanvasStore } from '../store'
 import { combinationRegistry } from '@/ai-combination/registry'
 import { aiCombinationService } from '@/ai-combination/service'
+import { useAuth } from '@/features/auth/useAuth'
 import { Upload, Play, X, Loader2, User, Shirt, Image as ImageIcon, Plus, Equal, Trash2 } from 'lucide-react'
 import type { SlotDefinition, SlotContent } from '@/ai-combination/types'
 
@@ -251,6 +252,7 @@ const OutputSlotContent: React.FC<OutputSlotContentProps> = ({ slot, resultImage
 export const AICombinationComponent: React.FC<AICombinationComponentProps> = ({ shape }) => {
   const [isDragOver, setIsDragOver] = useState<string | null>(null)
   const { updateShape } = useCanvasStore()
+  const { fetchUser } = useAuth()
 
   const combinationType = combinationRegistry.get(shape.combinationTypeId || 'simple-tryon')
 
@@ -337,13 +339,14 @@ export const AICombinationComponent: React.FC<AICombinationComponentProps> = ({ 
         combinationStatus: 'completed',
         combinationResults: [result.imageUrl],
       })
+      fetchUser()
     } else {
       updateShape(shape.id, {
         combinationStatus: 'error',
         combinationError: result.error,
       })
     }
-  }, [shape, updateShape])
+  }, [shape, updateShape, fetchUser])
 
   const clearSlot = useCallback((slotId: string) => {
     if (!combinationType) return
