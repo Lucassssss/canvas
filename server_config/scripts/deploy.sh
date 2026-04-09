@@ -148,16 +148,19 @@ upload_backend() {
     echo "[3.5/6] 上传后端代码..."
 
     ssh_exec "mkdir -p $REMOTE_API_DIR"
+    ssh_exec "mkdir -p $REMOTE_API_DIR/certs"
 
     if [[ "$IS_WINDOWS" == true ]]; then
         cd "$PROJECT_ROOT/apps/api"
         scp_upload src "$SERVER_USER@$SERVER_HOST:$REMOTE_API_DIR/"
         scp_upload package.json tsconfig.json drizzle.config.ts .env.example "$SERVER_USER@$SERVER_HOST:$REMOTE_API_DIR/"
         scp_upload .env.production "$SERVER_USER@$SERVER_HOST:$REMOTE_API_DIR/.env"
+        scp_upload certs/* "$SERVER_USER@$SERVER_HOST:$REMOTE_API_DIR/certs/"
     else
         scp_upload -r "$PROJECT_ROOT/apps/api/src" "$SERVER_USER@$SERVER_HOST:$REMOTE_API_DIR/"
         scp_upload "$PROJECT_ROOT/apps/api/package.json" "$PROJECT_ROOT/apps/api/tsconfig.json" "$PROJECT_ROOT/apps/api/drizzle.config.ts" "$PROJECT_ROOT/apps/api/.env.example" "$SERVER_USER@$SERVER_HOST:$REMOTE_API_DIR/"
         scp_upload "$PROJECT_ROOT/apps/api/.env.production" "$SERVER_USER@$SERVER_HOST:$REMOTE_API_DIR/.env"
+        scp_upload "$PROJECT_ROOT/apps/api/certs/"* "$SERVER_USER@$SERVER_HOST:$REMOTE_API_DIR/certs/"
     fi
 
     echo "✓ 后端代码上传完成"

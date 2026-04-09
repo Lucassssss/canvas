@@ -44,6 +44,7 @@
     "postgres": "^3.4.9",
     "real-require": "^1.0.0",
     "vercel-minimax-ai-provider": "^0.0.2",
+    "wechatpay-node-v3": "^2.2.1",
     "zod": "^4.3.6"
   },
   "devDependencies": {

@@ -5,6 +5,7 @@ export const vipLevelEnum = pgEnum('vip_level', ['free', 'pro', 'enterprise'])
 export const messageRoleEnum = pgEnum('message_role', ['user', 'assistant', 'system'])
 export const transactionTypeEnum = pgEnum('transaction_type', ['purchase', 'consume', 'refund', 'gift', 'admin', 'signup'])
 export const projectModeEnum = pgEnum('project_mode', ['agent', 'chat'])
+export const orderStatusEnum = pgEnum('order_status', ['pending', 'paid', 'expired', 'cancelled', 'refunded'])
 
 export const CanvasDataSchema = z.object({
   shapes: z.array(z.unknown()),
@@ -127,6 +128,47 @@ export const tokenBlacklist = pgTable('token_blacklist', {
   jtiIdx: uniqueIndex('idx_token_blacklist_jti').on(table.tokenJti),
 }))
 
+export const rechargePackages = pgTable('recharge_packages', {
+  id: text('id').primaryKey(),
+  credits: integer('credits').notNull(),
+  price: integer('price').notNull(),
+  unitPrice: text('unit_price').notNull(),
+  savings: integer('savings').default(0),
+  popular: integer('popular').default(0),
+  sortOrder: integer('sort_order').default(0),
+  isActive: integer('is_active').default(1),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  sortOrderIdx: index('idx_recharge_packages_sort').on(table.sortOrder),
+  isActiveIdx: index('idx_recharge_packages_active').on(table.isActive),
+}))
+
+export const orders = pgTable('orders', {
+  id: text('id').primaryKey(),
+  orderNo: text('order_no').unique().notNull(),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  credits: integer('credits').notNull(),
+  amount: integer('amount').notNull(),
+  status: orderStatusEnum('status').default('pending').notNull(),
+  paymentMethod: text('payment_method').default('wechat'),
+  prepayId: text('prepay_id'),
+  qrCodeUrl: text('qr_code_url'),
+  transactionId: text('transaction_id'),
+  expireAt: timestamp('expire_at').notNull(),
+  paidAt: timestamp('paid_at'),
+  pollCount: integer('poll_count').default(0).notNull(),
+  lastPolledAt: timestamp('last_polled_at', { mode: 'date' }),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  orderNoIdx: uniqueIndex('idx_orders_order_no').on(table.orderNo),
+  userIdIdx: index('idx_orders_user_id').on(table.userId),
+  statusIdx: index('idx_orders_status').on(table.status),
+  createdAtIdx: index('idx_orders_created_at').on(table.createdAt),
+  expireAtIdx: index('idx_orders_expire_at').on(table.expireAt),
+}))
+
 export type User = typeof users.$inferSelect
 export type NewUser = typeof users.$inferInsert
 export type Conversation = typeof conversations.$inferSelect
@@ -137,3 +179,5 @@ export type VerificationCode = typeof verificationCodes.$inferSelect
 export type CreditTransaction = typeof creditTransactions.$inferSelect
 export type UsageLog = typeof usageLogs.$inferSelect
 export type TokenBlacklistEntry = typeof tokenBlacklist.$inferSelect
+export type RechargePackage = typeof rechargePackages.$inferSelect
+export type Order = typeof orders.$inferSelect
