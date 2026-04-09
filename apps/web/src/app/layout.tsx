@@ -19,6 +19,7 @@ const notoSans = Noto_Sans_SC({
 import { AuthProvider } from '@/features/auth/AuthProvider';
 import { BaiduSEO } from '@/components/BaiduSEO';
 import { Analytics } from '@/components/Analytics';
+import { CreditsRechargeModal } from '@/features/credits';
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://joii.cc'),
@@ -141,7 +142,10 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
         <AuthProvider>
-          <TooltipProvider>{children}</TooltipProvider>
+          <TooltipProvider>
+            {children}
+            <CreditsRechargeModal />
+          </TooltipProvider>
         </AuthProvider>
       </body>
     </html>

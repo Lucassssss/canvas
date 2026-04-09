@@ -7,6 +7,7 @@ interface ConsumeCreditsParams {
   action: string
   description: string
   details?: Record<string, unknown>
+  onConfirm?: () => Promise<{ success: boolean; error?: string }>
 }
 
 interface ConsumeResult {
@@ -62,6 +63,21 @@ export const useCredits = create<CreditsState>((set, get) => ({
     set({ isConsuming: true })
     
     try {
+      if (pendingConsume.onConfirm) {
+        const result = await pendingConsume.onConfirm()
+        set({ 
+          isConsuming: false, 
+          isModalOpen: false, 
+          pendingConsume: null,
+        })
+        return { 
+          success: result.success, 
+          balanceBefore: 0, 
+          balanceAfter: 0, 
+          error: result.error 
+        }
+      }
+
       const res = await fetch(`${API_BASE}/api/credits/consume`, {
         method: 'POST',
         credentials: 'include',
