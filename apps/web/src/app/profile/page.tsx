@@ -4,12 +4,12 @@ import React, { useEffect, useState, useCallback, useRef } from 'react'
 import { LeftSidebar } from '@/components/LeftSidebar'
 import { PageHeader } from '@/components/PageHeader'
 import { useAuth } from '@/features/auth/useAuth'
+import { useCredits } from '@/features/credits/useCredits'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Zap, CreditCard, PenLine, Loader2 } from 'lucide-react'
-import Link from 'next/link'
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
 
@@ -38,6 +38,7 @@ const ACTION_LABELS: Record<string, string> = {
 
 export default function ProfilePage() {
   const { user, isAuthenticated, isLoading: authLoading, fetchUser } = useAuth()
+  const { openInsufficientModal } = useCredits()
   const router = useRouter()
   const [isEditing, setIsEditing] = useState(false)
   const [nickname, setNickname] = useState('')
@@ -209,12 +210,13 @@ export default function ProfilePage() {
                       <span className="font-serif-display text-4xl tracking-tight text-neutral-950">{user.credits}</span>
                       <span className="font-sans-zh text-sm text-neutral-500">积分</span>
                     </div>
-                    <Link href="/packages">
-                      <Button className="h-10 px-5 bg-neutral-950 hover:bg-neutral-800 text-white gap-2 font-sans-zh text-sm">
-                        <Zap className="w-4 h-4" />
-                        升级套餐
-                      </Button>
-                    </Link>
+                    <Button 
+                      onClick={openInsufficientModal}
+                      className="h-10 px-5 bg-neutral-950 hover:bg-neutral-800 text-white gap-2 font-sans-zh text-sm"
+                    >
+                      <Zap className="w-4 h-4" />
+                      充值积分
+                    </Button>
                   </div>
                 </div>
               </section>
