@@ -45,12 +45,20 @@ export default function ProfilePage() {
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [isLoadingData, setIsLoadingData] = useState(false)
   const hasFetchedData = useRef(false)
+  const hasFetchedUser = useRef(false)
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
       router.push('/login')
     }
   }, [isAuthenticated, authLoading, router])
+
+  useEffect(() => {
+    if (isAuthenticated && !hasFetchedUser.current) {
+      hasFetchedUser.current = true
+      fetchUser()
+    }
+  }, [isAuthenticated, fetchUser])
 
   useEffect(() => {
     if (user) {
