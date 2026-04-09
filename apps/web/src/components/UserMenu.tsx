@@ -3,6 +3,7 @@
 import React from 'react'
 import { LogOut, User as UserIcon, Zap } from 'lucide-react'
 import { useAuth } from '@/features/auth/useAuth'
+import { useCredits } from '@/features/credits/useCredits'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,6 +18,7 @@ import { useRouter } from 'next/navigation'
 
 export function UserMenu() {
   const { user, isAuthenticated, logout } = useAuth()
+  const { openInsufficientModal } = useCredits()
   const router = useRouter()
 
   if (!isAuthenticated || !user) return null
@@ -61,10 +63,10 @@ export function UserMenu() {
             <UserIcon className="w-4 h-4 text-neutral-500" />
             <span>个人中心</span>
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={navigateToProfile} className="gap-2 px-2 py-2 rounded-lg hover:bg-neutral-50 cursor-pointer">
+          <DropdownMenuItem onClick={openInsufficientModal} className="gap-2 px-2 py-2 rounded-lg hover:bg-neutral-50 cursor-pointer">
             <Zap className="w-4 h-4 text-amber-500" />
             <div className="flex justify-between w-full items-center">
-              <span>我的积分</span>
+              <span>充值积分</span>
               <span className="font-medium text-amber-600">{user.credits}</span>
             </div>
           </DropdownMenuItem>

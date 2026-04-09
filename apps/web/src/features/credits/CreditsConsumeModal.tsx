@@ -16,17 +16,17 @@ import { useAuth } from '@/features/auth/useAuth'
 
 interface CreditsConsumeModalProps {
   onSuccess?: () => void
-  onInsufficient?: () => void
 }
 
-export function CreditsConsumeModal({ onSuccess, onInsufficient }: CreditsConsumeModalProps) {
+export function CreditsConsumeModal({ onSuccess }: CreditsConsumeModalProps) {
   const { user } = useAuth()
   const { 
     isModalOpen, 
     closeConsumeModal, 
     consumeCredits, 
     isConsuming, 
-    pendingConsume 
+    pendingConsume,
+    openInsufficientModal 
   } = useCredits()
 
   const handleConfirm = async () => {
@@ -36,7 +36,7 @@ export function CreditsConsumeModal({ onSuccess, onInsufficient }: CreditsConsum
       onSuccess?.()
     } else if (result.error === '积分不足') {
       closeConsumeModal()
-      onInsufficient?.()
+      openInsufficientModal()
     }
   }
 
