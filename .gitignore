@@ -50,3 +50,4 @@ apps/*/.next
 tmp/
 
 friend-g
+apps/web/next-env.d.ts
