@@ -220,7 +220,7 @@ export class OpenRouterProvider extends BaseProvider {
     };
 
     console.log(`[OpenRouter服务商] 发送请求到 OpenRouter，图片数量: ${imageParts.length}`);
-
+    console.log(`[OpenRouter服务商] 请求 URL:`, OPENROUTER_API_URL);
     // 调用 API
     const response = await fetch(OPENROUTER_API_URL + "/chat/completions", {
       method: "POST",

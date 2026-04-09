@@ -5,7 +5,7 @@ import { generateToken, blacklistToken } from '../../middleware/auth.js'
 import { verifyCode, invalidateCode } from '../sms/index.js'
 import type { User, VerifyCodeResponse } from '../../types/auth.js'
 
-const SIGNUP_CREDITS = 100
+const SIGNUP_CREDITS = 10000
 
 export async function getUserById(userId: string): Promise<User | null> {
   const [row] = await db.select().from(users).where(eq(users.id, userId))

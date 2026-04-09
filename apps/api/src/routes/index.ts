@@ -4,6 +4,7 @@ import { runChat } from "../services/llm.js";
 import { imageGenerationService, s3UploadService } from "../services/image/index.js";
 import { sendVerificationCode } from "../services/sms/index.js";
 import { loginWithCode } from "../services/auth/index.js";
+import { consumeCredits, getPricingInfo, checkCredits } from "../services/credits/index.js";
 import {
   getConversation,
   getConversations,
@@ -30,11 +31,50 @@ function asyncHandler<T extends (...args: any[]) => Promise<any>>(fn: T) {
 }
 
 // ========== 公开接口 (无需认证) ==========
+router.get("/api/credits/pricing", async (req: Request, res: Response) => {
+  try {
+    const models = await getPricingInfo()
+    res.json({ models })
+  } catch (error) {
+    console.error('[API] Get pricing error:', error)
+    res.status(500).json({ success: false, error: '获取价格信息失败' })
+  }
+})
+
+function validatePhone(phone: unknown): { valid: boolean; error?: string } {
+  if (!phone) {
+    return { valid: false, error: '手机号不能为空' }
+  }
+  if (typeof phone !== 'string') {
+    return { valid: false, error: '手机号格式错误' }
+  }
+  // const phoneRegex = /^1[3-9]\d{9}$/
+  // if (!phoneRegex.test(phone)) {
+  //   return { valid: false, error: '手机号格式错误' }
+  // }
+  return { valid: true }
+}
+
+function validateCode(code: unknown): { valid: boolean; error?: string } {
+  if (!code) {
+    return { valid: false, error: '验证码不能为空' }
+  }
+  if (typeof code !== 'string') {
+    return { valid: false, error: '验证码格式错误' }
+  }
+  // const codeRegex = /^\d{6}$/
+  // if (!codeRegex.test(code)) {
+  //   return { valid: false, error: '验证码格式错误' }
+  // }
+  return { valid: true }
+}
+
 router.post("/api/auth/send-code", asyncHandler(async (req: Request, res: Response) => {
   const { phone } = req.body
   
-  if (!phone) {
-    return res.status(400).json({ success: false, message: '手机号不能为空' })
+  const validation = validatePhone(phone)
+  if (!validation.valid) {
+    return res.status(400).json({ success: false, message: validation.error })
   }
   
   const result = await sendVerificationCode(phone)
@@ -49,8 +89,14 @@ router.post("/api/auth/send-code", asyncHandler(async (req: Request, res: Respon
 router.post("/api/auth/verify-code", asyncHandler(async (req: Request, res: Response) => {
   const { phone, code } = req.body
   
-  if (!phone || !code) {
-    return res.status(400).json({ success: false, error: '手机号和验证码不能为空' })
+  const phoneValidation = validatePhone(phone)
+  if (!phoneValidation.valid) {
+    return res.status(400).json({ success: false, error: phoneValidation.error })
+  }
+  
+  const codeValidation = validateCode(code)
+  if (!codeValidation.valid) {
+    return res.status(400).json({ success: false, error: codeValidation.error })
   }
   
   const result = await loginWithCode(phone, code)
@@ -66,6 +112,7 @@ router.post("/api/auth/verify-code", asyncHandler(async (req: Request, res: Resp
 // ========== 上传和生成 API (需要认证) ==========
 router.post("/api/image/generate", authMiddleware, async (req, res) => {
   try {
+    const userId = req.user!.userId
     const { combinationTypeId, slotContents, settings } = req.body;
 
     if (!combinationTypeId) {
@@ -76,11 +123,33 @@ router.post("/api/image/generate", authMiddleware, async (req, res) => {
       return res.status(400).json({ success: false, error: "slotContents is required" });
     }
 
+    const modelId = settings?.model || 'gemini-2.5-flash-image'
+    
+    const creditCheck = await checkCredits(userId, modelId)
+    if (!creditCheck.sufficient) {
+      return res.status(402).json({ 
+        success: false, 
+        error: '积分不足',
+        required: creditCheck.required,
+        current: creditCheck.current
+      })
+    }
+
     const result = await imageGenerationService.generate({
       combinationTypeId,
       slotContents,
       settings: settings || { resolution: { width: 768, height: 1024 } },
     });
+
+    if (result.success) {
+      await consumeCredits(
+        userId,
+        modelId,
+        'image_generate',
+        '图片生成',
+        { combinationTypeId, resolution: settings?.resolution }
+      )
+    }
 
     res.json(result);
   } catch (error) {
@@ -251,6 +320,18 @@ router.post("/api/chat", authMiddleware, async (req, res) => {
 
     const modelName = model || defaultModel;
 
+    const creditCheck = await checkCredits(userId, modelName)
+    if (!creditCheck.sufficient) {
+      res.write(`data: ${JSON.stringify({ 
+        type: "error", 
+        error: '积分不足',
+        required: creditCheck.required,
+        current: creditCheck.current
+      })}\n\n`)
+      res.end()
+      return
+    }
+
     let currentConversationId = conversationId;
 
     if (!currentConversationId) {
@@ -306,6 +387,14 @@ router.post("/api/chat", authMiddleware, async (req, res) => {
 
       if (lastAssistantContent) {
         await addMessage(currentConversationId, "assistant", lastAssistantContent);
+        
+        await consumeCredits(
+          userId,
+          modelName,
+          'ai_chat',
+          'AI 对话',
+          { conversationId: currentConversationId }
+        )
       }
 
       const currentMessages = await getMessages(currentConversationId);
