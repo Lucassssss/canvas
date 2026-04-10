@@ -25,6 +25,15 @@ const OPENROUTER_API_URL = process.env.OPENROUTER_API_BASE_URL;
 const image_size = '1k'
 // const image_size = '2k'
 // const image_size = '4k'
+
+/**
+ * 内部模型 ID 到 OpenRouter API 模型 ID 的映射
+ */
+const MODEL_ID_MAP: Record<string, string> = {
+  "openrouter-gemini-2-5-flash": "google/gemini-2.5-flash-image",
+  "openrouter-gemini-3-pro": "google/gemini-3-pro-image-preview",
+  "openrouter-flux-2-max": "black-forest-labs/flux.2-max",
+};
 // ----------------------------------------------------------
 
 
@@ -192,7 +201,9 @@ export class OpenRouterProvider extends BaseProvider {
       throw new Error("没有提供任何图片");
     }
 
-    const model = settings.model || DEFAULT_MODEL;
+    // 将内部模型 ID 映射到 OpenRouter API 模型 ID
+    const internalModelId = settings.model;
+    const model = (internalModelId && MODEL_ID_MAP[internalModelId]) || internalModelId || DEFAULT_MODEL;
     console.log(`[OpenRouter服务商] 使用模型: ${model}`);
 
     // 构建请求
@@ -266,9 +277,12 @@ export class OpenRouterProvider extends BaseProvider {
     }
 
     const prompt = this.promptBuilder.build(GenerationMode.POSE_FISSION, slotContents);
-    const model = settings.model || DEFAULT_MODEL;
+    // 将内部模型 ID 映射到 OpenRouter API 模型 ID
+    const internalModelId = settings.model;
+    const model = (internalModelId && MODEL_ID_MAP[internalModelId]) || internalModelId || DEFAULT_MODEL;
 
     console.log(`[OpenRouter服务商] 姿势分解提示词: ${prompt.substring(0, 100)}...`);
+    console.log(`[OpenRouter服务商] 使用模型: ${model}`);
     console.log(`[OpenRouter服务商] 源图片: ${sourceImage.substring(0, 80)}...`);
 
     const requestBody = {

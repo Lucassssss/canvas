@@ -11,16 +11,16 @@ export interface ModelPricing {
 
 export const MODEL_PRICING: ModelPricing[] = [
   // 1.4
-  // {
-  //   id: 'gemini-3-pro-image-preview',
-  //   name: 'Nano Banana Pro',
-  //   provider: 'google',
-  //   credits: 5,
-  //   category: 'image',
-  //   description: '高质量图片生成',
-  //   icon: 'google',
-  //   enabled: true,
-  // },
+  {
+    id: 'gemini-3-pro-image-preview',
+    name: 'Nano Banana Pro',
+    provider: 'google',
+    credits: 5,
+    category: 'image',
+    description: '高质量图片生成',
+    icon: 'google',
+    enabled: true,
+  },
   {
     id: 'gemini-3.1-flash-image-preview',
     name: 'Nano Banana 2',

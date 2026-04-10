@@ -1,18 +1,19 @@
 import "dotenv/config";
-import { GenerationMode, ProviderId } from "../../types.js";
 import type { GenerationProvider } from "../../types.js";
 import { OpenRouterProvider } from "./openrouter.js";
 import { APIMartProvider } from "./apimart.js";
-
-const DEFAULT_IMAGE_PROVIDER_ID = process.env.DEFAULT_IMAGE_PROVIDER_ID;
 import { LocalGeminiProvider } from "./local-gemini.js";
+import { VolcengineSeedreamProvider } from "./volcengine-seedream.js";
+import { getEnabledModels } from "../../model-configs.js";
 
 const providerInstances: Map<string, GenerationProvider> = new Map();
 
 const registry: Record<string, () => GenerationProvider> = {
-  [ProviderId.OPENROUTER_GEMINI]: () => new OpenRouterProvider(),
-  [ProviderId.APIMART_GEMINI]: () => new APIMartProvider(),
-  [ProviderId.LOCAL_GEMINI]: () => new LocalGeminiProvider(),
+  "openrouter-gemini": () => new OpenRouterProvider(),
+  "apimart-gemini": () => new APIMartProvider(),
+  "local-gemini": () => new LocalGeminiProvider(),
+  "volcengine-seedream-5-0-lite": () => new VolcengineSeedreamProvider(),
+  "volcengine-seedream-4-5": () => new VolcengineSeedreamProvider(),
 };
 
 export function getProvider(providerId: string): GenerationProvider | null {
@@ -33,16 +34,22 @@ export function getProvider(providerId: string): GenerationProvider | null {
   return provider;
 }
 
-export function getDefaultProvider(): GenerationProvider | null {
-  if (!DEFAULT_IMAGE_PROVIDER_ID) {
-    throw new Error(
-      `[服务商注册表] 未配置默认图片服务商，请设置环境变量 DEFAULT_IMAGE_PROVIDER_ID\n` +
-      `可用选项: ${Object.values(ProviderId).join(", ")}`
-    );
-  }
+export function getProviderByModelId(modelId: string): GenerationProvider | null {
+  const models = getEnabledModels();
+  const modelConfig = models.find((m) => m.id === modelId);
   
-  console.log(`[服务商注册表] 使用默认服务商: ${DEFAULT_IMAGE_PROVIDER_ID}`);
-  return getProvider(DEFAULT_IMAGE_PROVIDER_ID);
+  if (!modelConfig) {
+    console.warn(`[服务商注册表] 未找到模型配置: ${modelId}`);
+    return null;
+  }
+
+  const providerId = modelConfig.registryProviderId;
+  if (!providerId) {
+    console.warn(`[服务商注册表] 模型 ${modelId} 未配置 registryProviderId`);
+    return null;
+  }
+
+  return getProvider(providerId);
 }
 
 export function getRegisteredProviderIds(): string[] {

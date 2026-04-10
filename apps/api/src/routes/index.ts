@@ -23,6 +23,10 @@ import userRoutes from "./users.js";
 import creditRoutes from "./credits.js";
 import paymentRoutes from "./payments.js";
 import { handlePaymentCallback } from "../services/payment/index.js";
+import {
+  getEnabledModels,
+  getModelStats,
+} from "../services/image/model-configs.js";
 
 const router = Router();
 
@@ -152,7 +156,7 @@ router.post("/api/image/generate", authMiddleware, async (req, res) => {
     const result = await imageGenerationService.generate({
       combinationTypeId,
       slotContents,
-      settings: settings || { resolution: { width: 768, height: 1024 } },
+      settings: settings || { resolution: '1K', aspectRatio: '1:1' },
     });
 
     if (result.success) {
@@ -161,7 +165,11 @@ router.post("/api/image/generate", authMiddleware, async (req, res) => {
         modelId,
         'image_generate',
         '图片生成',
-        { combinationTypeId, resolution: settings?.resolution }
+        { 
+          combinationTypeId, 
+          resolution: settings?.resolution,
+          aspectRatio: settings?.aspectRatio 
+        }
       )
     }
 
@@ -443,7 +451,17 @@ router.get("/health", (req, res) => {
 });
 
 router.get("/models", (req, res) => {
-  res.json({ models: [] });
+  const stats = getModelStats();
+  const models = getEnabledModels();
+
+  res.json({
+    success: true,
+    data: {
+      models,
+      stats,
+      defaultModel: process.env.DEFAULT_IMAGE_PROVIDER_ID,
+    },
+  });
 });
 
 export default router;

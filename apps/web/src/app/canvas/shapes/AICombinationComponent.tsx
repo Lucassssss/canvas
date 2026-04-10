@@ -21,7 +21,7 @@ interface AICombinationComponentProps {
     slotContents?: Record<string, SlotContent>
     imageConfig?: {
       model: string
-      resolution: '1K' | '2K' | '4K'
+      resolution: string
       aspectRatio: string
       count: number
       prompt: string
@@ -318,16 +318,12 @@ export const AICombinationComponent: React.FC<AICombinationComponentProps> = ({ 
 
     updateShape(shape.id, { combinationStatus: 'generating', combinationError: undefined })
 
-    const modelId = shape.imageConfig?.model || 'gemini-2.5-flash-image'
-    const resolutionMap: Record<string, { width: number; height: number }> = {
-      '1K': { width: 1024, height: 1024 },
-      '2K': { width: 2048, height: 2048 },
-      '4K': { width: 4096, height: 4096 },
-    }
+    const modelId = shape.imageConfig?.model || 'volcengine-seedream-5-0-lite'
 
     const settings = {
       prompt: shape.imageConfig?.prompt || '',
-      resolution: resolutionMap[shape.imageConfig?.resolution || '2K'] || { width: 2048, height: 2048 },
+      resolution: shape.imageConfig?.resolution || '1K',
+      aspectRatio: shape.imageConfig?.aspectRatio || '1:1',
       model: modelId,
     }
 
