@@ -55,6 +55,11 @@ export const MODEL_OPTIONS: ModelOption[] = [
     label: 'Seedream 4.5',
     icon: 'seedream',
   },
+  {
+    value: 'seedream-5-0-lite',
+    label: 'Seedream 5.0',
+    icon: 'seedream',
+  },
 ]
 
 interface ModelSelectProps {
