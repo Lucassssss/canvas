@@ -48,6 +48,8 @@ export interface ModelConfig {
     low?: number;
     high?: number;
   };
+  /** 积分价格 */
+  credits: number;
   /** 是否启用 */
   enabled: boolean;
   /** 是否为推荐模型 */
@@ -83,6 +85,7 @@ export const MODEL_CONFIGS: ModelConfig[] = [
       stream: false,
     },
     pricing: { low: 0.1, high: 0.3 },
+    credits: 1,
     enabled: true,
     recommended: true,
     tags: ["换装", "高质量", "推荐"],
@@ -109,14 +112,41 @@ export const MODEL_CONFIGS: ModelConfig[] = [
       stream: false,
     },
     pricing: { low: 0.1, high: 0.3 },
+    credits: 1,
     enabled: true,
     tags: ["换装", "高分辨率"],
   },
 
   // ==================== OpenRouter ====================
   {
+    id: "openrouter-gemini-3-flash-preview",
+    name: "Nano Banana 2",
+    provider: "OpenRouter",
+    providerId: "openrouter",
+    registryProviderId: "openrouter-gemini",
+    modelId: "google/gemini-3-flash-preview",
+    description: "Google Gemini 2.5 Flash 图像生成，速度快，性价比高",
+    capabilities: {
+      modes: [
+        GenerationMode.SIMPLE_TRYON,
+        GenerationMode.FIXED_FACE_TRYON,
+        GenerationMode.FIXED_FACE_BG_TRYON,
+        GenerationMode.FIXED_FACE_BG_POSE_TRYON,
+        GenerationMode.POSE_FISSION,
+      ],
+      maxImages: 10,
+      resolutions: ["1K", "2K", "4K"],
+      async: false,
+      stream: false,
+    },
+    pricing: { low: 0.27, high: 0.27 },
+    credits: 1,
+    enabled: true,
+    tags: ["快速", "性价比"],
+  },
+  {
     id: "openrouter-gemini-2-5-flash",
-    name: "Gemini 2.5 Flash",
+    name: "Nano Banana",
     provider: "OpenRouter",
     providerId: "openrouter",
     registryProviderId: "openrouter-gemini",
@@ -135,18 +165,19 @@ export const MODEL_CONFIGS: ModelConfig[] = [
       async: false,
       stream: false,
     },
-    pricing: { low: 0.0012, high: 1.34 },
+    pricing: { low: 0.27, high: 0.27 },
+    credits: 1,
     enabled: true,
     tags: ["快速", "性价比"],
   },
   {
     id: "openrouter-gemini-3-pro",
-    name: "Gemini 3 Pro",
+    name: "Nano Banana3 Pro",
     provider: "OpenRouter",
     providerId: "openrouter",
     registryProviderId: "openrouter-gemini",
     modelId: "google/gemini-3-pro-image-preview",
-    description: "Google Gemini 3 Pro 图像生成，效果优秀",
+    description: "Nano Banana3 Pro 图像生成，效果优秀",
     capabilities: {
       modes: [
         GenerationMode.SIMPLE_TRYON,
@@ -160,7 +191,8 @@ export const MODEL_CONFIGS: ModelConfig[] = [
       async: false,
       stream: false,
     },
-    pricing: { low: 0.95, high: 1.69 },
+    pricing: { low: 1, high: 1.7 },
+    credits: 5,
     enabled: true,
     recommended: true,
     tags: ["高质量", "推荐"],
@@ -187,6 +219,7 @@ export const MODEL_CONFIGS: ModelConfig[] = [
       stream: false,
     },
     pricing: { low: 0.69, high: 1.31 },
+    credits: 4,
     enabled: false,
     tags: ["多图", "高质量"],
   },
@@ -214,6 +247,7 @@ export const MODEL_CONFIGS: ModelConfig[] = [
       stream: false,
     },
     pricing: { low: 0.5, high: 2.0 },
+    credits: 5,
     enabled: false,
     tags: ["高分辨率", "极端宽高比"],
   },
@@ -235,6 +269,7 @@ export const MODEL_CONFIGS: ModelConfig[] = [
       stream: false,
     },
     pricing: { low: 0.2, high: 0.5 },
+    credits: 1,
     enabled: false,
     tags: ["换装", "稳定"],
   },
@@ -259,6 +294,7 @@ export const MODEL_CONFIGS: ModelConfig[] = [
       stream: false,
     },
     pricing: { low: 0.1, high: 0.3 },
+    credits: 1,
     enabled: false,
     tags: ["人物参考", "快速"],
   },
@@ -285,6 +321,7 @@ export const MODEL_CONFIGS: ModelConfig[] = [
       async: false,
       stream: false,
     },
+    credits: 1,
     enabled: false,
     tags: ["本地", "免费"],
   },

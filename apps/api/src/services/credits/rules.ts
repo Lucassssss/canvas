@@ -1,3 +1,5 @@
+import { MODEL_CONFIGS } from '../image/model-configs.js'
+
 export interface ModelPricing {
   id: string
   name: string
@@ -9,64 +11,16 @@ export interface ModelPricing {
   enabled: boolean
 }
 
-export const MODEL_PRICING: ModelPricing[] = [
-  // 1.4
-  {
-    id: 'gemini-3-pro-image-preview',
-    name: 'Nano Banana Pro',
-    provider: 'google',
-    credits: 5,
-    category: 'image',
-    description: '高质量图片生成',
-    icon: 'google',
-    enabled: true,
-  },
-  {
-    id: 'gemini-3.1-flash-image-preview',
-    name: 'Nano Banana 2',
-    provider: 'google',
-    credits: 150,
-    category: 'image',
-    description: '快速图片生成',
-    icon: 'google',
-    enabled: true,
-  },
-  {
-    id: 'gemini-2.5-flash-image',
-    name: 'Nano Banana',
-    provider: 'google',
-    credits: 120,
-    category: 'image',
-    description: '基础图片生成',
-    icon: 'google',
-    enabled: true,
-  },
-  {
-    id: 'seedream-4.5',
-    name: 'Seedream 4.5',
-    provider: 'seedream',
-    credits: 300,
-    category: 'image',
-    description: '专业级图片生成',
-    icon: 'seedream',
-    enabled: true,
-  },
-  // 3
-  {
-    id: 'seedream-5-0-lite',
-    name: 'Seedream 5.0',
-    provider: 'seedream',
-    credits: 3,
-    category: 'image',
-    description: '最新一代高质量图片生成，支持 3K 分辨率和 PNG 输出',
-    icon: 'seedream',
-    enabled: true,
-  },
+/**
+ * Chat 和 Video 模型定价配置
+ * 图片模型定价已迁移到 model-configs.ts
+ */
+const CHAT_VIDEO_PRICING: ModelPricing[] = [
   {
     id: 'deepseek/deepseek-chat',
     name: 'DeepSeek Chat',
     provider: 'deepseek',
-    credits: 10,
+    credits: 0.1,
     category: 'chat',
     description: '智能对话',
     enabled: true,
@@ -75,7 +29,7 @@ export const MODEL_PRICING: ModelPricing[] = [
     id: 'deepseek/deepseek-reasoner',
     name: 'DeepSeek Reasoner',
     provider: 'deepseek',
-    credits: 20,
+    credits: 0.1,
     category: 'chat',
     description: '深度推理对话',
     enabled: true,
@@ -84,7 +38,7 @@ export const MODEL_PRICING: ModelPricing[] = [
     id: 'minimax/MiniMax-M2.7',
     name: 'MiniMax M2.7',
     provider: 'minimax',
-    credits: 15,
+    credits: 0.1,
     category: 'chat',
     description: '智能对话助手',
     enabled: true,
@@ -93,7 +47,7 @@ export const MODEL_PRICING: ModelPricing[] = [
     id: 'video-gen-standard',
     name: '标准视频生成',
     provider: 'internal',
-    credits: 500,
+    credits: 5,
     category: 'video',
     description: '5秒标准视频',
     enabled: false,
@@ -102,38 +56,62 @@ export const MODEL_PRICING: ModelPricing[] = [
     id: 'video-gen-hd',
     name: '高清视频生成',
     provider: 'internal',
-    credits: 1000,
+    credits: 5,
     category: 'video',
     description: '10秒高清视频',
     enabled: false,
   },
 ]
 
+/**
+ * 获取图片模型定价列表（从 model-configs.ts 动态生成）
+ */
+function getImageModelPricing(): ModelPricing[] {
+  return MODEL_CONFIGS.map(config => ({
+    id: config.id,
+    name: config.name,
+    provider: config.provider,
+    credits: config.credits,
+    category: 'image' as const,
+    description: config.description,
+    icon: config.providerId,
+    enabled: config.enabled,
+  }))
+}
+
+/**
+ * 获取所有模型定价
+ */
+export function getAllModelPricing(): ModelPricing[] {
+  return [...getImageModelPricing(), ...CHAT_VIDEO_PRICING]
+}
+
 export function getModelPricing(modelId: string): ModelPricing | undefined {
-  return MODEL_PRICING.find(m => m.id === modelId && m.enabled)
+  const allModels = getAllModelPricing()
+  return allModels.find(m => m.id === modelId && m.enabled)
 }
 
 export function getCreditsForModel(modelId: string): number {
   const pricing = getModelPricing(modelId)
   if (!pricing) {
-    console.warn(`[积分定价警告] 未找到模型定价配置: modelId="${modelId}", 使用默认值 100 积分。请在 MODEL_PRICING 中添加该模型的定价配置。`)
+    console.warn(`[积分定价警告] 未找到模型定价配置: modelId="${modelId}", 使用默认值 100 积分。请在模型配置中添加该模型的定价配置。`)
     return 100
   }
   return pricing.credits
 }
 
 export function getEnabledImageModels(): ModelPricing[] {
-  return MODEL_PRICING.filter(m => m.category === 'image' && m.enabled)
+  return getImageModelPricing().filter(m => m.enabled)
 }
 
 export function getEnabledChatModels(): ModelPricing[] {
-  return MODEL_PRICING.filter(m => m.category === 'chat' && m.enabled)
+  return CHAT_VIDEO_PRICING.filter(m => m.category === 'chat' && m.enabled)
 }
 
 export function getEnabledVideoModels(): ModelPricing[] {
-  return MODEL_PRICING.filter(m => m.category === 'video' && m.enabled)
+  return CHAT_VIDEO_PRICING.filter(m => m.category === 'video' && m.enabled)
 }
 
 export function getAllEnabledModels(): ModelPricing[] {
-  return MODEL_PRICING.filter(m => m.enabled)
+  return getAllModelPricing().filter(m => m.enabled)
 }

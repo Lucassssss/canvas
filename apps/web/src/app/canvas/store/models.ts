@@ -20,6 +20,7 @@ export interface ModelConfig {
     low?: number
     high?: number
   }
+  credits: number
   enabled: boolean
   recommended?: boolean
   tags?: string[]
