@@ -74,9 +74,6 @@ export const ModelSelect: React.FC<ModelSelectProps> = ({ value, onChange, class
                 className="w-4 h-4" 
               />
               <span>{selectedModel.name}</span>
-              {selectedModel.recommended && (
-                <span className="text-[10px] bg-blue-100 text-blue-600 px-1 rounded">推荐</span>
-              )}
             </span>
           ) : (
             <SelectValue placeholder="选择模型" />
@@ -93,14 +90,12 @@ export const ModelSelect: React.FC<ModelSelectProps> = ({ value, onChange, class
             {providerModels.map((model) => (
               <SelectItem key={model.id} value={model.id}>
                 <span className="flex items-center gap-2">
+                  <span className="text-[10px] bg-gray-100 text-gray-500 px-1 rounded shrink-0">
+                    {model.credits === 0 ? '免费' : `${model.credits}积分`}
+                  </span>
                   <span>{model.name}</span>
                   {model.recommended && (
                     <span className="text-[10px] bg-blue-100 text-blue-600 px-1 rounded">推荐</span>
-                  )}
-                  {model.tags && model.tags.length > 0 && (
-                    <span className="text-[10px] text-gray-400">
-                      {model.tags.slice(0, 2).join(' · ')}
-                    </span>
                   )}
                 </span>
               </SelectItem>

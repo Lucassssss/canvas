@@ -141,7 +141,7 @@ router.post("/api/image/generate", authMiddleware, async (req, res) => {
       return res.status(400).json({ success: false, error: "slotContents is required" });
     }
 
-    const modelId = settings?.model || 'gemini-2.5-flash-image'
+    const modelId = settings?.model || 'openrouter-gemini-2-5-flash'
     
     const creditCheck = await checkCredits(userId, modelId)
     if (!creditCheck.sufficient) {
