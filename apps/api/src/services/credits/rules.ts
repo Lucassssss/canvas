@@ -10,16 +10,17 @@ export interface ModelPricing {
 }
 
 export const MODEL_PRICING: ModelPricing[] = [
-  {
-    id: 'gemini-3-pro-image-preview',
-    name: 'Nano Banana Pro',
-    provider: 'google',
-    credits: 200,
-    category: 'image',
-    description: '高质量图片生成',
-    icon: 'google',
-    enabled: true,
-  },
+  // 1.4
+  // {
+  //   id: 'gemini-3-pro-image-preview',
+  //   name: 'Nano Banana Pro',
+  //   provider: 'google',
+  //   credits: 5,
+  //   category: 'image',
+  //   description: '高质量图片生成',
+  //   icon: 'google',
+  //   enabled: true,
+  // },
   {
     id: 'gemini-3.1-flash-image-preview',
     name: 'Nano Banana 2',
@@ -47,6 +48,17 @@ export const MODEL_PRICING: ModelPricing[] = [
     credits: 300,
     category: 'image',
     description: '专业级图片生成',
+    icon: 'seedream',
+    enabled: true,
+  },
+  // 3
+  {
+    id: 'seedream-5-0-lite',
+    name: 'Seedream 5.0',
+    provider: 'seedream',
+    credits: 3,
+    category: 'image',
+    description: '最新一代高质量图片生成，支持 3K 分辨率和 PNG 输出',
     icon: 'seedream',
     enabled: true,
   },
