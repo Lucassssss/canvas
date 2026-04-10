@@ -2,6 +2,7 @@
  * 图片生成服务主类
  *
  * 负责协调各服务商，处理生成请求的分发
+ * 根据请求中的 model 字段选择对应的服务商
  */
 
 import { GenerationMode } from "../types.js";
@@ -10,23 +11,25 @@ import type {
   ImageGenerateResult,
   GenerationProvider,
 } from "../types.js";
-import { getDefaultProvider, getProvider } from "./providers/index.js";
+import { getProvider, getProviderByModelId } from "./providers/index.js";
 
 export class ImageGenerationService {
-  private currentProvider: GenerationProvider | null = null;
-
-  constructor() {
-    this.currentProvider = getDefaultProvider();
-  }
-
   async generate(input: ImageGenerateInput): Promise<ImageGenerateResult> {
     console.log(`[图片生成服务] 开始处理请求，类型: ${input.combinationTypeId}`);
 
-    const provider = this.getProvider();
-    if (!provider) {
-      console.error(`[图片生成服务] 未配置任何服务商`);
-      return { success: false, error: "未配置图片生成服务商" };
+    const modelId = input.settings?.model;
+    if (!modelId) {
+      console.error(`[图片生成服务] 请求中未指定模型`);
+      return { success: false, error: "请在请求中指定要使用的模型" };
     }
+
+    const provider = this.getProviderByModel(modelId);
+    if (!provider) {
+      console.error(`[图片生成服务] 未找到支持模型 ${modelId} 的服务商`);
+      return { success: false, error: `未找到支持模型 ${modelId} 的服务商` };
+    }
+
+    console.log(`[图片生成服务] 使用服务商: ${provider.name} (模型: ${provider.model})`);
 
     const validationResult = provider.validateInput(input);
     if (!validationResult.valid) {
@@ -52,19 +55,8 @@ export class ImageGenerationService {
     return result;
   }
 
-  setProvider(providerId: string): boolean {
-    const provider = getProvider(providerId);
-    if (!provider) {
-      console.error(`[图片生成服务] 无法设置服务商，不存在的 ID: ${providerId}`);
-      return false;
-    }
-    this.currentProvider = provider;
-    console.log(`[图片生成服务] 已切换到服务商: ${provider.name}`);
-    return true;
-  }
-
-  getProvider(): GenerationProvider | null {
-    return this.currentProvider;
+  private getProviderByModel(modelId: string): GenerationProvider | null {
+    return getProviderByModelId(modelId);
   }
 }
 

@@ -31,7 +31,7 @@ export type {
 
 export { GenerationMode, ProviderId, GenerationStatus };
 
-export { getProvider, getDefaultProvider, getRegisteredProviderIds, resetProviderCache } from "./providers/index.js";
+export { getProvider, getRegisteredProviderIds, resetProviderCache } from "./providers/index.js";
 export { BaseProvider } from "./providers/base.js";
 export { OpenRouterProvider } from "./providers/openrouter.js";
 export { APIMartProvider } from "./providers/apimart.js";

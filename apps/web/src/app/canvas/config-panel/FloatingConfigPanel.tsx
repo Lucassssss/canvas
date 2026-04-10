@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useState, useCallback, useRef } from 'react'
+import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react'
 import { useCanvasStore } from '../store'
 import { ImageConfig } from '../shapes/types'
 import { Button } from '@/components/ui/button'
@@ -8,6 +8,7 @@ import { ModelSelect } from './ModelSelect'
 import { AspectRatioSelect } from './AspectRatioSelect'
 import { ResolutionSelect, type Resolution } from './ResolutionSelect'
 import { CountSelect, type Count } from './CountSelect'
+import { useModels } from '../hooks/useModels'
 
 export type ConfigField = 'model' | 'resolution' | 'aspectRatio' | 'count'
 export type ShapeTypeFilter = 'image' | 'custom-combination' | 'ai-combination' | 'detail-image' | 'all'
@@ -82,6 +83,7 @@ const DEFAULT_ENABLED_FIELDS: ConfigField[] = ['model', 'resolution', 'aspectRat
 export const FloatingConfigPanel: React.FC<FloatingConfigPanelProps> = ({ containerRef, config }) => {
   const { shapes, selectedIds, viewport, updateShape } = useCanvasStore()
   const panelRef = useRef<HTMLDivElement>(null)
+  const { defaultModel, getResolutionsForModel, getModelById } = useModels()
 
   const [position, setPosition] = useState<{ left: number; top: number } | null>(null)
 
@@ -96,6 +98,14 @@ export const FloatingConfigPanel: React.FC<FloatingConfigPanelProps> = ({ contai
   })
 
   const enabledFields = config?.enabledFields || DEFAULT_ENABLED_FIELDS
+
+  // Hooks 必须在条件语句之前调用
+  const currentModel = selectedShape?.imageConfig?.model || defaultModel
+  const availableResolutions = useMemo(() => {
+    return getResolutionsForModel(currentModel)
+  }, [currentModel, getResolutionsForModel])
+
+  const defaultResolution = availableResolutions[0] || '2K'
 
   const calculatePosition = useCallback(() => {
     if (!selectedShape || !containerRef.current) {
@@ -148,13 +158,14 @@ export const FloatingConfigPanel: React.FC<FloatingConfigPanelProps> = ({ contai
     e.stopPropagation()
   }, [])
 
+  // 条件渲染在所有 Hooks 之后
   if (!selectedShape || !position) {
     return null
   }
 
   const imageConfig: ImageGenerationConfig = {
-    model: selectedShape.imageConfig?.model || 'gemini-3-pro-image-preview',
-    resolution: (selectedShape.imageConfig?.resolution as Resolution) || '2K',
+    model: currentModel,
+    resolution: (selectedShape.imageConfig?.resolution as Resolution) || defaultResolution,
     aspectRatio: selectedShape.imageConfig?.aspectRatio || '1:1',
     count: (selectedShape.imageConfig?.count as Count) || 1,
     prompt: selectedShape.imageConfig?.prompt || '',
@@ -164,6 +175,16 @@ export const FloatingConfigPanel: React.FC<FloatingConfigPanelProps> = ({ contai
     updateShape(selectedShape.id, {
       imageConfig: { ...imageConfig, ...updates },
     })
+  }
+
+  const handleModelChange = (model: string) => {
+    const newResolutions = getResolutionsForModel(model)
+    const currentRes = imageConfig.resolution
+    const newResolution = newResolutions.includes(currentRes) 
+      ? currentRes 
+      : newResolutions[0] || '2K'
+    
+    updateConfig({ model, resolution: newResolution })
   }
 
   const handleGenerate = () => {
@@ -201,7 +222,7 @@ export const FloatingConfigPanel: React.FC<FloatingConfigPanelProps> = ({ contai
             <div onMouseDown={(e) => e.stopPropagation()}>
               <ModelSelect
                 value={imageConfig.model}
-                onChange={(v) => updateConfig({ model: v })}
+                onChange={handleModelChange}
                 className="h-8 text-sm"
               />
             </div>
@@ -212,6 +233,7 @@ export const FloatingConfigPanel: React.FC<FloatingConfigPanelProps> = ({ contai
               <ResolutionSelect
                 value={imageConfig.resolution}
                 onChange={(v) => updateConfig({ resolution: v })}
+                resolutions={availableResolutions}
                 className="h-8 text-sm"
               />
             </div>

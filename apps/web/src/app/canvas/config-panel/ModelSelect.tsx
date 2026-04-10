@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { useMemo } from 'react'
 import {
   Select,
   SelectContent,
@@ -10,57 +10,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-
-export interface ModelOption {
-  value: string
-  label: string
-  icon: string
-}
+import { useModels, type ModelConfig } from '../hooks/useModels'
 
 const MODEL_ICONS: Record<string, string> = {
-  'google': '/model_provider/nano_banana.svg',
-  'flux': '/model_provider/flux.svg',
-  'riverflow': '/model_provider/flux.svg',
-  'seedream': '/model_provider/seedream_3.svg',
+  '火山引擎': '/model_provider/seedream_3.svg',
+  'OpenRouter': '/model_provider/nano_banana.svg',
+  'APIMart': '/model_provider/nano_banana.svg',
+  '腾讯云': '/model_provider/nano_banana.svg',
+  'MiniMax': '/model_provider/nano_banana.svg',
+  '本地': '/model_provider/nano_banana.svg',
   'default': '/model_provider/nano_banana.svg',
 }
 
-function getModelIcon(modelValue: string): string {
-  const lower = modelValue.toLowerCase()
-  if (lower.includes('gemini')) return MODEL_ICONS['google']
-  if (lower.includes('flux')) return MODEL_ICONS['flux']
-  if (lower.includes('riverflow')) return MODEL_ICONS['riverflow']
-  if (lower.includes('seedream')) return MODEL_ICONS['seedream']
-  return MODEL_ICONS['default']
+function getModelIcon(provider: string): string {
+  return MODEL_ICONS[provider] || MODEL_ICONS['default']
 }
-
-export const MODEL_OPTIONS: ModelOption[] = [
-  {
-    value: 'gemini-3-pro-image-preview',
-    label: 'Nano Banana Pro',
-    icon: 'google',
-  },
-  {
-    value: 'gemini-3.1-flash-image-preview',
-    label: 'Nano Banana 2',
-    icon: 'google',
-  },
-  {
-    value: 'gemini-2.5-flash-image',
-    label: 'Nano Banana',
-    icon: 'google',
-  },
-  {
-    value: 'seedream-4.5',
-    label: 'Seedream 4.5',
-    icon: 'seedream',
-  },
-  {
-    value: 'seedream-5-0-lite',
-    label: 'Seedream 5.0',
-    icon: 'seedream',
-  },
-]
 
 interface ModelSelectProps {
   value: string
@@ -68,8 +32,35 @@ interface ModelSelectProps {
   className?: string
 }
 
+function groupModelsByProvider(models: ModelConfig[]): Record<string, ModelConfig[]> {
+  return models.reduce((acc, model) => {
+    const provider = model.provider
+    if (!acc[provider]) {
+      acc[provider] = []
+    }
+    acc[provider].push(model)
+    return acc
+  }, {} as Record<string, ModelConfig[]>)
+}
+
 export const ModelSelect: React.FC<ModelSelectProps> = ({ value, onChange, className }) => {
-  const selectedModel = MODEL_OPTIONS.find((m) => m.value === value)
+  const { models, loading } = useModels()
+
+  const groupedModels = useMemo(() => groupModelsByProvider(models), [models])
+
+  const selectedModel = useMemo(() => {
+    return models.find((m) => m.id === value || m.modelId === value)
+  }, [models, value])
+
+  if (loading) {
+    return (
+      <Select disabled>
+        <SelectTrigger className={className}>
+          <SelectValue placeholder="加载中..." />
+        </SelectTrigger>
+      </Select>
+    )
+  }
 
   return (
     <Select value={value} onValueChange={onChange}>
@@ -77,27 +68,48 @@ export const ModelSelect: React.FC<ModelSelectProps> = ({ value, onChange, class
         <SelectValue>
           {selectedModel ? (
             <span className="flex items-center gap-1.5">
-              <img src={getModelIcon(selectedModel.icon)} alt="" className="w-4 h-4" />
-              <span>{selectedModel.label}</span>
+              <img 
+                src={getModelIcon(selectedModel.provider)} 
+                alt={selectedModel.provider} 
+                className="w-4 h-4" 
+              />
+              <span>{selectedModel.name}</span>
+              {selectedModel.recommended && (
+                <span className="text-[10px] bg-blue-100 text-blue-600 px-1 rounded">推荐</span>
+              )}
             </span>
           ) : (
-            <SelectValue />
+            <SelectValue placeholder="选择模型" />
           )}
         </SelectValue>
       </SelectTrigger>
-      <SelectContent className="z-[1001]">
-        <SelectGroup>
-          <SelectLabel className="text-xs text-gray-400 py-1">模型</SelectLabel>
-          {MODEL_OPTIONS.map((model) => (
-            <SelectItem key={model.value} value={model.value}>
-              <span className="flex items-center gap-2">
-                <img src={getModelIcon(model.icon)} alt="" className="w-4 h-4" />
-                <span>{model.label}</span>
-              </span>
-            </SelectItem>
-          ))}
-        </SelectGroup>
+      <SelectContent className="z-[1001] max-h-80">
+        {Object.entries(groupedModels).map(([provider, providerModels]) => (
+          <SelectGroup key={provider}>
+            <SelectLabel className="text-xs text-gray-400 py-1 flex items-center gap-1.5">
+              <img src={getModelIcon(provider)} alt={provider} className="w-3.5 h-3.5" />
+              {provider}
+            </SelectLabel>
+            {providerModels.map((model) => (
+              <SelectItem key={model.id} value={model.id}>
+                <span className="flex items-center gap-2">
+                  <span>{model.name}</span>
+                  {model.recommended && (
+                    <span className="text-[10px] bg-blue-100 text-blue-600 px-1 rounded">推荐</span>
+                  )}
+                  {model.tags && model.tags.length > 0 && (
+                    <span className="text-[10px] text-gray-400">
+                      {model.tags.slice(0, 2).join(' · ')}
+                    </span>
+                  )}
+                </span>
+              </SelectItem>
+            ))}
+          </SelectGroup>
+        ))}
       </SelectContent>
     </Select>
   )
 }
+
+export type { ModelConfig }

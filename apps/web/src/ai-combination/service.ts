@@ -16,7 +16,9 @@ interface GenerateInput {
   slotContents: Record<string, SlotContent>
   settings: {
     prompt: string
-    resolution: { width: number; height: number }
+    resolution: string
+    aspectRatio?: string
+    model?: string
   }
 }
 

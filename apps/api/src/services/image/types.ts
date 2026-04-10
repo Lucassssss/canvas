@@ -25,6 +25,10 @@ export enum ProviderId {
   FLUX_2_MAX = "flux-2-max",
   SEEDREAM_5 = "seedream-5",
   APIMART_GEMINI = "apimart-gemini",
+  VOLCENGINE_SEEDREAM_5_LITE = "volcengine-seedream-5-0-lite",
+  VOLCENGINE_SEEDREAM_4_5 = "volcengine-seedream-4-5",
+  TENCENT_HUNYUAN = "tencent-hunyuan",
+  MINIMAX_IMAGE = "minimax-image",
 }
 
 export enum GenerationStatus {
@@ -47,7 +51,8 @@ export type ImageGenerateInput = {
 
 export type GenerationSettings = {
   prompt?: string;
-  resolution: { width: number; height: number };
+  resolution: string;
+  aspectRatio?: string;
   model?: string;
 };
 

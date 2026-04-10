@@ -33,7 +33,6 @@ export {
   imageGenerationService,
   ImageGenerationService,
   getProvider,
-  getDefaultProvider,
   getRegisteredProviderIds,
 } from "./generation/index.js";
 
