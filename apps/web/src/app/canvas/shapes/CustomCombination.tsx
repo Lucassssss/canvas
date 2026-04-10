@@ -3,6 +3,7 @@
 import React, { useCallback, useState, useRef, useEffect, memo } from 'react'
 import { useCanvasStore } from '../store'
 import { aiCombinationService } from '@/ai-combination/service'
+import { imageGenerationService } from '../services/image-generation'
 import { Plus, Loader2, Play, Equal, Image as ImageIcon } from 'lucide-react'
 import type { ShapeProps, CustomCombinationSlot } from './types'
 import {
@@ -408,34 +409,88 @@ export const CustomCombination: React.FC<CustomCombinationProps> = ({ shape }) =
     useCanvasStore.getState().updateShape(shapeIdRef.current, { [key]: newSlots })
   }, [])
 
-  const handleGenerate = useCallback(() => {
+  const handleGenerate = useCallback(async () => {
+    const currentShape = useCanvasStore.getState().shapes.find(s => s.id === shapeIdRef.current)
+    const currentInputSlots = currentShape?.customInputSlots || []
+    const currentOutputSlots = currentShape?.customOutputSlots || []
+    const imageConfig = currentShape?.imageConfig
+    
+    // 验证输入
+    const inputImages = currentInputSlots
+      .filter(s => s.imageUrl)
+      .map(s => s.imageUrl as string)
+    
+    if (inputImages.length === 0) {
+      useCanvasStore.getState().updateShape(shapeIdRef.current, {
+        customStatus: 'error',
+        customError: '请上传至少一张输入图片',
+      })
+      return
+    }
+
+    // 验证提示词
+    const prompt = imageConfig?.prompt || ''
+    if (!prompt.trim()) {
+      useCanvasStore.getState().updateShape(shapeIdRef.current, {
+        customStatus: 'error',
+        customError: '请输入提示词',
+      })
+      return
+    }
+
+    // 开始生成
     useCanvasStore.getState().updateShape(shapeIdRef.current, {
       customStatus: 'generating',
       customError: undefined,
     })
 
-    setTimeout(() => {
-      const currentShape = useCanvasStore.getState().shapes.find(s => s.id === shapeIdRef.current)
-      const currentInputSlots = currentShape?.customInputSlots || []
-      const currentOutputSlots = currentShape?.customOutputSlots || []
-      
-      const hasAllInputs = currentInputSlots.every(s => s.imageUrl)
-      if (!hasAllInputs) {
+    try {
+      const result = await imageGenerationService.generate({
+        combinationTypeId: 'custom',
+        images: inputImages,
+        prompt,
+        settings: {
+          model: imageConfig?.model || 'openrouter-gemini-2-5-flash',
+          resolution: imageConfig?.resolution || '2K',
+          aspectRatio: imageConfig?.aspectRatio || '1:1',
+        },
+      })
+
+      if (result.success && result.images.length > 0) {
+        // 更新输出槽位
+        const updatedOutputSlots = currentOutputSlots.map((slot, index) => ({
+          ...slot,
+          imageUrl: result.images[index] || result.images[0],
+        }))
+
+        // 如果生成的图片多于输出槽位，添加新槽位
+        if (result.images.length > currentOutputSlots.length) {
+          for (let i = currentOutputSlots.length; i < result.images.length; i++) {
+            updatedOutputSlots.push({
+              id: `${shapeIdRef.current}-output-${Date.now()}-${i}`,
+              label: `输出${i + 1}`,
+              imageUrl: result.images[i],
+            })
+          }
+        }
+
+        useCanvasStore.getState().updateShape(shapeIdRef.current, {
+          customStatus: 'completed',
+          customOutputSlots: updatedOutputSlots,
+        })
+      } else {
         useCanvasStore.getState().updateShape(shapeIdRef.current, {
           customStatus: 'error',
-          customError: '请上传所有输入图片',
+          customError: result.error || '生成失败',
         })
-        return
       }
-
+    } catch (error) {
+      console.error('[CustomCombination] 生成异常:', error)
       useCanvasStore.getState().updateShape(shapeIdRef.current, {
-        customStatus: 'completed',
-        customOutputSlots: currentOutputSlots.map(s => ({
-          ...s,
-          imageUrl: 'https://picsum.photos/seed/output/1024/1024',
-        })),
+        customStatus: 'error',
+        customError: error instanceof Error ? error.message : '生成失败',
       })
-    }, 2000)
+    }
   }, [])
 
   const handleInputLabelChange = useCallback((id: string, label: string) => {

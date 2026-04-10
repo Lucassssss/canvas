@@ -16,7 +16,6 @@ export function useModels() {
     getModelById,
     getModelsByProvider,
     getRecommendedModels,
-    getModelsByMode,
     getResolutionsForModel,
   } = useModelsStore()
 
@@ -36,7 +35,6 @@ export function useModels() {
     getModelById,
     getModelsByProvider,
     getRecommendedModels,
-    getModelsByMode,
     getResolutionsForModel,
   }
 }

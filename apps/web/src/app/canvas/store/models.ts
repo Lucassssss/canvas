@@ -1,7 +1,6 @@
 import { create } from 'zustand'
 
 export interface ModelCapability {
-  modes: string[]
   maxImages: number
   resolutions: string[]
   async: boolean
@@ -39,7 +38,6 @@ interface ModelsActions {
   getModelById: (id: string) => ModelConfig | undefined
   getModelsByProvider: (providerId: string) => ModelConfig[]
   getRecommendedModels: () => ModelConfig[]
-  getModelsByMode: (mode: string) => ModelConfig[]
   getResolutionsForModel: (modelId: string) => string[]
 }
 
@@ -105,10 +103,6 @@ export const useModelsStore = create<ModelsStore>((set, get) => ({
 
   getRecommendedModels: () => {
     return get().models.filter(m => m.recommended)
-  },
-
-  getModelsByMode: (mode) => {
-    return get().models.filter(m => m.capabilities.modes.includes(mode))
   },
 
   getResolutionsForModel: (modelId) => {

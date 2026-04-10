@@ -1,34 +1,24 @@
 /**
  * 图片生成服务公共类型定义
- *
- * 此模块定义了图片生成服务的核心类型，包括：
- * - 生成模式枚举
- * - 服务商接口
- * - 生成选项和结果类型
  */
 
 export enum GenerationMode {
+  TEXT_TO_IMAGE = "text-to-image",
+  IMAGE_TO_IMAGE = "image-to-image",
   SIMPLE_TRYON = "simple-tryon",
   FIXED_FACE_TRYON = "fixed-face-tryon",
   FIXED_FACE_BG_TRYON = "fixed-face-bg-tryon",
   FIXED_FACE_BG_POSE_TRYON = "fixed-face-bg-pose-tryon",
   POSE_FISSION = "pose-fission",
+  CUSTOM = "custom",
 }
 
 export enum ProviderId {
   OPENROUTER_GEMINI = "openrouter-gemini",
   LOCAL_GEMINI = "local-gemini",
-  NANO_BANANA_2 = "nano-banana-2",
-  NANO_BANANA_PRO = "nano-banana-pro",
-  GPT_IMAGE_1_5 = "gpt-image-1.5",
-  FLUX_2_PRO = "flux-2-pro",
-  FLUX_2_MAX = "flux-2-max",
-  SEEDREAM_5 = "seedream-5",
   APIMART_GEMINI = "apimart-gemini",
   VOLCENGINE_SEEDREAM_5_LITE = "volcengine-seedream-5-0-lite",
   VOLCENGINE_SEEDREAM_4_5 = "volcengine-seedream-4-5",
-  TENCENT_HUNYUAN = "tencent-hunyuan",
-  MINIMAX_IMAGE = "minimax-image",
 }
 
 export enum GenerationStatus {
@@ -38,55 +28,73 @@ export enum GenerationStatus {
   FAILED = "failed",
 }
 
+/**
+ * 生成配置
+ */
+export interface GenerationSettings {
+  model?: string;
+  resolution?: string;
+  aspectRatio?: string;
+  outputCount?: number;
+}
+
+/**
+ * 生成选项 - Provider 的输入
+ */
+export interface GenerationOptions {
+  images: string[];
+  prompt: string;
+  settings: GenerationSettings;
+}
+
+/**
+ * 生成结果 - Provider 的输出
+ */
+export interface GenerationResult {
+  success: boolean;
+  images: string[];
+  error?: string;
+}
+
+/**
+ * 服务商接口
+ */
+export interface GenerationProvider {
+  readonly id: string;
+  readonly name: string;
+  generate(options: GenerationOptions): Promise<GenerationResult>;
+}
+
+/**
+ * API 输入格式（前端调用）
+ */
+export interface ImageGenerateInput {
+  combinationTypeId: string;
+  images: string[];
+  prompt: string;
+  settings: GenerationSettings;
+  slotContents?: Record<string, SlotContent>;
+}
+
+/**
+ * API 输出格式
+ */
+export interface ImageGenerateResult {
+  success: boolean;
+  images: string[];
+  error?: string;
+  required?: number;
+  current?: number;
+}
+
 export type SlotContent = {
   imageUrl?: string | null;
   text?: string | null;
 };
 
-export type ImageGenerateInput = {
-  combinationTypeId: string;
-  slotContents: Record<string, SlotContent>;
-  settings: GenerationSettings;
-};
-
-export type GenerationSettings = {
-  prompt?: string;
-  resolution: string;
-  aspectRatio?: string;
-  model?: string;
-};
-
-export type ImageGenerateResult = {
-  success: boolean;
-  imageUrl?: string;
-  error?: string;
-};
-
-export type GenerationOptions = {
-  mode: GenerationMode;
-  slotContents: Record<string, SlotContent>;
-  settings: GenerationSettings;
-};
-
-export type GenerationResult = {
-  success: boolean;
-  imageUrl?: string;
-  error?: string;
-  rawData?: unknown;
-};
-
 export type ValidationResult = {
   valid: boolean;
   error?: string;
-};
-
-export type GenerationProvider = {
-  readonly id: string;
-  readonly name: string;
-  readonly model: string;
-  readonly supportedModes: GenerationMode[];
-  generate(options: GenerationOptions): Promise<GenerationResult>;
-  validateInput(input: ImageGenerateInput): ValidationResult;
 };
 
 export type PromptTemplate = {
