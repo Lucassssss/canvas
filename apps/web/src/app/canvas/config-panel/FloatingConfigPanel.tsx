@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react'
+import { Loader2 } from 'lucide-react'
 import { useCanvasStore } from '../store'
 import { ImageConfig } from '../shapes/types'
 import { Button } from '@/components/ui/button'
@@ -9,6 +10,7 @@ import { AspectRatioSelect } from './AspectRatioSelect'
 import { ResolutionSelect, type Resolution } from './ResolutionSelect'
 import { CountSelect, type Count } from './CountSelect'
 import { useModels } from '../hooks/useModels'
+import { imageGenerationService } from '../services/image-generation'
 
 export type ConfigField = 'model' | 'resolution' | 'aspectRatio' | 'count'
 export type ShapeTypeFilter = 'image' | 'custom-combination' | 'ai-combination' | 'detail-image' | 'all'
@@ -83,8 +85,9 @@ const DEFAULT_ENABLED_FIELDS: ConfigField[] = ['model', 'resolution', 'aspectRat
 export const FloatingConfigPanel: React.FC<FloatingConfigPanelProps> = ({ containerRef, config }) => {
   const { shapes, selectedIds, viewport, updateShape } = useCanvasStore()
   const panelRef = useRef<HTMLDivElement>(null)
-  const { defaultModel, getResolutionsForModel, getModelById } = useModels()
-
+  const { defaultModel, getResolutionsForModel } = useModels()
+  const [isGenerating, setIsGenerating] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const [position, setPosition] = useState<{ left: number; top: number } | null>(null)
 
   const shapeTypeFilter = config?.shapeTypeFilter || 'all'
@@ -99,7 +102,6 @@ export const FloatingConfigPanel: React.FC<FloatingConfigPanelProps> = ({ contai
 
   const enabledFields = config?.enabledFields || DEFAULT_ENABLED_FIELDS
 
-  // Hooks 必须在条件语句之前调用
   const currentModel = selectedShape?.imageConfig?.model || defaultModel
   const availableResolutions = useMemo(() => {
     return getResolutionsForModel(currentModel)
@@ -158,7 +160,6 @@ export const FloatingConfigPanel: React.FC<FloatingConfigPanelProps> = ({ contai
     e.stopPropagation()
   }, [])
 
-  // 条件渲染在所有 Hooks 之后
   if (!selectedShape || !position) {
     return null
   }
@@ -187,15 +188,94 @@ export const FloatingConfigPanel: React.FC<FloatingConfigPanelProps> = ({ contai
     updateConfig({ model, resolution: newResolution })
   }
 
-  const handleGenerate = () => {
-    console.log('=== 图片生成配置 ===')
-    console.log('model:', imageConfig.model)
-    console.log('resolution:', imageConfig.resolution)
-    console.log('aspectRatio:', imageConfig.aspectRatio)
-    console.log('count:', imageConfig.count)
-    console.log('prompt:', imageConfig.prompt)
-    console.log('=================')
+  const handleGenerate = async () => {
+    if (!selectedShape || isGenerating) return
+
+    setIsGenerating(true)
+    setError(null)
+
+    const isEditMode = !!selectedShape.imageUrl
+    console.log(`[FloatingConfigPanel] ${isEditMode ? '编辑' : '新生成'}模式`)
+
+    try {
+      // 收集输入图片
+      let images: string[] = []
+      
+      if (selectedShape.type === 'image' || selectedShape.type === 'detail-image') {
+        // 单个图片组件：有图片则图生图，无图片则文生图
+        if (selectedShape.imageUrl) {
+          images = [selectedShape.imageUrl]
+        }
+      } else if (selectedShape.type === 'custom-combination') {
+        // 自定义组合组件：收集 customInputSlots 中的图片
+        const customInputSlots = selectedShape.customInputSlots || []
+        images = customInputSlots
+          .filter(s => s.imageUrl)
+          .map(s => s.imageUrl as string)
+      } else if (selectedShape.type === 'ai-combination') {
+        // AI 组合组件：收集 slotContents 中的图片
+        const slotContents = selectedShape.slotContents || {}
+        images = Object.values(slotContents)
+          .filter((s): s is { imageUrl: string } => !!s?.imageUrl)
+          .map(s => s.imageUrl)
+      }
+
+      const result = await imageGenerationService.generate({
+        combinationTypeId: selectedShape.type,
+        images,
+        prompt: imageConfig.prompt,
+        settings: {
+          model: imageConfig.model,
+          resolution: imageConfig.resolution,
+          aspectRatio: imageConfig.aspectRatio,
+        },
+      })
+
+      if (result.success && result.images.length > 0) {
+        // 根据组件类型更新不同的属性
+        if (selectedShape.type === 'custom-combination') {
+          // 自定义组合：更新 customOutputSlots
+          const currentOutputSlots = selectedShape.customOutputSlots || []
+          const updatedOutputSlots = currentOutputSlots.map((slot, index) => ({
+            ...slot,
+            imageUrl: result.images[index] || result.images[0],
+          }))
+          
+          // 如果生成的图片多于输出槽位，添加新槽位
+          if (result.images.length > currentOutputSlots.length) {
+            for (let i = currentOutputSlots.length; i < result.images.length; i++) {
+              updatedOutputSlots.push({
+                id: `${selectedShape.id}-output-${Date.now()}-${i}`,
+                label: `输出${i + 1}`,
+                imageUrl: result.images[i],
+              })
+            }
+          }
+          
+          updateShape(selectedShape.id, {
+            customOutputSlots: updatedOutputSlots,
+            customStatus: 'completed',
+          })
+        } else {
+          // 其他组件：更新 imageUrl
+          updateShape(selectedShape.id, {
+            imageUrl: result.images[0],
+          })
+        }
+        console.log('[FloatingConfigPanel] 生成成功:', result.images[0])
+      } else {
+        setError(result.error || '生成失败')
+        console.error('[FloatingConfigPanel] 生成失败:', result.error)
+      }
+    } catch (err) {
+      setError(String(err))
+      console.error('[FloatingConfigPanel] 生成异常:', err)
+    } finally {
+      setIsGenerating(false)
+    }
   }
+
+  const isEditMode = !!selectedShape.imageUrl
 
   return (
     <div
@@ -216,6 +296,12 @@ export const FloatingConfigPanel: React.FC<FloatingConfigPanelProps> = ({ contai
           onChange={(e) => updateConfig({ prompt: e.target.value })}
           onMouseDown={(e) => e.stopPropagation()}
         />
+
+        {error && (
+          <div className="px-3 py-1 text-xs text-red-500 bg-red-50">
+            {error}
+          </div>
+        )}
 
         <div className="flex items-center gap-2 px-3 pb-3">
           {enabledFields.includes('model') && (
@@ -261,8 +347,15 @@ export const FloatingConfigPanel: React.FC<FloatingConfigPanelProps> = ({ contai
 
           <div className="flex-1" />
 
-          <Button size="sm" onClick={handleGenerate}>
-            生成{imageConfig.count > 1 ? ` ${imageConfig.count} 张` : ''}
+          <Button size="sm" onClick={handleGenerate} disabled={isGenerating}>
+            {isGenerating ? (
+              <>
+                <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                生成中...
+              </>
+            ) : (
+              `${isEditMode ? '重新生成' : '生成'}${imageConfig.count > 1 ? ` ${imageConfig.count} 张` : ''}`
+            )}
           </Button>
         </div>
       </div>

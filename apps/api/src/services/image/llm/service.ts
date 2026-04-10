@@ -84,7 +84,11 @@ class ImageLLMService {
       const result = await imageGenerationService.generate(input);
 
       task.status = result.success ? GenerationStatus.COMPLETED : GenerationStatus.FAILED;
-      task.result = result;
+      task.result = {
+        success: result.success,
+        images: result.images || [],
+        error: result.error,
+      };
       task.completedAt = new Date();
 
       console.log(`[图片LLM服务] 任务完成 [${taskId}]，状态: ${task.status}`);
@@ -93,6 +97,7 @@ class ImageLLMService {
       task.status = GenerationStatus.FAILED;
       task.result = {
         success: false,
+        images: [],
         error: error instanceof Error ? error.message : "未知错误",
       };
       task.completedAt = new Date();

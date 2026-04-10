@@ -5,22 +5,24 @@
  * 直接在此文件中配置模型的启用状态
  */
 
-import { GenerationMode } from "./types.js";
-
 /**
  * 模型能力配置
  */
 export interface ModelCapability {
-  /** 支持的生成模式 */
-  modes: GenerationMode[];
   /** 最大输入图片数 */
   maxImages: number;
   /** 支持的分辨率 */
   resolutions: string[];
+  /** 支持的宽高比 */
+  aspectRatios?: string[];
+  /** 输出模式（OpenRouter 专用） */
+  modalities?: ("image" | "text")[];
   /** 是否支持异步生成 */
   async: boolean;
   /** 是否支持流式输出 */
   stream: boolean;
+  /** 是否支持 output_format 参数（火山引擎专用） */
+  supportsOutputFormat?: boolean;
 }
 
 /**
@@ -72,17 +74,11 @@ export const MODEL_CONFIGS: ModelConfig[] = [
     modelId: "doubao-seedream-5-0-260128",
     description: "火山引擎最新图像生成模型，专为换装场景优化，效果最佳",
     capabilities: {
-      modes: [
-        GenerationMode.SIMPLE_TRYON,
-        GenerationMode.FIXED_FACE_TRYON,
-        GenerationMode.FIXED_FACE_BG_TRYON,
-        GenerationMode.FIXED_FACE_BG_POSE_TRYON,
-        GenerationMode.POSE_FISSION,
-      ],
       maxImages: 15,
       resolutions: ["2K", "3K"],
       async: false,
       stream: false,
+      supportsOutputFormat: true,
     },
     pricing: { low: 0.1, high: 0.3 },
     credits: 1,
@@ -99,17 +95,11 @@ export const MODEL_CONFIGS: ModelConfig[] = [
     modelId: "doubao-seedream-4-5-251128",
     description: "火山引擎图像生成模型，支持更高分辨率",
     capabilities: {
-      modes: [
-        GenerationMode.SIMPLE_TRYON,
-        GenerationMode.FIXED_FACE_TRYON,
-        GenerationMode.FIXED_FACE_BG_TRYON,
-        GenerationMode.FIXED_FACE_BG_POSE_TRYON,
-        GenerationMode.POSE_FISSION,
-      ],
       maxImages: 15,
       resolutions: ["2K", "4K"],
       async: false,
       stream: false,
+      supportsOutputFormat: false,
     },
     pricing: { low: 0.1, high: 0.3 },
     credits: 1,
@@ -124,18 +114,13 @@ export const MODEL_CONFIGS: ModelConfig[] = [
     provider: "OpenRouter",
     providerId: "openrouter",
     registryProviderId: "openrouter-gemini",
-    modelId: "google/gemini-3-flash-preview",
-    description: "Google Gemini 2.5 Flash 图像生成，速度快，性价比高",
+    modelId: "google/gemini-3.1-flash-image-preview",
+    description: "Google Gemini 3.1 Flash 图像生成，支持 0.5K 和极端宽高比，速度快，性价比高",
     capabilities: {
-      modes: [
-        GenerationMode.SIMPLE_TRYON,
-        GenerationMode.FIXED_FACE_TRYON,
-        GenerationMode.FIXED_FACE_BG_TRYON,
-        GenerationMode.FIXED_FACE_BG_POSE_TRYON,
-        GenerationMode.POSE_FISSION,
-      ],
       maxImages: 10,
-      resolutions: ["1K", "2K", "4K"],
+      resolutions: ["0.5K", "1K", "2K", "4K"],
+      aspectRatios: ["1:1", "2:3", "3:2", "3:4", "4:3", "4:5", "5:4", "9:16", "16:9", "21:9", "1:4", "4:1", "1:8", "8:1"],
+      modalities: ["image"],
       async: false,
       stream: false,
     },
@@ -153,22 +138,18 @@ export const MODEL_CONFIGS: ModelConfig[] = [
     modelId: "google/gemini-2.5-flash-image",
     description: "Google Gemini 2.5 Flash 图像生成，速度快，性价比高",
     capabilities: {
-      modes: [
-        GenerationMode.SIMPLE_TRYON,
-        GenerationMode.FIXED_FACE_TRYON,
-        GenerationMode.FIXED_FACE_BG_TRYON,
-        GenerationMode.FIXED_FACE_BG_POSE_TRYON,
-        GenerationMode.POSE_FISSION,
-      ],
       maxImages: 10,
       resolutions: ["1K", "2K", "4K"],
+      aspectRatios: ["1:1", "2:3", "3:2", "3:4", "4:3", "4:5", "5:4", "9:16", "16:9", "21:9"],
+      modalities: ["image"],
       async: false,
       stream: false,
     },
     pricing: { low: 0.27, high: 0.27 },
     credits: 1,
     enabled: true,
-    tags: ["快速", "性价比"],
+    recommended: true,
+    tags: ["快速", "性价比", "推荐"],
   },
   {
     id: "openrouter-gemini-3-pro",
@@ -179,15 +160,10 @@ export const MODEL_CONFIGS: ModelConfig[] = [
     modelId: "google/gemini-3-pro-image-preview",
     description: "Nano Banana3 Pro 图像生成，效果优秀",
     capabilities: {
-      modes: [
-        GenerationMode.SIMPLE_TRYON,
-        GenerationMode.FIXED_FACE_TRYON,
-        GenerationMode.FIXED_FACE_BG_TRYON,
-        GenerationMode.FIXED_FACE_BG_POSE_TRYON,
-        GenerationMode.POSE_FISSION,
-      ],
       maxImages: 10,
-      resolutions: ["2K", "4K"],
+      resolutions: ["1K", "2K", "4K"],
+      aspectRatios: ["1:1", "2:3", "3:2", "3:4", "4:3", "4:5", "5:4", "9:16", "16:9", "21:9"],
+      modalities: ["image"],
       async: false,
       stream: false,
     },
@@ -206,15 +182,10 @@ export const MODEL_CONFIGS: ModelConfig[] = [
     modelId: "black-forest-labs/flux.2-max",
     description: "Flux 2 Max 图像生成，多图性能优秀",
     capabilities: {
-      modes: [
-        GenerationMode.SIMPLE_TRYON,
-        GenerationMode.FIXED_FACE_TRYON,
-        GenerationMode.FIXED_FACE_BG_TRYON,
-        GenerationMode.FIXED_FACE_BG_POSE_TRYON,
-        GenerationMode.POSE_FISSION,
-      ],
       maxImages: 10,
-      resolutions: ["2K"],
+      resolutions: ["1K", "2K"],
+      aspectRatios: ["1:1", "9:16", "16:9"],
+      modalities: ["image"],
       async: false,
       stream: false,
     },
@@ -234,13 +205,6 @@ export const MODEL_CONFIGS: ModelConfig[] = [
     modelId: "gemini-3-pro-image-preview",
     description: "通过 APIMart 调用 Gemini 3 Pro，支持极端宽高比",
     capabilities: {
-      modes: [
-        GenerationMode.SIMPLE_TRYON,
-        GenerationMode.FIXED_FACE_TRYON,
-        GenerationMode.FIXED_FACE_BG_TRYON,
-        GenerationMode.FIXED_FACE_BG_POSE_TRYON,
-        GenerationMode.POSE_FISSION,
-      ],
       maxImages: 14,
       resolutions: ["0.5K", "1K", "2K", "4K"],
       async: true,
@@ -262,7 +226,6 @@ export const MODEL_CONFIGS: ModelConfig[] = [
     modelId: "hunyuan-tryon",
     description: "腾讯混元专用换装模型，效果稳定",
     capabilities: {
-      modes: [GenerationMode.SIMPLE_TRYON],
       maxImages: 2,
       resolutions: ["1K", "2K"],
       async: true,
@@ -284,10 +247,6 @@ export const MODEL_CONFIGS: ModelConfig[] = [
     modelId: "image-01",
     description: "MiniMax 图像生成模型，支持人物参考",
     capabilities: {
-      modes: [
-        GenerationMode.SIMPLE_TRYON,
-        GenerationMode.FIXED_FACE_TRYON,
-      ],
       maxImages: 5,
       resolutions: ["1K", "2K"],
       async: false,
@@ -309,13 +268,6 @@ export const MODEL_CONFIGS: ModelConfig[] = [
     modelId: "gemini-local",
     description: "本地部署的 Gemini 模型，无需外部 API",
     capabilities: {
-      modes: [
-        GenerationMode.SIMPLE_TRYON,
-        GenerationMode.FIXED_FACE_TRYON,
-        GenerationMode.FIXED_FACE_BG_TRYON,
-        GenerationMode.FIXED_FACE_BG_POSE_TRYON,
-        GenerationMode.POSE_FISSION,
-      ],
       maxImages: 10,
       resolutions: ["1K", "2K"],
       async: false,
@@ -353,15 +305,6 @@ export function getModelConfig(modelId: string): ModelConfig | undefined {
  */
 export function getModelsByProvider(providerId: string): ModelConfig[] {
   return getEnabledModels().filter((model) => model.providerId === providerId);
-}
-
-/**
- * 根据生成模式获取支持的模型
- */
-export function getModelsByMode(mode: GenerationMode): ModelConfig[] {
-  return getEnabledModels().filter((model) =>
-    model.capabilities.modes.includes(mode)
-  );
 }
 
 /**

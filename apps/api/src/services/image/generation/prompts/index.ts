@@ -2,6 +2,18 @@ import { GenerationMode } from "../../types.js";
 import type { PromptTemplate } from "../../types.js";
 
 const TEMPLATES: Record<GenerationMode, { name: string; template: string }> = {
+  [GenerationMode.TEXT_TO_IMAGE]: {
+    name: "文生图",
+    template: `You are an expert image generator. Generate a high-quality image based on the following description. Create a realistic, detailed, and visually appealing image. Only output the final result image.
+
+Description: {{prompt}}`,
+  },
+  [GenerationMode.IMAGE_TO_IMAGE]: {
+    name: "图生图",
+    template: `You are an expert image editor. Based on the provided image, create a new image following the instructions. Maintain the quality and style while applying the requested changes. Only output the final result image.
+
+Instructions: {{prompt}}`,
+  },
   [GenerationMode.SIMPLE_TRYON]: {
     name: "简单换装",
     template: `You are an expert fashion stylist. Take the person from the first image and apply the clothing from the second image to them. The person should keep their natural pose, face, and body shape. The final image must look realistic, as if the person is genuinely wearing that clothing item. Important: Only output the final result image, no additional text or description.`,
@@ -21,6 +33,10 @@ const TEMPLATES: Record<GenerationMode, { name: string; template: string }> = {
   [GenerationMode.POSE_FISSION]: {
     name: "姿势分解",
     template: `You are an expert fashion stylist. Generate 5 different natural pose variations of the person in the image. Each pose should be unique and realistic. Only output the final result images, no additional text or description.`,
+  },
+  [GenerationMode.CUSTOM]: {
+    name: "自定义",
+    template: `{{prompt}}`,
   },
 };
 

@@ -131,14 +131,10 @@ router.post("/api/pay/wechat/notify", async (req: Request, res: Response) => {
 router.post("/api/image/generate", authMiddleware, async (req, res) => {
   try {
     const userId = req.user!.userId
-    const { combinationTypeId, slotContents, settings } = req.body;
+    const { combinationTypeId, images, prompt, settings, slotContents } = req.body;
 
     if (!combinationTypeId) {
       return res.status(400).json({ success: false, error: "combinationTypeId is required" });
-    }
-
-    if (!slotContents || typeof slotContents !== "object") {
-      return res.status(400).json({ success: false, error: "slotContents is required" });
     }
 
     const modelId = settings?.model || 'openrouter-gemini-2-5-flash'
@@ -153,10 +149,27 @@ router.post("/api/image/generate", authMiddleware, async (req, res) => {
       })
     }
 
+    let inputImages = images || []
+    
+    if (slotContents && typeof slotContents === 'object') {
+      const extractedImages: string[] = []
+      for (const slotId of Object.keys(slotContents)) {
+        const content = slotContents[slotId]
+        if (content?.imageUrl) {
+          extractedImages.push(content.imageUrl)
+        }
+      }
+      if (extractedImages.length > 0) {
+        inputImages = extractedImages
+      }
+    }
+
     const result = await imageGenerationService.generate({
       combinationTypeId,
+      images: inputImages,
+      prompt: prompt || "",
+      settings: settings || { resolution: '2K', aspectRatio: '9:16' },
       slotContents,
-      settings: settings || { resolution: '1K', aspectRatio: '1:1' },
     });
 
     if (result.success) {
@@ -168,12 +181,17 @@ router.post("/api/image/generate", authMiddleware, async (req, res) => {
         { 
           combinationTypeId, 
           resolution: settings?.resolution,
-          aspectRatio: settings?.aspectRatio 
+          aspectRatio: settings?.aspectRatio,
+          imageCount: result.images.length,
         }
       )
     }
 
-    res.json(result);
+    res.json({
+      success: result.success,
+      images: result.images,
+      error: result.error,
+    });
   } catch (error) {
     console.error("[API] Image generate error:", error);
     res.status(500).json({ success: false, error: "Internal server error" });

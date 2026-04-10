@@ -39,12 +39,12 @@ class AICombinationService {
       })
       const data = await response.json()
       
-      if (data.success) {
-        return { success: true, imageUrl: data.imageUrl }
+      if (data.success && data.images && data.images.length > 0) {
+        return { success: true, imageUrl: data.images[0] }
       } else {
         return { 
           success: false, 
-          error: data.error,
+          error: data.error || '生成失败',
           required: data.required,
           current: data.current
         }
