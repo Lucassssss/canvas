@@ -37,6 +37,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
+import { DIMENSIONS } from '../constants/dimensions'
 
 const baseTools: { type: ToolType; icon: React.ReactNode; label: string; shortcut: string; requiresAlt?: boolean }[] = [
   { type: 'select', icon: <MousePointer2 size={20} />, label: '选择', shortcut: 'V' },
@@ -58,46 +59,49 @@ interface ShapeSize {
 }
 
 const SHAPE_SIZES: Record<string, ShapeSize> = {
-  text: { width: 200, height: 50 },
-  note: { width: 200, height: 150 },
-  image: { width: 150, height: 150 },
-  shape: { width: 200, height: 200 },
-  arrow: { width: 200, height: 50 },
-  pen: { width: 200, height: 200 },
-  clothing: { width: 800, height: 800 },
-  'detail-image': { width: 400, height: 280 },
+  text: DIMENSIONS.TEXT,
+  note: DIMENSIONS.NOTE,
+  image: DIMENSIONS.IMAGE,
+  shape: DIMENSIONS.SHAPE,
+  arrow: DIMENSIONS.TEXT,
+  pen: DIMENSIONS.SHAPE,
+  clothing: DIMENSIONS.CLOTHING,
+  'detail-image': DIMENSIONS.DETAIL_IMAGE,
 }
 
-const SLOT_SIZE = { width: 140, height: 180 }
-const ROW_GAP = 80
-const COL_GAP = 50
-const START_X = 100
-const START_Y = 100
+function getSmartSpawnPosition(width: number, height: number): { x: number; y: number } {
+  const state = useCanvasStore.getState()
+  const { shapes, selectedIds } = state
 
-let lastCreatedPosition = { x: START_X, y: START_Y }
-let lastCreatedSize = { width: 200, height: 50 }
-
-function getNextPosition(width: number, height: number): { x: number; y: number } {
-  const screenWidth = window.innerWidth
-
-  const potentialX = lastCreatedPosition.x + lastCreatedSize.width + COL_GAP
-
-  if (potentialX + width <= screenWidth - START_X) {
-    lastCreatedPosition = { x: potentialX, y: lastCreatedPosition.y }
-  } else {
-    const newY = lastCreatedPosition.y + lastCreatedSize.height + ROW_GAP
-    lastCreatedPosition = { x: START_X, y: newY }
+  if (selectedIds.length > 0) {
+    const selectedShapes = shapes.filter((s) => selectedIds.includes(s.id))
+    if (selectedShapes.length > 0) {
+      const minX = Math.min(...selectedShapes.map((s) => s.x))
+      const maxY = Math.max(...selectedShapes.map((s) => s.y + s.height))
+      return { x: minX, y: maxY + DIMENSIONS.COMBINATION.CREATE_GAP }
+    }
   }
 
-  lastCreatedSize = { width, height }
-  return { ...lastCreatedPosition }
+  // Fallback to viewport center
+  const sidebarWidth = 320
+  const topOffset = 56
+  
+  const screenCenterX = (window.innerWidth - sidebarWidth) / 2
+  const screenCenterY = (window.innerHeight - topOffset) / 2
+
+  const canvasPt = state.screenToCanvas(screenCenterX, screenCenterY)
+  
+  return {
+    x: canvasPt.x - width / 2,
+    y: canvasPt.y - height / 2
+  }
 }
 
 function createShape(type: ToolType): void {
-  const { addShape, setSelectedIds, focusOnArea } = useCanvasStore.getState()
+  const { addShape, setSelectedIds } = useCanvasStore.getState()
   
-  const size = SHAPE_SIZES[type] || { width: 200, height: 200 }
-  const pos = getNextPosition(size.width, size.height)
+  const size = SHAPE_SIZES[type] || DIMENSIONS.SHAPE
+  const pos = getSmartSpawnPosition(size.width, size.height)
 
   let newShape: ReturnType<typeof addShape>
 
@@ -249,11 +253,10 @@ function createShape(type: ToolType): void {
   }
 
   setSelectedIds([newShape.id])
-  focusOnArea(pos.x, pos.y, size.width, size.height)
 }
 
 function createAICombinationShape(categoryId: string): void {
-  const { addShape, setSelectedIds, focusOnArea } = useCanvasStore.getState()
+  const { addShape, setSelectedIds } = useCanvasStore.getState()
   
   const combinationType = combinationRegistry.get(categoryId)
   if (!combinationType) {
@@ -264,10 +267,10 @@ function createAICombinationShape(categoryId: string): void {
   const inputCount = combinationType.slots.filter((s) => s.role === 'input').length
   const outputCount = combinationType.slots.filter((s) => s.role === 'output').length
   
-  const slotWidth = SLOT_SIZE.width
-  const slotHeight = SLOT_SIZE.height
-  const gap = 16
-  const padding = 12
+  const slotWidth = DIMENSIONS.SLOT.width
+  const slotHeight = DIMENSIONS.SLOT.height
+  const gap = DIMENSIONS.COMBINATION.GAP
+  const padding = DIMENSIONS.COMBINATION.PADDING
   const buttonWidth = 48
   const equalWidth = 20
   
@@ -278,7 +281,7 @@ function createAICombinationShape(categoryId: string): void {
   const totalWidth = inputWidth + centerWidth + outputWidth + padding * 2
   const totalHeight = slotHeight + 30 + padding * 2
   
-  const pos = getNextPosition(totalWidth, totalHeight)
+  const pos = getSmartSpawnPosition(totalWidth, totalHeight)
   
   const slotContents: Record<string, SlotContent> = {}
   combinationType.slots.forEach((slot) => {
@@ -315,17 +318,16 @@ function createAICombinationShape(categoryId: string): void {
   })
   
   setSelectedIds([newId.id])
-  focusOnArea(pos.x, pos.y, totalWidth, totalHeight)
 }
 
 function createCustomCombination(): void {
-  const { addShape, setSelectedIds, focusOnArea } = useCanvasStore.getState()
+  const { addShape, setSelectedIds } = useCanvasStore.getState()
 
-  const slotWidth = 140
-  const slotHeight = 180
-  const gap = 12
+  const slotWidth = DIMENSIONS.SLOT.width
+  const slotHeight = DIMENSIONS.SLOT.height
+  const gap = DIMENSIONS.COMBINATION.GAP
+  const padding = DIMENSIONS.COMBINATION.PADDING
   const addButtonSize = 32
-  const padding = 24
 
   const inputSlots = [{ id: `input-${Date.now()}`, label: '输入1', imageUrl: undefined }]
   const outputSlots = [{ id: `output-${Date.now()}`, label: '输出', imageUrl: undefined }]
@@ -334,7 +336,7 @@ function createCustomCombination(): void {
   const totalWidth = padding * 2 + inputWidth
   const totalHeight = slotHeight + 100 + 200
 
-  const pos = getNextPosition(totalWidth, totalHeight)
+  const pos = getSmartSpawnPosition(totalWidth, totalHeight)
 
   const newId = addShape({
     type: 'custom-combination',
@@ -362,7 +364,6 @@ function createCustomCombination(): void {
   })
 
   setSelectedIds([newId.id])
-  focusOnArea(pos.x, pos.y, totalWidth, totalHeight)
 }
 
 export const Toolbar: React.FC = () => {
