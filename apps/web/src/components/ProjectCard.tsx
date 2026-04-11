@@ -94,13 +94,13 @@ export function ProjectCard({
     const diff = now - timestamp
     const hours = Math.floor(diff / (1000 * 60 * 60))
     const days = Math.floor(diff / (1000 * 60 * 60 * 24))
-    
+
     if (hours < 1) return '刚刚'
     if (hours < 24) return `${hours} 小时前`
     if (days === 1) return '昨天'
     if (days < 7) return `${days} 天前`
     if (days < 30) return `${Math.floor(days / 7)} 周前`
-    
+
     const date = new Date(timestamp)
     return date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' })
   }
@@ -112,26 +112,63 @@ export function ProjectCard({
         group relative aspect-[4/3] overflow-hidden
         border transition-all hover:shadow-md cursor-pointer
         flex flex-col
-        ${isCurrent 
-          ? 'border-neutral-400 bg-white' 
+        ${isCurrent
+          ? 'border-neutral-400 bg-white'
           : 'border-neutral-200 hover:border-neutral-400 bg-white'
         }
       `}
     >
       {/* 缩略图区域 */}
-      <div className="flex-1 bg-neutral-50 flex items-center justify-center relative">
+      <div className="flex-1 bg-neutral-100 flex items-center justify-center relative overflow-hidden">
         {project.thumbnail ? (
-          <img 
-            src={project.thumbnail} 
-            alt={project.name}
-            className="w-full h-full object-cover"
-          />
+          (() => {
+            // thumbnail is stored as JSON array ["url1","url2"] or legacy single URL
+            let urls: string[] = []
+            try {
+              const parsed = JSON.parse(project.thumbnail)
+              urls = Array.isArray(parsed) ? parsed : [project.thumbnail]
+            } catch {
+              urls = [project.thumbnail]
+            }
+
+            if (urls.length >= 2) {
+              return (
+                <div className="absolute inset-0 flex">
+                  <div className="w-1/2 h-full overflow-hidden border-r border-neutral-200">
+                    <img
+                      src={urls[0]}
+                      alt=""
+                      className="w-full h-full object-contain"
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
+                    />
+                  </div>
+                  <div className="w-1/2 h-full overflow-hidden">
+                    <img
+                      src={urls[1]}
+                      alt=""
+                      className="w-full h-full object-contain"
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
+                    />
+                  </div>
+                </div>
+              )
+            }
+
+            return (
+              <img
+                src={urls[0]}
+                alt={project.name}
+                className="w-full h-full object-contain"
+                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
+              />
+            )
+          })()
         ) : (
           <div className="text-neutral-400 text-2xl font-medium">
             {project.name.charAt(0).toUpperCase()}
           </div>
         )}
-        
+
         {/* 当前项目标记 */}
         {isCurrent && (
           <div className="absolute top-2 left-2">
@@ -143,8 +180,8 @@ export function ProjectCard({
 
         {/* 操作菜单按钮 */}
         {showMenu && (
-          <div 
-            className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+          <div
+            className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10"
             onClick={(e) => e.stopPropagation()}
           >
             <button
@@ -156,7 +193,7 @@ export function ProjectCard({
             >
               <MoreVertical size={14} />
             </button>
-            
+
             {/* 下拉菜单 */}
             {menuOpen && (
               <div className="absolute right-0 mt-1 w-28 bg-white border border-neutral-200 rounded shadow-lg py-1 z-10">
@@ -179,7 +216,7 @@ export function ProjectCard({
           </div>
         )}
       </div>
-      
+
       {/* 项目信息 */}
       <div className="p-2 border-t border-neutral-100">
         {isEditing ? (

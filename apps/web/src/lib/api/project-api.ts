@@ -103,6 +103,27 @@ export const projectApi = {
   },
 
   /**
+   * 更新项目缩略图（fire-and-forget，不阻塞画布保存流程）
+   */
+  async saveThumbnail(id: string, thumbnail: string): Promise<void> {
+    console.log(`[Project API] Saving thumbnail for project: ${id}`)
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/projects/${id}`, {
+        method: 'PUT',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ thumbnail }),
+      })
+      if (!response.ok) {
+        console.warn(`[Project API] Failed to save thumbnail: ${response.status}`)
+      }
+    } catch (err) {
+      // Silently fail — thumbnail is non-critical
+      console.warn('[Project API] Thumbnail save error (non-critical):', err)
+    }
+  },
+
+  /**
    * 删除项目
    */
   async deleteProject(id: string): Promise<{ success: boolean; id: string; deletedAt: number }> {

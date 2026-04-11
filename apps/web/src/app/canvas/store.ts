@@ -9,6 +9,8 @@ import { projectApi } from '@/lib/api/project-api'
 import type { CanvasData } from '@/types/project'
 import { clearImageCache } from './shapes/OptimizedImage'
 import { clearImageOptimizationCache } from './utils/imageOptimization'
+import { extractThumbnailFromShapes } from './utils/thumbnailGenerator'
+import { useProjectStore } from '@/store/project-store'
 
 function clearAllImageCaches() {
   clearImageCache()
@@ -677,6 +679,15 @@ export const useCanvasStore = create<CanvasStore>()(
           }
 
           await projectApi.saveCanvasData(projectId, canvasData)
+
+          // Fire-and-forget thumbnail — non-blocking, non-critical
+          const thumbnailUrl = extractThumbnailFromShapes(shapes)
+          if (thumbnailUrl) {
+            projectApi.saveThumbnail(projectId, thumbnailUrl).then(() => {
+              // Sync in-memory project list so the card updates without a reload
+              useProjectStore.getState().updateProjectThumbnail(projectId, thumbnailUrl)
+            })
+          }
 
           set((state) => ({
             isDirty: false,
