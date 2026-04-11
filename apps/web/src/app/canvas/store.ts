@@ -7,6 +7,13 @@ import { jsonExporter, jsonImporter } from '@/lib/import-export/json'
 import type { CanvasHistoryEntry, OperationType } from '@/types/canvas/mvp'
 import { projectApi } from '@/lib/api/project-api'
 import type { CanvasData } from '@/types/project'
+import { clearImageCache } from './shapes/OptimizedImage'
+import { clearImageOptimizationCache } from './utils/imageOptimization'
+
+function clearAllImageCaches() {
+  clearImageCache()
+  clearImageOptimizationCache()
+}
 
 const isBrowser = typeof window !== 'undefined'
 
@@ -40,6 +47,7 @@ interface CanvasStore {
   history: HistoryEntry[]
   historyIndex: number
   isDragging: boolean
+  isResizing: boolean
   isRotating: boolean
   isSpacePressed: boolean
   isPanning: boolean
@@ -229,211 +237,211 @@ export const useCanvasStore = create<CanvasStore>()(
         get().scheduleAutoSave()
       },
 
-  setSelectedIds: (ids) => set({ selectedIds: ids }),
+      setSelectedIds: (ids) => set({ selectedIds: ids }),
 
-  addToSelection: (id) => {
-    set((state) => ({
-      selectedIds: state.selectedIds.includes(id)
-        ? state.selectedIds
-        : [...state.selectedIds, id],
-    }))
-  },
-
-  removeFromSelection: (id) => {
-    set((state) => ({
-      selectedIds: state.selectedIds.filter((sid) => sid !== id),
-    }))
-  },
-
-  clearSelection: () => set({ selectedIds: [] }),
-
-  setViewport: (viewport) => {
-    set((state) => ({
-      viewport: { ...state.viewport, ...viewport },
-    }))
-  },
-
-  zoomIn: () => {
-    set((state) => ({
-      viewport: { ...state.viewport, zoom: Math.min(state.viewport.zoom * 1.2, 10) },
-    }))
-  },
-
-  zoomOut: () => {
-    set((state) => ({
-      viewport: { ...state.viewport, zoom: Math.max(state.viewport.zoom / 1.2, 0.1) },
-    }))
-  },
-
-  zoomToFit: () => {
-    const { shapes } = get()
-    if (shapes.length === 0) {
-      set({ viewport: { x: 0, y: 0, zoom: 1 } })
-      return
-    }
-
-    const minX = Math.min(...shapes.map((s) => s.x))
-    const minY = Math.min(...shapes.map((s) => s.y))
-    const maxX = Math.max(...shapes.map((s) => s.x + s.width))
-    const maxY = Math.max(...shapes.map((s) => s.y + s.height))
-
-    const padding = 50
-    const contentWidth = maxX - minX + padding * 2
-    const contentHeight = maxY - minY + padding * 2
-
-    const viewportWidth = window.innerWidth - 64 - 320
-    const viewportHeight = window.innerHeight - 56 - 80
-
-    const zoom = Math.min(
-      viewportWidth / contentWidth,
-      viewportHeight / contentHeight,
-      1
-    )
-
-    const centerX = (minX + maxX) / 2
-    const centerY = (minY + maxY) / 2
-
-    set({
-      viewport: {
-        x: viewportWidth / 2 / zoom - centerX,
-        y: viewportHeight / 2 / zoom - centerY,
-        zoom,
+      addToSelection: (id) => {
+        set((state) => ({
+          selectedIds: state.selectedIds.includes(id)
+            ? state.selectedIds
+            : [...state.selectedIds, id],
+        }))
       },
-    })
-  },
 
-  resetZoom: () => {
-    set((state) => ({
-      viewport: { ...state.viewport, zoom: 1 },
-    }))
-  },
-
-  zoomToArea: (x, y, width, height) => {
-    const { viewport } = get()
-    const padding = 20
-    const sidebarWidth = 320
-    const topOffset = 56
-    const bottomOffset = 80
-
-    const containerWidth = window.innerWidth - sidebarWidth
-    const containerHeight = window.innerHeight - topOffset - bottomOffset
-
-    const scaleX = containerWidth / (width + padding * 2)
-    const scaleY = containerHeight / (height + padding * 2)
-    const zoom = Math.min(scaleX, scaleY, 10)
-
-    const centerX = x + width / 2
-    const centerY = y + height / 2
-
-    const newViewport = {
-      x: containerWidth / 2 - centerX * zoom,
-      y: containerHeight / 2 - centerY * zoom + topOffset,
-      zoom,
-    }
-
-    set({
-      viewport: newViewport,
-      logoEditingState: {
-        isEditing: true,
-        previousViewport: { x: viewport.x, y: viewport.y, zoom: viewport.zoom },
-        targetShapeId: null,
-        targetLogoId: null,
+      removeFromSelection: (id) => {
+        set((state) => ({
+          selectedIds: state.selectedIds.filter((sid) => sid !== id),
+        }))
       },
-    })
-  },
 
-  focusOnArea: (x, y, width, height, options) => {
-    const padding = options?.padding ?? 40
-    const maxZoom = options?.maxZoom ?? 1
-    const sidebarWidth = 320
-    const topOffset = 56
-    const bottomOffset = 80
+      clearSelection: () => set({ selectedIds: [] }),
 
-    const containerWidth = window.innerWidth - sidebarWidth
-    const containerHeight = window.innerHeight - topOffset - bottomOffset
-
-    const scaleX = containerWidth / (width + padding * 2)
-    const scaleY = containerHeight / (height + padding * 2)
-    const zoom = Math.min(scaleX, scaleY, maxZoom)
-
-    const centerX = x + width / 2
-    const centerY = y + height / 2
-
-    const newViewport = {
-      x: containerWidth / 2 - centerX * zoom,
-      y: containerHeight / 2 - centerY * zoom + topOffset,
-      zoom,
-    }
-
-    set({ viewport: newViewport })
-  },
-
-  exitLogoEditing: () => {
-    const { logoEditingState, shapes, selectedIds } = get()
-    if (logoEditingState.previousViewport) {
-      set({
-        viewport: logoEditingState.previousViewport,
-      })
-    }
-
-    const selectedClothing = shapes.find(
-      (s) => s.type === 'clothing' && selectedIds.includes(s.id) && s.activeLogoId
-    )
-    if (selectedClothing) {
-      useCanvasStore.getState().updateShape(selectedClothing.id, { activeLogoId: undefined })
-    }
-
-    set({
-      logoEditingState: {
-        isEditing: false,
-        previousViewport: null,
-        targetShapeId: null,
-        targetLogoId: null,
+      setViewport: (viewport) => {
+        set((state) => ({
+          viewport: { ...state.viewport, ...viewport },
+        }))
       },
-    })
-  },
 
-  setActiveTool: (tool) => set({ activeTool: tool }),
-  setActiveAICategory: (categoryId) => set({ activeAICategory: categoryId }),
+      zoomIn: () => {
+        set((state) => ({
+          viewport: { ...state.viewport, zoom: Math.min(state.viewport.zoom * 1.2, 10) },
+        }))
+      },
 
-  setIsDragging: (isDragging) => set({ isDragging }),
-  setIsResizing: (isResizing) => set({ isResizing }),
-  setIsRotating: (isRotating) => set({ isRotating }),
-  setIsSpacePressed: (isSpacePressed) => set({ isSpacePressed }),
-  setIsPanning: (isPanning) => set({ isPanning }),
-  setIsZooming: (isZooming) => set({ isZooming }),
-  setAlignmentGuides: (guides) => set({ alignmentGuides: guides }),
-  clearAlignmentGuides: () => set({ alignmentGuides: [] }),
-  setDragData: (data) => set({ dragData: data }),
+      zoomOut: () => {
+        set((state) => ({
+          viewport: { ...state.viewport, zoom: Math.max(state.viewport.zoom / 1.2, 0.1) },
+        }))
+      },
 
-  setDropTarget: (target) => set({ dropTarget: target }),
-  setPreviewImage: (preview) => set({ previewImage: preview }),
+      zoomToFit: () => {
+        const { shapes } = get()
+        if (shapes.length === 0) {
+          set({ viewport: { x: 0, y: 0, zoom: 1 } })
+          return
+        }
 
-  undo: () => {
-    const { history, historyIndex } = get()
-    if (historyIndex > 0) {
-      const prevEntry = history[historyIndex - 1]
-      set({
-        shapes: prevEntry.shapes,
-        selectedIds: prevEntry.selectedIds,
-        historyIndex: historyIndex - 1,
-      })
-    }
-  },
+        const minX = Math.min(...shapes.map((s) => s.x))
+        const minY = Math.min(...shapes.map((s) => s.y))
+        const maxX = Math.max(...shapes.map((s) => s.x + s.width))
+        const maxY = Math.max(...shapes.map((s) => s.y + s.height))
 
-  redo: () => {
-    const { history, historyIndex } = get()
-    if (historyIndex < history.length - 1) {
-      const nextEntry = history[historyIndex + 1]
-      set({
-        shapes: nextEntry.shapes,
-        selectedIds: nextEntry.selectedIds,
-        historyIndex: historyIndex + 1,
-      })
-    }
-  },
+        const padding = 50
+        const contentWidth = maxX - minX + padding * 2
+        const contentHeight = maxY - minY + padding * 2
 
-  saveHistory: (operationType?: OperationType, description?: string) => {
+        const viewportWidth = window.innerWidth - 64 - 320
+        const viewportHeight = window.innerHeight - 56 - 80
+
+        const zoom = Math.min(
+          viewportWidth / contentWidth,
+          viewportHeight / contentHeight,
+          1
+        )
+
+        const centerX = (minX + maxX) / 2
+        const centerY = (minY + maxY) / 2
+
+        set({
+          viewport: {
+            x: viewportWidth / 2 / zoom - centerX,
+            y: viewportHeight / 2 / zoom - centerY,
+            zoom,
+          },
+        })
+      },
+
+      resetZoom: () => {
+        set((state) => ({
+          viewport: { ...state.viewport, zoom: 1 },
+        }))
+      },
+
+      zoomToArea: (x, y, width, height) => {
+        const { viewport } = get()
+        const padding = 20
+        const sidebarWidth = 320
+        const topOffset = 56
+        const bottomOffset = 80
+
+        const containerWidth = window.innerWidth - sidebarWidth
+        const containerHeight = window.innerHeight - topOffset - bottomOffset
+
+        const scaleX = containerWidth / (width + padding * 2)
+        const scaleY = containerHeight / (height + padding * 2)
+        const zoom = Math.min(scaleX, scaleY, 10)
+
+        const centerX = x + width / 2
+        const centerY = y + height / 2
+
+        const newViewport = {
+          x: containerWidth / 2 - centerX * zoom,
+          y: containerHeight / 2 - centerY * zoom + topOffset,
+          zoom,
+        }
+
+        set({
+          viewport: newViewport,
+          logoEditingState: {
+            isEditing: true,
+            previousViewport: { x: viewport.x, y: viewport.y, zoom: viewport.zoom },
+            targetShapeId: null,
+            targetLogoId: null,
+          },
+        })
+      },
+
+      focusOnArea: (x, y, width, height, options) => {
+        const padding = options?.padding ?? 40
+        const maxZoom = options?.maxZoom ?? 1
+        const sidebarWidth = 320
+        const topOffset = 56
+        const bottomOffset = 80
+
+        const containerWidth = window.innerWidth - sidebarWidth
+        const containerHeight = window.innerHeight - topOffset - bottomOffset
+
+        const scaleX = containerWidth / (width + padding * 2)
+        const scaleY = containerHeight / (height + padding * 2)
+        const zoom = Math.min(scaleX, scaleY, maxZoom)
+
+        const centerX = x + width / 2
+        const centerY = y + height / 2
+
+        const newViewport = {
+          x: containerWidth / 2 - centerX * zoom,
+          y: containerHeight / 2 - centerY * zoom + topOffset,
+          zoom,
+        }
+
+        set({ viewport: newViewport })
+      },
+
+      exitLogoEditing: () => {
+        const { logoEditingState, shapes, selectedIds } = get()
+        if (logoEditingState.previousViewport) {
+          set({
+            viewport: logoEditingState.previousViewport,
+          })
+        }
+
+        const selectedClothing = shapes.find(
+          (s) => s.type === 'clothing' && selectedIds.includes(s.id) && s.activeLogoId
+        )
+        if (selectedClothing) {
+          useCanvasStore.getState().updateShape(selectedClothing.id, { activeLogoId: undefined })
+        }
+
+        set({
+          logoEditingState: {
+            isEditing: false,
+            previousViewport: null,
+            targetShapeId: null,
+            targetLogoId: null,
+          },
+        })
+      },
+
+      setActiveTool: (tool) => set({ activeTool: tool }),
+      setActiveAICategory: (categoryId) => set({ activeAICategory: categoryId }),
+
+      setIsDragging: (isDragging) => set({ isDragging }),
+      setIsResizing: (isResizing) => set({ isResizing }),
+      setIsRotating: (isRotating) => set({ isRotating }),
+      setIsSpacePressed: (isSpacePressed) => set({ isSpacePressed }),
+      setIsPanning: (isPanning) => set({ isPanning }),
+      setIsZooming: (isZooming) => set({ isZooming }),
+      setAlignmentGuides: (guides) => set({ alignmentGuides: guides }),
+      clearAlignmentGuides: () => set({ alignmentGuides: [] }),
+      setDragData: (data) => set({ dragData: data }),
+
+      setDropTarget: (target) => set({ dropTarget: target }),
+      setPreviewImage: (preview) => set({ previewImage: preview }),
+
+      undo: () => {
+        const { history, historyIndex } = get()
+        if (historyIndex > 0) {
+          const prevEntry = history[historyIndex - 1]
+          set({
+            shapes: prevEntry.shapes,
+            selectedIds: prevEntry.selectedIds,
+            historyIndex: historyIndex - 1,
+          })
+        }
+      },
+
+      redo: () => {
+        const { history, historyIndex } = get()
+        if (historyIndex < history.length - 1) {
+          const nextEntry = history[historyIndex + 1]
+          set({
+            shapes: nextEntry.shapes,
+            selectedIds: nextEntry.selectedIds,
+            historyIndex: historyIndex + 1,
+          })
+        }
+      },
+
+      saveHistory: (operationType?: OperationType, description?: string) => {
         const { shapes, selectedIds, history, historyIndex } = get()
         const newEntry: HistoryEntry = {
           shapes: JSON.parse(JSON.stringify(shapes)),
@@ -592,13 +600,25 @@ export const useCanvasStore = create<CanvasStore>()(
        */
       loadProject: async (projectId: string) => {
         console.log(`[Canvas Store] Loading project: ${projectId}`)
-        
+
+        // CRITICAL: Immediately clear shapes BEFORE the async API call.
+        // Without this, zustand's persist middleware hydrates the previous project's 
+        // shapes from localStorage on page mount, causing React to render stale 
+        // <OptimizedImage> components that fire network requests for the old project's images.
+        clearAllImageCaches()
+        set({
+          shapes: [],
+          selectedIds: [],
+          history: [],
+          historyIndex: -1,
+        })
+
         try {
           const project = await projectApi.getProject(projectId)
-          
+
           if (project && project.canvasData) {
             console.log(`[Canvas Store] Project loaded: ${project.name}`)
-            
+
             set({
               projectId: project.id,
               projectName: project.name,
@@ -610,13 +630,13 @@ export const useCanvasStore = create<CanvasStore>()(
               isDirty: false,
               lastSavedAt: project.updatedAt,
             })
-            
+
             // 初始化历史记录
             get().saveHistory('batch', 'Load project')
           }
         } catch (error) {
           console.error('[Canvas Store] Failed to load project:', error)
-          
+
           // 尝试从本地备份恢复
           const backup = localStorage.getItem(`canvas-backup-${projectId}`)
           if (backup) {
@@ -629,7 +649,7 @@ export const useCanvasStore = create<CanvasStore>()(
               selectedIds: [],
             })
           }
-          
+
           throw error
         }
       },
@@ -640,44 +660,44 @@ export const useCanvasStore = create<CanvasStore>()(
        */
       saveToServer: async () => {
         const { projectId, shapes, viewport, isSaving } = get()
-        
+
         // 没有项目ID或正在保存中，跳过
         if (!projectId || isSaving) {
           return
         }
-        
+
         console.log(`[Canvas Store] Saving to server: ${projectId}`)
         set({ isSaving: true })
-        
+
         try {
           const canvasData: CanvasData = {
             shapes,
             viewport,
             selectedIds: [], // 不保存选中状态
           }
-          
+
           await projectApi.saveCanvasData(projectId, canvasData)
-          
+
           set((state) => ({
             isDirty: false,
             lastSavedAt: Date.now(),
             saveTrigger: state.saveTrigger + 1
           }))
-          
+
           console.log('[Canvas Store] Saved successfully')
-          
+
           // 清除本地备份
           localStorage.removeItem(`canvas-backup-${projectId}`)
         } catch (error) {
           console.error('[Canvas Store] Save failed:', error)
-          
+
           // 保存到本地作为备份
           const { shapes, viewport } = get()
           localStorage.setItem(
-            `canvas-backup-${projectId}`, 
+            `canvas-backup-${projectId}`,
             JSON.stringify({ shapes, viewport, timestamp: Date.now() })
           )
-          
+
           console.log('[Canvas Store] Saved to local backup')
         } finally {
           set({ isSaving: false })
@@ -690,22 +710,22 @@ export const useCanvasStore = create<CanvasStore>()(
        */
       scheduleAutoSave: () => {
         const { autoSaveTimer, projectId } = get()
-        
+
         // 如果没有项目ID，不保存
         if (!projectId) {
           return
         }
-        
+
         // 清除之前的定时器
         if (autoSaveTimer) {
           clearTimeout(autoSaveTimer)
         }
-        
+
         // 设置新的定时器
         const timer = setTimeout(() => {
           get().saveToServer()
         }, AUTO_SAVE_DELAY)
-        
+
         set({ autoSaveTimer: timer, isDirty: true })
       },
 

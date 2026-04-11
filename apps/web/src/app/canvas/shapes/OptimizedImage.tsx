@@ -3,6 +3,7 @@
 import React, { useRef, useEffect, useState, memo, useMemo } from 'react'
 import { Loader2 } from 'lucide-react'
 import { useCanvasStore } from '../store'
+import { getOptimizedImageUrl } from '../utils/imageOptimization'
 
 interface OptimizedImageProps {
   src: string
@@ -15,6 +16,10 @@ interface OptimizedImageProps {
 
 const imageCache = new Map<string, HTMLImageElement>()
 
+export function clearImageCache(): void {
+  imageCache.clear()
+}
+
 function OptimizedImageComponent({
   src,
   width,
@@ -23,14 +28,40 @@ function OptimizedImageComponent({
   onError,
   isGenerating,
 }: OptimizedImageProps) {
+  const zoom = useCanvasStore((state) => state.viewport.zoom)
+  const [debouncedZoom, setDebouncedZoom] = useState(zoom)
+
+  // Debounce zoom during active canvas pinch/wheel events
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedZoom(zoom), 200)
+    return () => clearTimeout(timer)
+  }, [zoom])
+
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [isVisible, setIsVisible] = useState(true)
+
+  // Only consider loading large details when image actually paints within the viewport bounds
+  useEffect(() => {
+    if (!containerRef.current) return
+    const observer = new IntersectionObserver((entries) => {
+      setIsVisible(entries[0].isIntersecting)
+    }, { rootMargin: '300px' }) // load slightly ahead of view
+
+    observer.observe(containerRef.current)
+    return () => observer.disconnect()
+  }, [])
+
+  // Pass 0 if off-screen, getOptimizedImageUrl will fallback to cache max size and NOT request new bandwidth
+  const optimizedSrc = useMemo(() => getOptimizedImageUrl(src, isVisible ? width * debouncedZoom : 0), [src, width, debouncedZoom, isVisible])
+
   const [loaded, setLoaded] = useState(() => {
-    if (!src) return false
-    const cached = imageCache.get(src)
+    if (!optimizedSrc) return false
+    const cached = imageCache.get(optimizedSrc)
     return cached ? cached.complete && cached.naturalWidth > 0 : false
   })
   const [error, setError] = useState(false)
   const loadingRef = useRef(false)
-  
+
   const setPreviewImage = useCanvasStore((state) => state.setPreviewImage)
 
   const handleDoubleClick = (e: React.MouseEvent) => {
@@ -41,9 +72,9 @@ function OptimizedImageComponent({
   }
 
   useEffect(() => {
-    if (!src) return
+    if (!optimizedSrc) return
 
-    const cachedImage = imageCache.get(src)
+    const cachedImage = imageCache.get(optimizedSrc)
     if (cachedImage && cachedImage.complete && cachedImage.naturalWidth > 0) {
       setLoaded(true)
       setError(false)
@@ -59,7 +90,7 @@ function OptimizedImageComponent({
     img.onload = () => {
       loadingRef.current = false
       if (img.naturalWidth > 0) {
-        imageCache.set(src, img)
+        imageCache.set(optimizedSrc, img)
         setLoaded(true)
         setError(false)
         onLoad?.({ naturalWidth: img.naturalWidth, naturalHeight: img.naturalHeight })
@@ -75,8 +106,8 @@ function OptimizedImageComponent({
       onError?.()
     }
 
-    img.src = src
-  }, [src])
+    img.src = optimizedSrc
+  }, [optimizedSrc])
 
   const imgStyle = useMemo(() => ({
     // objectFit: 'fill' as const,
@@ -89,17 +120,17 @@ function OptimizedImageComponent({
 
   if (error && !isGenerating) {
     return (
-      <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-100 text-gray-400 gap-1">
+      <div ref={containerRef} className="absolute inset-0 flex flex-col items-center justify-center bg-gray-100 text-gray-400 gap-1">
         <span className="text-xs">加载失败</span>
       </div>
     )
   }
 
   return (
-    <div className="relative w-full h-full overflow-hidden bg-gray-100">
-      {src && (
+    <div ref={containerRef} className="relative w-full h-full overflow-hidden bg-gray-100">
+      {optimizedSrc && (
         <img
-          src={src}
+          src={optimizedSrc}
           alt=""
           className={`w-full h-full ${isGenerating ? 'opacity-50 blur-sm' : ''}`}
           style={imgStyle}
@@ -108,7 +139,7 @@ function OptimizedImageComponent({
         />
       )}
 
-      {!loaded && !error && !isGenerating && src && (
+      {!loaded && !error && !isGenerating && optimizedSrc && (
         <div className="absolute inset-0 flex items-center justify-center">
           <Loader2 size={24} className="animate-spin text-gray-400" />
         </div>

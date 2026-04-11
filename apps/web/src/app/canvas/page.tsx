@@ -43,6 +43,12 @@ const CanvasPageContent: React.FC = () => {
     cancelAutoSave 
   } = useCanvasStore()
 
+  // Detect project mismatch SYNCHRONOUSLY during render, not in useEffect.
+  // This prevents the Canvas from ever rendering a single frame with stale 
+  // shapes from a previous project (which would trigger image network requests).
+  const projectIdFromUrl = searchParams.get('projectId')
+  const needsProjectSwitch = !!(projectIdFromUrl && projectIdFromUrl !== projectId)
+
   const selectedClothing = shapes.find(
     (s) => s.type === 'clothing' && selectedIds.includes(s.id)
   )
@@ -71,8 +77,6 @@ const CanvasPageContent: React.FC = () => {
    * 从 URL 参数加载项目
    */
   useEffect(() => {
-    const projectIdFromUrl = searchParams.get('projectId')
-    
     if (projectIdFromUrl && projectIdFromUrl !== projectId) {
       console.log('[Canvas Page] Loading project from URL:', projectIdFromUrl)
       setIsLoading(true)
@@ -155,8 +159,9 @@ const CanvasPageContent: React.FC = () => {
     }
   }, [isDirty, projectId, saveToServer, cancelAutoSave])
 
-  // 加载中状态
-  if (isLoading) {
+  // 加载中状态 — also block rendering when we detect a project mismatch 
+  // synchronously (before useEffect fires) to prevent stale image requests
+  if (isLoading || needsProjectSwitch) {
     return (
       <div className="w-full h-full flex items-center justify-center bg-neutral-50">
         <div className="text-center">
