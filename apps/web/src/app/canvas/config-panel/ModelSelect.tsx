@@ -52,6 +52,13 @@ export const ModelSelect: React.FC<ModelSelectProps> = ({ value, onChange, class
     return models.find((m) => m.id === value || m.modelId === value)
   }, [models, value])
 
+  console.log('[DEBUG ModelSelect]', {
+    incomingValue: value,
+    selectedModelId: selectedModel?.id,
+    modelsLoaded: !loading,
+    found: !!selectedModel
+  })
+
   if (loading) {
     return (
       <Select disabled>
@@ -63,7 +70,7 @@ export const ModelSelect: React.FC<ModelSelectProps> = ({ value, onChange, class
   }
 
   return (
-    <Select value={value} onValueChange={onChange}>
+    <Select value={selectedModel?.id || value} onValueChange={onChange}>
       <SelectTrigger className={className}>
         <SelectValue>
           {selectedModel ? (

@@ -249,7 +249,7 @@ export function ProjectCard({
           </div>
         ) : (
           <>
-            <h3 className="text-[10px] text-neutral-700 truncate group-hover:text-neutral-900 transition-colors">
+            <h3 className="text-sm text-neutral-700 truncate group-hover:text-neutral-900 transition-colors">
               {project.name}
             </h3>
             <div className="flex items-center justify-between mt-0.5">
