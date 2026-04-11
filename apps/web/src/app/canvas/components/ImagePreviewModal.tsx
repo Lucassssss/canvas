@@ -1,6 +1,10 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
-import { X, ZoomIn, ZoomOut, Maximize, Download, Crop, Check, Image as ImageIcon } from 'lucide-react'
+import { createPortal } from 'react-dom'
+import { X, ZoomIn, ZoomOut, Maximize, Download, Crop as CropIcon, Check, Image as ImageIcon, Loader2 } from 'lucide-react'
+import ReactCrop, { type Crop, type PixelCrop } from 'react-image-crop'
+import 'react-image-crop/dist/ReactCrop.css'
 import { useCanvasStore } from '../store'
+import { aiCombinationService } from '@/ai-combination/service'
 
 export const ImagePreviewModal: React.FC = () => {
   const { previewImage, setPreviewImage } = useCanvasStore()
@@ -12,9 +16,10 @@ export const ImagePreviewModal: React.FC = () => {
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
   
   const [isCropMode, setIsCropMode] = useState(false)
-  const [cropBox, setCropBox] = useState({ x: 0, y: 0, width: 300, height: 300 })
-  const [isDraggingCrop, setIsDraggingCrop] = useState(false)
-  const [cropDragStart, setCropDragStart] = useState({ x: 0, y: 0 })
+  const [crop, setCrop] = useState<Crop>()
+  const [completedCrop, setCompletedCrop] = useState<PixelCrop>()
+  const [isUploadingCrop, setIsUploadingCrop] = useState(false)
+  const [dimensions, setDimensions] = useState<{w: number, h: number} | null>(null)
   
   const containerRef = useRef<HTMLDivElement>(null)
   const imgRef = useRef<HTMLImageElement>(null)
@@ -25,6 +30,7 @@ export const ImagePreviewModal: React.FC = () => {
       setPosition({ x: 0, y: 0 })
       setIsFitScreen(true)
       setIsCropMode(false)
+      setDimensions(null)
       document.body.style.overflow = 'hidden'
     } else {
       document.body.style.overflow = ''
@@ -103,40 +109,121 @@ export const ImagePreviewModal: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [isCropMode, setPreviewImage])
   
-  const stopNativeEvents = (e: React.MouseEvent | React.WheelEvent) => {
+  const stopNativeEvents = (e: React.MouseEvent | React.WheelEvent | React.TouchEvent) => {
     e.stopPropagation()
-    e.nativeEvent.stopImmediatePropagation()
+    // Depending on React version, native stopImmediatePropagation helps isolate from window global listeners
+    if (e.nativeEvent && typeof e.nativeEvent.stopImmediatePropagation === 'function') {
+      e.nativeEvent.stopImmediatePropagation()
+    }
+  }
+
+  const getCropDimensions = () => {
+    if (!isCropMode || !crop || !crop.width || !crop.height || !imgRef.current) return null;
+    const img = imgRef.current;
+    if (img.width === 0 || img.height === 0) return null;
+    const scaleX = img.naturalWidth / img.width;
+    const scaleY = img.naturalHeight / img.height;
+    return {
+      w: Math.round(crop.width * scaleX),
+      h: Math.round(crop.height * scaleY)
+    }
+  }
+
+  const cropDims = getCropDimensions()
+
+  const handleConfirmCrop = async () => {
+    if (completedCrop && completedCrop.width && completedCrop.height && imgRef.current) {
+      const image = imgRef.current
+      const canvas = document.createElement('canvas')
+      const scaleX = image.naturalWidth / image.width
+      const scaleY = image.naturalHeight / image.height
+
+      canvas.width = completedCrop.width * scaleX
+      canvas.height = completedCrop.height * scaleY
+      const ctx = canvas.getContext('2d')
+      if (!ctx) return
+
+      ctx.drawImage(
+        image,
+        completedCrop.x * scaleX,
+        completedCrop.y * scaleY,
+        completedCrop.width * scaleX,
+        completedCrop.height * scaleY,
+        0,
+        0,
+        completedCrop.width * scaleX,
+        completedCrop.height * scaleY
+      )
+
+      canvas.toBlob(async (blob) => {
+        if (!blob) return
+        
+        setIsUploadingCrop(true)
+        try {
+          const file = new File([blob], `cropped-${Date.now()}.png`, { type: 'image/png' })
+          const result = await aiCombinationService.uploadImage(file, 'canvas-uploads')
+          if (result.success && result.url) {
+            setPreviewImage({ url: result.url })
+            setIsCropMode(false)
+            setCrop(undefined)
+          } else {
+            console.error('Upload failed:', result.error)
+            alert('上传裁剪图片失败')
+          }
+        } catch (error) {
+          console.error(error)
+          alert('上传过程发生错误')
+        } finally {
+          setIsUploadingCrop(false)
+        }
+      }, 'image/png')
+    } else {
+      setIsCropMode(false)
+    }
   }
 
   if (!previewImage) return null
 
-  return (
+  // Ensure we only portal when document is defined (browser env)
+  if (typeof document === 'undefined') return null
+
+  return createPortal(
     <div 
       className="fixed inset-0 z-[99999] bg-black/90 flex flex-col backdrop-blur-sm"
       onWheel={handleWheel}
       onMouseMove={(e) => {
         stopNativeEvents(e)
-        if (isDraggingCrop) {
-          setCropBox(prev => ({
-            ...prev,
-            x: e.clientX - cropDragStart.x,
-            y: e.clientY - cropDragStart.y
-          }))
-        } else {
-          handleMouseMove(e)
-        }
+        if (!isCropMode) handleMouseMove(e)
       }}
       onMouseUp={(e) => {
         stopNativeEvents(e)
-        handleMouseUp()
-        setIsDraggingCrop(false)
+        if (!isCropMode) handleMouseUp()
       }}
-      onMouseLeave={handleMouseUp}
+      onMouseLeave={() => {
+        if (!isCropMode) handleMouseUp()
+      }}
       onMouseDown={stopNativeEvents}
+      onTouchStart={stopNativeEvents}
+      onTouchMove={stopNativeEvents}
+      onTouchEnd={stopNativeEvents}
     >
       <div className="flex items-center justify-between p-4 bg-gradient-to-b from-black/60 to-transparent absolute top-0 left-0 right-0 z-10 w-full pointer-events-none">
-        <div className="text-white/80 text-sm pointer-events-auto bg-black/40 px-3 py-1.5 rounded-full backdrop-blur-md border border-white/10">
-          按 ESC 退出
+        <div className="flex gap-2">
+          <div className="text-white/80 text-sm pointer-events-auto bg-black/40 px-3 py-1.5 rounded-full backdrop-blur-md border border-white/10">
+            按 ESC 退出
+          </div>
+          {dimensions && (
+            <div className="text-white/80 text-sm pointer-events-auto bg-black/40 px-3 py-1.5 rounded-full backdrop-blur-md border border-white/10 flex items-center gap-1">
+              <ImageIcon size={14} />
+              {dimensions.w} × {dimensions.h}
+            </div>
+          )}
+          {isCropMode && cropDims && (
+            <div className="text-blue-300 font-medium text-sm pointer-events-auto bg-blue-900/60 px-3 py-1.5 rounded-full backdrop-blur-md border border-blue-400/30 flex items-center gap-1 shadow-inner shadow-blue-500/20">
+              <CropIcon size={14} />
+              截取: {cropDims.w} × {cropDims.h}
+            </div>
+          )}
         </div>
         
         <div className="flex gap-2 pointer-events-auto bg-black/40 p-2 rounded-full backdrop-blur-md border border-white/10 shadow-xl">
@@ -161,7 +248,7 @@ export const ImagePreviewModal: React.FC = () => {
               <div className="w-px h-5 bg-white/20 my-auto mx-1" />
 
               <button onClick={() => setIsCropMode(true)} className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-white hover:bg-white/10 rounded-full transition-colors" title="进入裁剪模式">
-                <Crop size={16} /> 裁剪
+                <CropIcon size={16} /> 裁剪
               </button>
               <button onClick={handleDownload} className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-white bg-blue-600 hover:bg-blue-500 rounded-full transition-colors ml-2 shadow-lg" title="下载原图">
                 <Download size={16} /> 下载
@@ -169,11 +256,16 @@ export const ImagePreviewModal: React.FC = () => {
             </>
           ) : (
             <>
-              <button onClick={() => setIsCropMode(false)} className="px-4 py-1.5 text-sm text-white hover:bg-white/10 rounded-full transition-colors">
+              <button onClick={() => setIsCropMode(false)} disabled={isUploadingCrop} className="px-4 py-1.5 text-sm text-white hover:bg-white/10 rounded-full transition-colors disabled:opacity-50">
                 取消裁剪
               </button>
-              <button onClick={() => { setIsCropMode(false); alert('开发中：应用裁剪区坐标'); }} className="px-4 py-1.5 text-sm bg-blue-600 text-white hover:bg-blue-700 rounded-full transition-colors flex items-center gap-1.5 shadow-lg shadow-blue-500/20">
-                <Check size={16} /> 确认裁剪
+              <button 
+                onClick={handleConfirmCrop} 
+                disabled={isUploadingCrop}
+                className="px-4 py-1.5 text-sm bg-blue-600 text-white hover:bg-blue-700 rounded-full transition-colors flex items-center gap-1.5 shadow-lg shadow-blue-500/20 disabled:opacity-50"
+              >
+                {isUploadingCrop ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
+                {isUploadingCrop ? '处理中...' : '确认裁剪'}
               </button>
             </>
           )}
@@ -190,52 +282,54 @@ export const ImagePreviewModal: React.FC = () => {
         className="flex-1 w-full h-full overflow-hidden flex items-center justify-center cursor-move"
         onMouseDown={(e) => {
           stopNativeEvents(e)
-          handleMouseDown(e)
+          if (!isCropMode) handleMouseDown(e)
         }}
         onWheel={(e) => {
             stopNativeEvents(e)
             handleWheel(e)
         }}
       >
-        <img
-          ref={imgRef}
-          src={previewImage.url}
-          alt="Preview"
-          draggable={false}
-          className={`transition-all duration-75 ${isCropMode ? 'opacity-30' : 'opacity-100'}`}
-          style={
-            isFitScreen 
-             ? { maxHeight: '90vh', maxWidth: '90vw', objectFit: 'contain', transform: `translate(${position.x}px, ${position.y}px)` }
-             : { transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`, transformOrigin: 'center' }
-          }
-        />
-        
-        {isCropMode && (
-          <div 
-            className="absolute border-2 border-blue-400 cursor-move shadow-[0_0_0_9999px_rgba(0,0,0,0.6)] z-20 flex items-center justify-center text-blue-300 font-medium"
-            style={{
-              width: `${cropBox.width}px`,
-              height: `${cropBox.height}px`,
-              transform: `translate(${cropBox.x}px, ${cropBox.y}px)`
-            }}
-            onMouseDown={(e) => {
-              e.stopPropagation()
-              e.nativeEvent.stopImmediatePropagation()
-              setIsDraggingCrop(true)
-              setCropDragStart({
-                x: e.clientX - cropBox.x,
-                y: e.clientY - cropBox.y
-              })
-            }}
+        {isCropMode ? (
+          <ReactCrop 
+            crop={crop} 
+            onChange={(c) => setCrop(c)} 
+            onComplete={(c) => setCompletedCrop(c)}
+             className="max-h-[85vh] max-w-[90vw]"
           >
-            <div className="absolute -top-1 -left-1 w-3 h-3 bg-blue-500 rounded-full" />
-            <div className="absolute -top-1 -right-1 w-3 h-3 bg-blue-500 rounded-full" />
-            <div className="absolute -bottom-1 -left-1 w-3 h-3 bg-blue-500 rounded-full" />
-            <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-blue-500 rounded-full" />
-            挪动裁剪框
-          </div>
+            <img
+              ref={imgRef}
+              src={previewImage.url}
+              crossOrigin="anonymous"
+              alt="Crop Preview"
+              draggable={false}
+              onLoad={(e) => {
+                const img = e.currentTarget
+                setDimensions({ w: img.naturalWidth, h: img.naturalHeight })
+              }}
+              className="max-h-[85vh] max-w-[90vw] object-contain block"
+            />
+          </ReactCrop>
+        ) : (
+          <img
+            ref={imgRef}
+            src={previewImage.url}
+            crossOrigin="anonymous"
+            alt="Preview"
+            draggable={false}
+            onLoad={(e) => {
+              const img = e.currentTarget
+              setDimensions({ w: img.naturalWidth, h: img.naturalHeight })
+            }}
+            className="transition-all duration-75 block"
+            style={
+              isFitScreen 
+               ? { maxHeight: '90vh', maxWidth: '90vw', objectFit: 'contain', transform: `translate(${position.x}px, ${position.y}px)` }
+               : { transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`, transformOrigin: 'center' }
+            }
+          />
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }
