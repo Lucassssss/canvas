@@ -68,6 +68,8 @@ interface ProjectStore {
   deleteProject: (id: string) => Promise<void>
   /** 加载项目详情 */
   loadProject: (id: string) => Promise<CanvasData | null>
+  /** 更新内存中项目的缩略图（不发起 API 请求，仅同步 store） */
+  updateProjectThumbnail: (id: string, thumbnail: string) => void
   
   /** 加载项目的会话列表 */
   loadProjectConversations: (projectId: string) => Promise<void>
@@ -243,6 +245,14 @@ export const useProjectStore = create<ProjectStore>()(
           console.error('[Project Store] Failed to load project:', error)
           throw error
         }
+      },
+
+      updateProjectThumbnail: (id, thumbnail) => {
+        set((state) => ({
+          projects: state.projects.map((p) =>
+            p.id === id ? { ...p, thumbnail } : p
+          ),
+        }))
       },
 
       // ========== 会话管理 ==========
