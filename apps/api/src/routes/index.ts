@@ -468,7 +468,7 @@ router.get("/health", (req, res) => {
   res.json({ status: "ok" });
 });
 
-router.get("/models", (req, res) => {
+router.get("/api/models", (req, res) => {
   const stats = getModelStats();
   const models = getEnabledModels();
 
