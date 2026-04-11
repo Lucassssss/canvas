@@ -20,27 +20,25 @@ export function getOptimizedImageUrl(src: string, targetWidth?: number): string 
       // 1. Force modern high-compression format
       url.searchParams.set('fmt', 'webp')
 
-      // 2. Add dynamic resizing if width is known
-      if (targetWidth && targetWidth > 0) {
-        // Use devicePixelRatio to ensure retina screens get sharp images
-        const dpr = typeof window !== 'undefined' ? window.devicePixelRatio || 2 : 2
+      // 2. Add dynamic resizing if width is known or default to fallback
+      let bucketedWidth = targetWidth && targetWidth > 0 ? Math.ceil(targetWidth / 200) * 200 : 0;
+      const currentMax = urlMaxWidthCache.get(src) || 0;
 
-        // Bucket the target width to nearest 200px to prevent cache-busting spam on every tiny resize
-        let bucketedWidth = Math.ceil(targetWidth / 200) * 200;
-
-        // Ensure we never request a smaller width than we already have seen (to save traffic when shrinking)
-        const currentMax = urlMaxWidthCache.get(src) || 0;
-        if (bucketedWidth < currentMax) {
-          bucketedWidth = currentMax;
-        } else {
-          urlMaxWidthCache.set(src, bucketedWidth);
-        }
-
-        // Calculate the required width, cap it to a maximum reasonable S4 processing limit (e.g., 2560px)
-        const optimizedWidth = Math.min(2560, bucketedWidth * dpr)
-
-        url.searchParams.set('w', optimizedWidth.toString())
+      // If we go off-screen (width 0), ALWAYS fallback to the max width we've already cached.
+      // This guarantees the URL string does not change, preventing React from reloading the <img>
+      // and preventing the CDN from returning the original massive image without a 'w' parameter.
+      if (bucketedWidth === 0) {
+        bucketedWidth = currentMax > 0 ? currentMax : 200;
+      } else if (bucketedWidth < currentMax) {
+        bucketedWidth = currentMax;
+      } else {
+        urlMaxWidthCache.set(src, bucketedWidth);
       }
+
+      const dpr = typeof window !== 'undefined' ? window.devicePixelRatio || 2 : 2
+      const optimizedWidth = Math.min(2560, bucketedWidth * dpr)
+      
+      url.searchParams.set('w', optimizedWidth.toString())
 
       return url.toString()
     }
