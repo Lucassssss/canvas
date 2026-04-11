@@ -1,6 +1,9 @@
 import { db, verificationCodes } from '../../db/index.js'
 import { eq, and, gt, isNull, sql } from 'drizzle-orm'
 import { nanoid } from 'nanoid'
+import Dysmsapi20170525, * as $Dysmsapi20170525 from '@alicloud/dysmsapi20170525'
+import * as $OpenApi from '@alicloud/openapi-client'
+import * as $Util from '@alicloud/tea-util'
 
 const SMS_CODE_LENGTH = parseInt(process.env.SMS_CODE_LENGTH || '6')
 const SMS_CODE_EXPIRY_MS = 5 * 60 * 1000
@@ -80,7 +83,35 @@ async function sendViaAliyun(phone: string, code: string): Promise<void> {
     return
   }
   
-  console.log(`[SMS] Sending via Aliyun to ${phone} with code ${code}`)
+  try {
+    let config = new $OpenApi.Config({
+      accessKeyId: accessKeyId,
+      accessKeySecret: accessKeySecret,
+    });
+    config.endpoint = `dysmsapi.aliyuncs.com`;
+    
+    const client = new Dysmsapi20170525(config);
+    
+    let sendSmsRequest = new $Dysmsapi20170525.SendSmsRequest({
+      phoneNumbers: phone,
+      signName: signName,
+      templateCode: templateCode,
+      templateParam: JSON.stringify({ code }),
+    });
+    
+    let runtime = new $Util.RuntimeOptions({ });
+    const response = await client.sendSmsWithOptions(sendSmsRequest, runtime);
+    
+    if (response.body?.code !== 'OK') {
+      console.error('[SMS] Aliyun SMS send failed:', response.body);
+      throw new Error(`Aliyun returned ${response.body?.code}: ${response.body?.message}`);
+    }
+    
+    console.log(`[SMS] Successfully sent via Aliyun to ${phone}`);
+  } catch (error) {
+    console.error(`[SMS] Exception when sending Aliyun SMS to ${phone}:`, error);
+    throw error;
+  }
 }
 
 export async function verifyCode(phone: string, code: string): Promise<boolean> {
