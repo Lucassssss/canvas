@@ -12,6 +12,8 @@ import { CountSelect, type Count } from './CountSelect'
 import { useModels } from '../hooks/useModels'
 import { imageGenerationService } from '../services/image-generation'
 import { getOptimizedImageUrl } from '../utils/imageOptimization'
+import TextareaAutosize from 'react-textarea-autosize'
+import { InputGroup, InputGroupAddon } from '@/components/ui/input-group'
 
 export type ConfigField = 'model' | 'resolution' | 'aspectRatio' | 'count'
 export type ShapeTypeFilter = 'image' | 'custom-combination' | 'ai-combination' | 'detail-image' | 'all'
@@ -29,7 +31,7 @@ export interface ImageGenerationConfig {
   prompt: string
 }
 
-const PANEL_WIDTH = 560
+const PANEL_WIDTH = 640
 const PANEL_OFFSET_Y = 12
 
 function getRotatedBoundingBox(
@@ -98,7 +100,6 @@ export const FloatingConfigPanel: React.FC<FloatingConfigPanelProps> = ({ contai
     }
     return s.type === shapeTypeFilter
   })
-
   const enabledFields = config?.enabledFields || DEFAULT_ENABLED_FIELDS
 
   const currentModel = selectedShape?.imageConfig?.model
@@ -345,7 +346,7 @@ export const FloatingConfigPanel: React.FC<FloatingConfigPanelProps> = ({ contai
   return (
     <div
       ref={panelRef}
-      className="fixed z-[999] rounded-lg border border-gray-200 bg-white shadow-lg"
+      className="fixed z-[999]"
       style={{
         left: position.left,
         top: position.top,
@@ -353,77 +354,79 @@ export const FloatingConfigPanel: React.FC<FloatingConfigPanelProps> = ({ contai
       }}
       onMouseDown={handlePanelMouseDown}
     >
-      <div className="flex flex-col">
-        <textarea
-          className="min-h-20 resize-none py-3 px-3.5 text-sm outline-none"
-          placeholder="输入指令..."
-          value={imageConfig.prompt}
-          onChange={(e) => updateConfig({ prompt: e.target.value })}
-          onMouseDown={(e) => e.stopPropagation()}
-        />
-
-        {error && (
-          <div className="px-3 py-1 text-xs text-red-500 bg-red-50">
-            {error}
-          </div>
-        )}
-
-        <div className="flex items-center gap-2 px-3 pb-3">
-          {enabledFields.includes('model') && (
-            <div onMouseDown={(e) => e.stopPropagation()}>
-              <ModelSelect
-                value={imageConfig.model}
-                onChange={handleModelChange}
-                className="h-8 text-sm"
-              />
+      <InputGroup className="h-auto flex-col rounded-lg border border-gray-200 bg-white shadow-xl">
+        <div className="w-full relative px-0 flex flex-col">
+          <TextareaAutosize
+            className="w-full resize-none bg-transparent py-3 px-3.5 text-sm outline-none placeholder:text-gray-400"
+            placeholder="输入指令..."
+            value={imageConfig.prompt}
+            onChange={(e) => updateConfig({ prompt: e.target.value })}
+            onMouseDown={(e) => e.stopPropagation()}
+            minRows={3}
+            maxRows={8}
+          />
+          {error && (
+            <div className="px-3 pb-2 text-xs text-red-500">
+              {error}
             </div>
           )}
-
-          {enabledFields.includes('resolution') && (
-            <div onMouseDown={(e) => e.stopPropagation()}>
-              <ResolutionSelect
-                value={imageConfig.resolution}
-                onChange={(v) => updateConfig({ resolution: v })}
-                resolutions={availableResolutions}
-                className="h-8 text-sm"
-              />
-            </div>
-          )}
-
-          {enabledFields.includes('aspectRatio') && (
-            <div onMouseDown={(e) => e.stopPropagation()}>
-              <AspectRatioSelect
-                value={imageConfig.aspectRatio}
-                onChange={(v) => updateConfig({ aspectRatio: v })}
-                className="h-8 text-sm"
-              />
-            </div>
-          )}
-
-          {enabledFields.includes('count') && (
-            <div onMouseDown={(e) => e.stopPropagation()}>
-              <CountSelect
-                value={imageConfig.count}
-                onChange={(v) => updateConfig({ count: v })}
-                className="h-8 text-sm"
-              />
-            </div>
-          )}
-
-          <div className="flex-1" />
-
-          <Button size="sm" onClick={handleGenerate} disabled={isGenerating}>
-            {isGenerating ? (
-              <>
-                <Loader2 className="mr-1 h-3 w-3 animate-spin" />
-                {/* 生成中... */}
-              </>
-            ) : (
-              `${isEditMode ? '编辑' : '生成'}${imageConfig.count > 1 ? ` ${imageConfig.count} 张` : ''}`
-            )}
-          </Button>
         </div>
-      </div>
+
+        <InputGroupAddon align="block-end" className="w-full pt-1 pb-2">
+          <div className="flex items-center justify-between w-full">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {enabledFields.includes('model') && (
+                <div onMouseDown={(e) => e.stopPropagation()}>
+                  <ModelSelect
+                    value={imageConfig.model}
+                    onChange={handleModelChange}
+                    className="h-8 text-sm bg-transparent border-0 ring-1 ring-inset ring-gray-200 hover:bg-gray-50 focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              )}
+              {enabledFields.includes('resolution') && (
+                <div onMouseDown={(e) => e.stopPropagation()}>
+                  <ResolutionSelect
+                    value={imageConfig.resolution}
+                    onChange={(v) => updateConfig({ resolution: v })}
+                    resolutions={availableResolutions}
+                    className="h-8 text-sm bg-transparent border-0 ring-1 ring-inset ring-gray-200 hover:bg-gray-50 focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              )}
+              {enabledFields.includes('aspectRatio') && (
+                <div onMouseDown={(e) => e.stopPropagation()}>
+                  <AspectRatioSelect
+                    value={imageConfig.aspectRatio}
+                    onChange={(v) => updateConfig({ aspectRatio: v })}
+                    className="h-8 text-sm bg-transparent border-0 ring-1 ring-inset ring-gray-200 hover:bg-gray-50 focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              )}
+              {enabledFields.includes('count') && (
+                <div onMouseDown={(e) => e.stopPropagation()}>
+                  <CountSelect
+                    value={imageConfig.count}
+                    onChange={(v) => updateConfig({ count: v })}
+                    className="h-8 text-sm bg-transparent border-0 ring-1 ring-inset ring-gray-200 hover:bg-gray-50 focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              )}
+            </div>
+
+            <Button size="sm" onClick={handleGenerate} disabled={isGenerating} className="shrink-0 ml-4 pb-0 h-8">
+              {isGenerating ? (
+                <>
+                  <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                  生成中...
+                </>
+              ) : (
+                `${isEditMode ? '基于此重绘' : '生成图片'}${imageConfig.count > 1 ? ` (${imageConfig.count} 张)` : ''}`
+              )}
+            </Button>
+          </div>
+        </InputGroupAddon>
+      </InputGroup>
     </div>
   )
 }
