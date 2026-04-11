@@ -13,44 +13,56 @@ export function startMatrixDrag(
   const state = useCanvasStore.getState()
   const { zoom } = state.viewport
   
-  // Create a temporary clone
-  const clone = document.createElement('div')
-  clone.style.position = 'fixed'
-  clone.style.left = '0px'
-  clone.style.top = '0px'
-  clone.style.width = `${sourceWidth}px`
-  clone.style.height = `${sourceHeight}px`
-  clone.style.backgroundImage = `url("${imageUrl}")`
-  clone.style.backgroundSize = 'contain'
-  clone.style.backgroundRepeat = 'no-repeat'
-  clone.style.backgroundPosition = 'center'
-  clone.style.pointerEvents = 'none' // Crucial for elementsFromPoint
-  clone.style.zIndex = '9999'
-  clone.style.opacity = '0.8'
-  clone.style.borderRadius = '8px'
-  clone.style.border = '2px solid var(--canvas-primary, #3b82f6)'
-  clone.style.backgroundColor = '#e5e7eb'
-  clone.style.boxShadow = '0 10px 25px -5px rgba(0, 0, 0, 0.2)'
-  clone.classList.add('dragging')
-  
   const startX = e.clientX
   const startY = e.clientY
   
   let currentX = startX - (sourceWidth * zoom) / 2
   let currentY = startY - (sourceHeight * zoom) / 2
   
-  clone.style.transform = `matrix(${zoom}, 0, 0, ${zoom}, ${currentX}, ${currentY})`
-  clone.style.transformOrigin = '0 0'
-  
-  const container = document.body
-  container.appendChild(clone)
+  let clone: HTMLDivElement | null = null
+  let hasStartedDrag = false
+
+  const initClone = () => {
+    clone = document.createElement('div')
+    clone.style.position = 'fixed'
+    clone.style.left = '0px'
+    clone.style.top = '0px'
+    clone.style.width = `${sourceWidth}px`
+    clone.style.height = `${sourceHeight}px`
+    clone.style.backgroundImage = `url("${imageUrl}")`
+    clone.style.backgroundSize = 'contain'
+    clone.style.backgroundRepeat = 'no-repeat'
+    clone.style.backgroundPosition = 'center'
+    clone.style.pointerEvents = 'none' 
+    clone.style.zIndex = '9999'
+    clone.style.opacity = '0.8'
+    clone.style.borderRadius = '8px'
+    clone.style.border = '2px solid var(--canvas-primary, #3b82f6)'
+    clone.style.backgroundColor = '#e5e7eb'
+    clone.style.boxShadow = '0 10px 25px -5px rgba(0, 0, 0, 0.2)'
+    clone.classList.add('dragging')
+    clone.style.transformOrigin = '0 0'
+    document.body.appendChild(clone)
+  }
   
   const mouseMoveHandler = (moveEvent: MouseEvent) => {
     const dx = moveEvent.clientX - startX
     const dy = moveEvent.clientY - startY
-    const newX = currentX + dx
-    const newY = currentY + dy
-    clone.style.transform = `matrix(${zoom}, 0, 0, ${zoom}, ${newX}, ${newY})`
+    
+    if (!hasStartedDrag) {
+      if (Math.hypot(dx, dy) > 5) {
+        hasStartedDrag = true
+        initClone()
+      } else {
+        return
+      }
+    }
+
+    if (clone) {
+      const newX = currentX + dx
+      const newY = currentY + dy
+      clone.style.transform = `matrix(${zoom}, 0, 0, ${zoom}, ${newX}, ${newY})`
+    }
     
     // Check drop targets
     const currentState = useCanvasStore.getState()
@@ -62,10 +74,18 @@ export function startMatrixDrag(
     window.removeEventListener('mousemove', mouseMoveHandler)
     window.removeEventListener('mouseup', mouseUpHandler)
     
+    // Safety check for accidental clicks (no drag)
+    if (!hasStartedDrag || !clone) {
+      clearDropTarget()
+      return
+    }
+    
+    const finalClone = clone
+    
     // Small delay to allow react cycles to catch up if needed
     setTimeout(() => {
-      if (clone.parentNode) {
-        clone.parentNode.removeChild(clone)
+      if (finalClone.parentNode) {
+        finalClone.parentNode.removeChild(finalClone)
       }
     }, 50)
     

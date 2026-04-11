@@ -144,6 +144,12 @@ const ImageSlotRenderer: React.FC<ImageSlotRendererProps> = ({
             className={`w-full h-full object-contain transition-opacity ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
             onLoad={() => setImageLoaded(true)}
             onError={() => setImageError(true)}
+            onDoubleClick={(e) => {
+              e.stopPropagation()
+              if (content.imageUrl) {
+                useCanvasStore.getState().setPreviewImage({ url: content.imageUrl })
+              }
+            }}
           />
           <button
             className="absolute top-2 right-2 p-1.5 bg-gray-500 text-white rounded-full hover:bg-gray-600 transition-all shadow opacity-0 group-hover:opacity-100"
@@ -239,7 +245,7 @@ const OutputSlotContent: React.FC<OutputSlotContentProps> = ({ slot, resultImage
       )}
       {(resultImage || isGenerating) && (
         <div 
-          className={`absolute inset-0 z-10 ${resultImage ? 'cursor-grab active:cursor-grabbing' : ''}`}
+          className={`absolute inset-0 z-10`}
           onMouseDown={(e) => {
             if (resultImage) {
               e.stopPropagation()

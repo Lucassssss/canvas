@@ -163,6 +163,12 @@ const InputSlotRenderer = memo<InputSlotRendererProps>(({
               className={`w-full h-full object-contain transition-opacity ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
               onLoad={() => setImageLoaded(true)}
               onError={() => setImageError(true)}
+              onDoubleClick={(e) => {
+                e.stopPropagation()
+                if (slot.imageUrl) {
+                  useCanvasStore.getState().setPreviewImage({ url: slot.imageUrl })
+                }
+              }}
             />
             <button
               className="absolute bottom-2 right-2 p-1.5 bg-gray-500 text-white rounded-full hover:bg-gray-600 transition-all shadow opacity-0 group-hover:opacity-100"
@@ -262,7 +268,7 @@ const OutputSlotRenderer = memo<OutputSlotRendererProps>(({ slot, onLabelChange,
         )}
         {(slot.imageUrl || isGenerating) && (
           <div 
-            className={`absolute inset-0 z-10 ${slot.imageUrl ? 'cursor-grab active:cursor-grabbing' : ''}`}
+            className={`absolute inset-0 z-10`}
             onMouseDown={(e) => {
               if (slot.imageUrl) {
                 e.stopPropagation()
