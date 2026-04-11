@@ -275,6 +275,12 @@ const OutputSlotRenderer = memo<OutputSlotRendererProps>(({ slot, onLabelChange,
                 startMatrixDrag(e, slot.imageUrl)
               }
             }}
+            onDoubleClick={(e) => {
+              if (slot.imageUrl) {
+                e.stopPropagation()
+                useCanvasStore.getState().setPreviewImage({ url: slot.imageUrl })
+              }
+            }}
           >
             <div className="w-full h-full pointer-events-none">
               <OptimizedImage

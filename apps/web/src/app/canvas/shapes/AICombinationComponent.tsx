@@ -252,6 +252,12 @@ const OutputSlotContent: React.FC<OutputSlotContentProps> = ({ slot, resultImage
               startMatrixDrag(e, resultImage)
             }
           }}
+          onDoubleClick={(e) => {
+            if (resultImage) {
+              e.stopPropagation()
+              useCanvasStore.getState().setPreviewImage({ url: resultImage })
+            }
+          }}
         >
           <div className="w-full h-full pointer-events-none">
             <OptimizedImage
