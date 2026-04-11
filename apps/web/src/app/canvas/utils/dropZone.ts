@@ -17,7 +17,7 @@ export function detectDropTarget(
   const excludedSet = new Set(excludedShapeIds)
 
   const combinationShapes = shapes.filter(
-    (s) => s.type === 'custom-combination' && !excludedSet.has(s.id)
+    (s) => (s.type === 'custom-combination' || s.type === 'ai-combination') && !excludedSet.has(s.id)
   )
 
   if (combinationShapes.length === 0) return null

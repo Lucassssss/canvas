@@ -376,10 +376,10 @@ export const FloatingConfigPanel: React.FC<FloatingConfigPanelProps> = ({ contai
             {isGenerating ? (
               <>
                 <Loader2 className="mr-1 h-3 w-3 animate-spin" />
-                生成中...
+                {/* 生成中... */}
               </>
             ) : (
-              `${isEditMode ? '重新生成' : '生成'}${imageConfig.count > 1 ? ` ${imageConfig.count} 张` : ''}`
+              `${isEditMode ? '编辑' : '生成'}${imageConfig.count > 1 ? ` ${imageConfig.count} 张` : ''}`
             )}
           </Button>
         </div>

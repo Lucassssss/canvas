@@ -6,6 +6,8 @@ import { aiCombinationService } from '@/ai-combination/service'
 import { imageGenerationService } from '../services/image-generation'
 import { Plus, Loader2, Play, Equal, Image as ImageIcon } from 'lucide-react'
 import { OptimizedImage } from './OptimizedImage'
+import { startMatrixDrag } from '../utils/dragOut'
+import { DIMENSIONS } from '../constants/dimensions'
 import type { ShapeProps, CustomCombinationSlot } from './types'
 import {
   Tooltip,
@@ -17,10 +19,10 @@ interface CustomCombinationProps {
   shape: ShapeProps
 }
 
-const SLOT_WIDTH = 140
-const SLOT_HEIGHT = 180
-const SLOT_GAP = 12
-const PADDING = 12
+const SLOT_WIDTH = DIMENSIONS.SLOT.width
+const SLOT_HEIGHT = DIMENSIONS.SLOT.height
+const SLOT_GAP = DIMENSIONS.COMBINATION.GAP
+const PADDING = DIMENSIONS.COMBINATION.PADDING
 const BUTTON_WIDTH = 48
 const EQUAL_WIDTH = 20
 const PLUS_WIDTH = 16
@@ -259,13 +261,23 @@ const OutputSlotRenderer = memo<OutputSlotRendererProps>(({ slot, onLabelChange,
           </div>
         )}
         {(slot.imageUrl || isGenerating) && (
-          <div className="absolute inset-0 z-10">
-            <OptimizedImage
-              src={slot.imageUrl || ''}
-              width={SLOT_WIDTH}
-              height={SLOT_HEIGHT}
-              isGenerating={isGenerating}
-            />
+          <div 
+            className={`absolute inset-0 z-10 ${slot.imageUrl ? 'cursor-grab active:cursor-grabbing' : ''}`}
+            onMouseDown={(e) => {
+              if (slot.imageUrl) {
+                e.stopPropagation()
+                startMatrixDrag(e, slot.imageUrl)
+              }
+            }}
+          >
+            <div className="w-full h-full pointer-events-none">
+              <OptimizedImage
+                src={slot.imageUrl || ''}
+                width={SLOT_WIDTH}
+                height={SLOT_HEIGHT}
+                isGenerating={isGenerating}
+              />
+            </div>
           </div>
         )}
       </div>
