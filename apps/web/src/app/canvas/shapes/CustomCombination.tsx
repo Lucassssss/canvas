@@ -5,6 +5,7 @@ import { useCanvasStore } from '../store'
 import { aiCombinationService } from '@/ai-combination/service'
 import { imageGenerationService } from '../services/image-generation'
 import { Plus, Loader2, Play, Equal, Image as ImageIcon } from 'lucide-react'
+import { OptimizedImage } from './OptimizedImage'
 import type { ShapeProps, CustomCombinationSlot } from './types'
 import {
   Tooltip,
@@ -198,18 +199,12 @@ const InputSlotRenderer = memo<InputSlotRendererProps>(({
 interface OutputSlotRendererProps {
   slot: CustomCombinationSlot
   onLabelChange: (slotId: string, label: string) => void
+  isGenerating: boolean
 }
 
-const OutputSlotRenderer = memo<OutputSlotRendererProps>(({ slot, onLabelChange }) => {
-  const [imageLoaded, setImageLoaded] = useState(false)
+const OutputSlotRenderer = memo<OutputSlotRendererProps>(({ slot, onLabelChange, isGenerating }) => {
   const [isEditingLabel, setIsEditingLabel] = useState(false)
   const [editedLabel, setEditedLabel] = useState(slot.label)
-
-  useEffect(() => {
-    if (slot.imageUrl) {
-      setImageLoaded(false)
-    }
-  }, [slot.imageUrl])
 
   const handleLabelSubmit = useCallback(() => {
     setIsEditingLabel(false)
@@ -258,24 +253,19 @@ const OutputSlotRenderer = memo<OutputSlotRendererProps>(({ slot, onLabelChange 
         className="relative bg-gray-200 border-3 border-white overflow-hidden shadow-md"
         style={{ width: SLOT_WIDTH, height: SLOT_HEIGHT }}
       >
-        {slot.imageUrl ? (
-          <>
-            {!imageLoaded && (
-              <div className="absolute inset-0 flex items-center justify-center">
-                <Loader2 size={20} className="animate-spin text-gray-400" />
-              </div>
-            )}
-            <img
-              src={slot.imageUrl}
-              alt={slot.label}
-              className={`w-full h-full object-contain transition-opacity ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
-              onLoad={() => setImageLoaded(true)}
-              onError={() => setImageLoaded(true)}
-            />
-          </>
-        ) : (
-          <div className="w-full h-full flex items-center justify-center text-gray-400">
+        {(!slot.imageUrl && !isGenerating) && (
+          <div className="absolute inset-0 flex items-center justify-center text-gray-400 z-0">
             <ImageIcon size={24} />
+          </div>
+        )}
+        {(slot.imageUrl || isGenerating) && (
+          <div className="absolute inset-0 z-10">
+            <OptimizedImage
+              src={slot.imageUrl || ''}
+              width={SLOT_WIDTH}
+              height={SLOT_HEIGHT}
+              isGenerating={isGenerating}
+            />
           </div>
         )}
       </div>
@@ -286,7 +276,8 @@ const OutputSlotRenderer = memo<OutputSlotRendererProps>(({ slot, onLabelChange 
     prevProps.slot.id === nextProps.slot.id &&
     prevProps.slot.imageUrl === nextProps.slot.imageUrl &&
     prevProps.slot.label === nextProps.slot.label &&
-    prevProps.onLabelChange === nextProps.onLabelChange
+    prevProps.onLabelChange === nextProps.onLabelChange &&
+    prevProps.isGenerating === nextProps.isGenerating
   )
 })
 
@@ -440,6 +431,7 @@ export const CustomCombination: React.FC<CustomCombinationProps> = ({ shape }) =
 
     // 开始生成
     useCanvasStore.getState().updateShape(shapeIdRef.current, {
+      isGenerating: true,
       customStatus: 'generating',
       customError: undefined,
     })
@@ -475,11 +467,13 @@ export const CustomCombination: React.FC<CustomCombinationProps> = ({ shape }) =
         }
 
         useCanvasStore.getState().updateShape(shapeIdRef.current, {
+          isGenerating: false,
           customStatus: 'completed',
           customOutputSlots: updatedOutputSlots,
         })
       } else {
         useCanvasStore.getState().updateShape(shapeIdRef.current, {
+          isGenerating: false,
           customStatus: 'error',
           customError: result.error || '生成失败',
         })
@@ -487,6 +481,7 @@ export const CustomCombination: React.FC<CustomCombinationProps> = ({ shape }) =
     } catch (error) {
       console.error('[CustomCombination] 生成异常:', error)
       useCanvasStore.getState().updateShape(shapeIdRef.current, {
+        isGenerating: false,
         customStatus: 'error',
         customError: error instanceof Error ? error.message : '生成失败',
       })
@@ -545,17 +540,13 @@ export const CustomCombination: React.FC<CustomCombinationProps> = ({ shape }) =
               className={`
                 flex-shrink-0 w-12 h-12 rounded-full transition-all flex items-center justify-center
                 ${status === 'generating'
-                  ? 'bg-gray-300 cursor-not-allowed'
+                  ? 'bg-gray-300 cursor-not-allowed text-gray-500'
                   : 'bg-blue-500 hover:bg-blue-600 text-white'}
               `}
               onClick={handleGenerate}
               disabled={status === 'generating'}
             >
-              {status === 'generating' ? (
-                <Loader2 size={22} className="animate-spin" />
-              ) : (
-                <Play size={22} />
-              )}
+              <Play size={22} />
             </button>
             <Equal size={16} className="text-gray-400" />
           </div>
@@ -565,6 +556,7 @@ export const CustomCombination: React.FC<CustomCombinationProps> = ({ shape }) =
               key={slot.id}
               slot={slot}
               onLabelChange={handleOutputLabelChange}
+              isGenerating={status === 'generating'}
             />
           ))}
         </div>
