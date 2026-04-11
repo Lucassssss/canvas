@@ -196,7 +196,12 @@ export const FloatingConfigPanel: React.FC<FloatingConfigPanelProps> = ({ contai
     const shapeType = selectedShape.type
     
     // Update shape state and visually hide the panel by deselecting
-    updateShape(shapeId, { isGenerating: true, generationError: undefined })
+    updateShape(shapeId, { 
+      isGenerating: true, 
+      generationError: undefined,
+      ...(shapeType === 'custom-combination' ? { customStatus: 'generating', customError: undefined } : {}),
+      ...(shapeType === 'ai-combination' ? { combinationStatus: 'generating', combinationError: undefined } : {})
+    })
     setSelectedIds([])
 
     const isEditMode = !!selectedShape.imageUrl
@@ -263,6 +268,11 @@ export const FloatingConfigPanel: React.FC<FloatingConfigPanelProps> = ({ contai
             customOutputSlots: updatedOutputSlots,
             customStatus: 'completed',
           })
+        } else if (shapeType === 'ai-combination') {
+          useCanvasStore.getState().updateShape(shapeId, {
+            combinationStatus: 'completed',
+            combinationResults: result.images
+          })
         } else {
           // 其他组件：更新 imageUrl
           useCanvasStore.getState().updateShape(shapeId, {
@@ -271,11 +281,19 @@ export const FloatingConfigPanel: React.FC<FloatingConfigPanelProps> = ({ contai
         }
         console.log('[FloatingConfigPanel] 生成成功:', result.images[0])
       } else {
-        useCanvasStore.getState().updateShape(shapeId, { generationError: result.error || '生成失败' })
+        useCanvasStore.getState().updateShape(shapeId, { 
+          generationError: result.error || '生成失败',
+          ...(shapeType === 'custom-combination' ? { customStatus: 'error', customError: result.error || '生成失败' } : {}),
+          ...(shapeType === 'ai-combination' ? { combinationStatus: 'error', combinationError: result.error || '生成失败' } : {})
+        })
         console.error('[FloatingConfigPanel] 生成失败:', result.error)
       }
     } catch (err) {
-      useCanvasStore.getState().updateShape(shapeId, { generationError: String(err) })
+      useCanvasStore.getState().updateShape(shapeId, { 
+        generationError: String(err),
+        ...(shapeType === 'custom-combination' ? { customStatus: 'error', customError: String(err) } : {}),
+        ...(shapeType === 'ai-combination' ? { combinationStatus: 'error', combinationError: String(err) } : {})
+      })
       console.error('[FloatingConfigPanel] 生成异常:', err)
     } finally {
       useCanvasStore.getState().updateShape(shapeId, { isGenerating: false })

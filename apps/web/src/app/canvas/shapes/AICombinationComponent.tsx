@@ -7,6 +7,7 @@ import { aiCombinationService } from '@/ai-combination/service'
 import { useAuth } from '@/features/auth/useAuth'
 import { useCredits } from '@/features/credits/useCredits'
 import { Upload, Play, X, Loader2, User, Shirt, Image as ImageIcon, Plus, Equal, Trash2 } from 'lucide-react'
+import { OptimizedImage } from './OptimizedImage'
 import type { SlotDefinition, SlotContent } from '@/ai-combination/types'
 
 interface AICombinationComponentProps {
@@ -216,34 +217,28 @@ const TextSlotRenderer: React.FC<TextSlotRendererProps> = ({
 interface OutputSlotContentProps {
   slot: SlotDefinition
   resultImage?: string | null
+  isGenerating?: boolean
 }
 
-const OutputSlotContent: React.FC<OutputSlotContentProps> = ({ slot, resultImage }) => {
-  const [imageLoaded, setImageLoaded] = React.useState(false)
-
+const OutputSlotContent: React.FC<OutputSlotContentProps> = ({ slot, resultImage, isGenerating }) => {
   return (
     <div
       className="relative bg-gray-200 border-3 border-white overflow-hidden shadow-md"
       style={{ width: SLOT_WIDTH, height: SLOT_HEIGHT }}
     >
-      {resultImage ? (
-        <>
-          {!imageLoaded && (
-            <div className="absolute inset-0 flex items-center justify-center">
-              <Loader2 size={20} className="animate-spin text-gray-400" />
-            </div>
-          )}
-          <img
-            src={resultImage}
-            alt={slot.name}
-            className={`w-full h-full object-contain transition-opacity ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
-            onLoad={() => setImageLoaded(true)}
-            onError={() => setImageLoaded(true)}
-          />
-        </>
-      ) : (
-        <div className="w-full h-full flex items-center justify-center text-gray-400">
+      {(!resultImage && !isGenerating) && (
+        <div className="absolute inset-0 flex items-center justify-center text-gray-400 z-0">
           <ImageIcon size={24} />
+        </div>
+      )}
+      {(resultImage || isGenerating) && (
+        <div className="absolute inset-0 z-10">
+          <OptimizedImage
+            src={resultImage || ''}
+            width={SLOT_WIDTH}
+            height={SLOT_HEIGHT}
+            isGenerating={isGenerating}
+          />
         </div>
       )}
     </div>
@@ -316,7 +311,7 @@ export const AICombinationComponent: React.FC<AICombinationComponentProps> = ({ 
   const handleExecute = useCallback(async () => {
     if (shape.combinationStatus === 'generating') return
 
-    updateShape(shape.id, { combinationStatus: 'generating', combinationError: undefined })
+    updateShape(shape.id, { isGenerating: true, combinationStatus: 'generating', combinationError: undefined })
 
     const modelId = shape.imageConfig?.model || 'volcengine-seedream-5-0-lite'
 
@@ -336,15 +331,17 @@ export const AICombinationComponent: React.FC<AICombinationComponentProps> = ({ 
 
     if (result.success && result.imageUrl) {
       updateShape(shape.id, {
+        isGenerating: false,
         combinationStatus: 'completed',
         combinationResults: [result.imageUrl],
       })
       fetchUser()
     } else if (result.error === '积分不足') {
       openInsufficientModal()
-      updateShape(shape.id, { combinationStatus: 'idle' })
+      updateShape(shape.id, { isGenerating: false, combinationStatus: 'idle' })
     } else {
       updateShape(shape.id, {
+        isGenerating: false,
         combinationStatus: 'error',
         combinationError: result.error,
       })
@@ -416,7 +413,7 @@ export const AICombinationComponent: React.FC<AICombinationComponentProps> = ({ 
           {slotIcon}
           <span>{slot.name}</span>
         </div>
-        <OutputSlotContent slot={slot} resultImage={resultImage} />
+        <OutputSlotContent slot={slot} resultImage={resultImage} isGenerating={shape.combinationStatus === 'generating'} />
       </div>
     )
   }
@@ -438,17 +435,13 @@ export const AICombinationComponent: React.FC<AICombinationComponentProps> = ({ 
             className={`
               flex-shrink-0 w-12 h-12 rounded-full transition-all flex items-center justify-center
               ${shape.combinationStatus === 'generating'
-                ? 'bg-gray-300 cursor-not-allowed'
+                ? 'bg-gray-300 cursor-not-allowed text-gray-500'
                 : 'bg-blue-500 hover:bg-blue-600 text-white'}
             `}
             onClick={handleExecute}
             disabled={shape.combinationStatus === 'generating'}
           >
-            {shape.combinationStatus === 'generating' ? (
-              <Loader2 size={22} className="animate-spin" />
-            ) : (
-              <Play size={22} />
-            )}
+            <Play size={22} />
           </button>
           <Equal size={16} className="text-gray-400" />
         </div>
