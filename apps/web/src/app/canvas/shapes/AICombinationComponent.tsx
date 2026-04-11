@@ -5,6 +5,7 @@ import { useCanvasStore } from '../store'
 import { combinationRegistry } from '@/ai-combination/registry'
 import { startMatrixDrag } from '../utils/dragOut'
 import { aiCombinationService } from '@/ai-combination/service'
+import { getOptimizedImageUrl } from '../utils/imageOptimization'
 import { useAuth } from '@/features/auth/useAuth'
 import { useCredits } from '@/features/credits/useCredits'
 import { Upload, Play, X, Loader2, User, Shirt, Image as ImageIcon, Plus, Equal, Trash2 } from 'lucide-react'
@@ -350,14 +351,25 @@ export const AICombinationComponent: React.FC<AICombinationComponentProps> = ({ 
       model: modelId,
     }
 
-    const result = await aiCombinationService.generate({
-      id: shape.id,
-      combinationTypeId: shape.combinationTypeId || 'simple-tryon',
-      slotContents: shape.slotContents || {},
-      settings,
-    })
+    const optimizedSlotContents = { ...(shape.slotContents || {}) }
+    for (const key in optimizedSlotContents) {
+      if (optimizedSlotContents[key].imageUrl) {
+        optimizedSlotContents[key] = {
+          ...optimizedSlotContents[key],
+          imageUrl: getOptimizedImageUrl(optimizedSlotContents[key].imageUrl as string, 1024)
+        }
+      }
+    }
 
-    if (result.success && result.imageUrl) {
+    try {
+      const result = await aiCombinationService.generate({
+        id: shape.id,
+        combinationTypeId: shape.combinationTypeId || 'simple-tryon',
+        slotContents: optimizedSlotContents,
+        settings,
+      })
+
+      if (result.success && result.imageUrl) {
       updateShape(shape.id, {
         isGenerating: false,
         combinationStatus: 'completed',
@@ -372,6 +384,13 @@ export const AICombinationComponent: React.FC<AICombinationComponentProps> = ({ 
         isGenerating: false,
         combinationStatus: 'error',
         combinationError: result.error,
+      })
+    }
+    } catch (err) {
+      updateShape(shape.id, {
+        isGenerating: false,
+        combinationStatus: 'error',
+        combinationError: String(err),
       })
     }
   }, [shape, updateShape, fetchUser, openInsufficientModal])

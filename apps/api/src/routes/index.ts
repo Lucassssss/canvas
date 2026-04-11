@@ -137,7 +137,7 @@ router.post("/api/image/generate", authMiddleware, async (req, res) => {
       return res.status(400).json({ success: false, error: "combinationTypeId is required" });
     }
 
-    const modelId = settings?.model || 'openrouter-gemini-2-5-flash'
+    const modelId = settings?.model
     
     const creditCheck = await checkCredits(userId, modelId)
     if (!creditCheck.sufficient) {

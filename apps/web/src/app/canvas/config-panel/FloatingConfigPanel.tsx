@@ -11,6 +11,7 @@ import { ResolutionSelect, type Resolution } from './ResolutionSelect'
 import { CountSelect, type Count } from './CountSelect'
 import { useModels } from '../hooks/useModels'
 import { imageGenerationService } from '../services/image-generation'
+import { getOptimizedImageUrl } from '../utils/imageOptimization'
 
 export type ConfigField = 'model' | 'resolution' | 'aspectRatio' | 'count'
 export type ShapeTypeFilter = 'image' | 'custom-combination' | 'ai-combination' | 'detail-image' | 'all'
@@ -85,7 +86,7 @@ const DEFAULT_ENABLED_FIELDS: ConfigField[] = ['model', 'resolution', 'aspectRat
 export const FloatingConfigPanel: React.FC<FloatingConfigPanelProps> = ({ containerRef, config }) => {
   const { shapes, selectedIds, viewport, updateShape, setSelectedIds } = useCanvasStore()
   const panelRef = useRef<HTMLDivElement>(null)
-  const { defaultModel, getResolutionsForModel } = useModels()
+  const { defaultModel, getResolutionsForModel, loading: modelsLoading, models } = useModels()
   const [position, setPosition] = useState<{ left: number; top: number } | null>(null)
 
   const shapeTypeFilter = config?.shapeTypeFilter || 'all'
@@ -100,12 +101,32 @@ export const FloatingConfigPanel: React.FC<FloatingConfigPanelProps> = ({ contai
 
   const enabledFields = config?.enabledFields || DEFAULT_ENABLED_FIELDS
 
-  const currentModel = selectedShape?.imageConfig?.model || defaultModel
+  const currentModel = selectedShape?.imageConfig?.model
+  const activeModel = currentModel || (models.length > 0 ? models[0].id : '')
+
   const availableResolutions = useMemo(() => {
-    return getResolutionsForModel(currentModel)
-  }, [currentModel, getResolutionsForModel])
+    return getResolutionsForModel(activeModel)
+  }, [activeModel, getResolutionsForModel])
 
   const defaultResolution = availableResolutions[0] || '2K'
+
+  // When models finish loading but the shape has no model saved yet,
+  // write the active fallback model (models[0].id) into the shape.
+  useEffect(() => {
+    if (modelsLoading || !activeModel || !selectedShape) return
+    if (!selectedShape.imageConfig?.model) {
+      updateShape(selectedShape.id, {
+        imageConfig: {
+          model: activeModel,
+          resolution: selectedShape.imageConfig?.resolution || '2K',
+          aspectRatio: selectedShape.imageConfig?.aspectRatio || '1:1',
+          count: selectedShape.imageConfig?.count ?? 1,
+          prompt: selectedShape.imageConfig?.prompt || '',
+        },
+      })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [modelsLoading, activeModel, selectedShape?.id])
 
   const calculatePosition = useCallback(() => {
     if (!selectedShape || !containerRef.current) {
@@ -165,8 +186,21 @@ export const FloatingConfigPanel: React.FC<FloatingConfigPanelProps> = ({ contai
   const isGenerating = !!selectedShape.isGenerating
   const error = selectedShape.generationError || null
 
+  if (selectedShape.type === 'image') {
+    console.log('[DEBUG FloatingConfigPanel]', { 
+      currentModel, 
+      defaultModel, 
+      modelsLength: models.length, 
+      activeModel,
+      shapeId: selectedShape.id,
+      imageConfigModel: selectedShape.imageConfig?.model
+    })
+    // @ts-ignore - for debugging purposes directly from DevTools
+    window.__DEBUG_MODEL__ = { currentModel, defaultModel, models, activeModel }
+  }
+
   const imageConfig: ImageGenerationConfig = {
-    model: currentModel,
+    model: activeModel,
     resolution: (selectedShape.imageConfig?.resolution as Resolution) || defaultResolution,
     aspectRatio: selectedShape.imageConfig?.aspectRatio || '1:1',
     count: (selectedShape.imageConfig?.count as Count) || 1,
@@ -182,10 +216,10 @@ export const FloatingConfigPanel: React.FC<FloatingConfigPanelProps> = ({ contai
   const handleModelChange = (model: string) => {
     const newResolutions = getResolutionsForModel(model)
     const currentRes = imageConfig.resolution
-    const newResolution = newResolutions.includes(currentRes) 
-      ? currentRes 
+    const newResolution = newResolutions.includes(currentRes)
+      ? currentRes
       : newResolutions[0] || '2K'
-    
+
     updateConfig({ model, resolution: newResolution })
   }
 
@@ -194,10 +228,10 @@ export const FloatingConfigPanel: React.FC<FloatingConfigPanelProps> = ({ contai
 
     const shapeId = selectedShape.id
     const shapeType = selectedShape.type
-    
+
     // Update shape state and visually hide the panel by deselecting
-    updateShape(shapeId, { 
-      isGenerating: true, 
+    updateShape(shapeId, {
+      isGenerating: true,
       generationError: undefined,
       ...(shapeType === 'custom-combination' ? { customStatus: 'generating', customError: undefined } : {}),
       ...(shapeType === 'ai-combination' ? { combinationStatus: 'generating', combinationError: undefined } : {})
@@ -210,7 +244,7 @@ export const FloatingConfigPanel: React.FC<FloatingConfigPanelProps> = ({ contai
     try {
       // 收集输入图片
       let images: string[] = []
-      
+
       if (selectedShape.type === 'image' || selectedShape.type === 'detail-image') {
         // 单个图片组件：有图片则图生图，无图片则文生图
         if (selectedShape.imageUrl) {
@@ -230,9 +264,12 @@ export const FloatingConfigPanel: React.FC<FloatingConfigPanelProps> = ({ contai
           .filter((url): url is string => typeof url === 'string' && url !== '')
       }
 
+      // Optimize images to prevent "InvalidParameter.OversizeImage" (Max 10MB) for AI services
+      const optimizedImages = images.map(img => getOptimizedImageUrl(img, 1024))
+
       const result = await imageGenerationService.generate({
         combinationTypeId: shapeType,
-        images,
+        images: optimizedImages,
         prompt: imageConfig.prompt,
         settings: {
           model: imageConfig.model,
@@ -252,7 +289,7 @@ export const FloatingConfigPanel: React.FC<FloatingConfigPanelProps> = ({ contai
             ...slot,
             imageUrl: result.images[index] || result.images[0],
           }))
-          
+
           // 如果生成的图片多于输出槽位，添加新槽位
           if (result.images.length > currentOutputSlots.length) {
             for (let i = currentOutputSlots.length; i < result.images.length; i++) {
@@ -263,7 +300,7 @@ export const FloatingConfigPanel: React.FC<FloatingConfigPanelProps> = ({ contai
               })
             }
           }
-          
+
           useCanvasStore.getState().updateShape(shapeId, {
             customOutputSlots: updatedOutputSlots,
             customStatus: 'completed',
@@ -281,7 +318,8 @@ export const FloatingConfigPanel: React.FC<FloatingConfigPanelProps> = ({ contai
         }
         console.log('[FloatingConfigPanel] 生成成功:', result.images[0])
       } else {
-        useCanvasStore.getState().updateShape(shapeId, { 
+        useCanvasStore.getState().updateShape(shapeId, {
+          isGenerating: false,
           generationError: result.error || '生成失败',
           ...(shapeType === 'custom-combination' ? { customStatus: 'error', customError: result.error || '生成失败' } : {}),
           ...(shapeType === 'ai-combination' ? { combinationStatus: 'error', combinationError: result.error || '生成失败' } : {})
@@ -289,13 +327,15 @@ export const FloatingConfigPanel: React.FC<FloatingConfigPanelProps> = ({ contai
         console.error('[FloatingConfigPanel] 生成失败:', result.error)
       }
     } catch (err) {
-      useCanvasStore.getState().updateShape(shapeId, { 
+      useCanvasStore.getState().updateShape(shapeId, {
+        isGenerating: false,
         generationError: String(err),
         ...(shapeType === 'custom-combination' ? { customStatus: 'error', customError: String(err) } : {}),
         ...(shapeType === 'ai-combination' ? { combinationStatus: 'error', combinationError: String(err) } : {})
       })
       console.error('[FloatingConfigPanel] 生成异常:', err)
     } finally {
+      // 确保 isGenerating 在所有组件级别都重置
       useCanvasStore.getState().updateShape(shapeId, { isGenerating: false })
     }
   }
@@ -316,7 +356,7 @@ export const FloatingConfigPanel: React.FC<FloatingConfigPanelProps> = ({ contai
       <div className="flex flex-col">
         <textarea
           className="min-h-20 resize-none py-3 px-3.5 text-sm outline-none"
-          placeholder="输入提示词..."
+          placeholder="输入指令..."
           value={imageConfig.prompt}
           onChange={(e) => updateConfig({ prompt: e.target.value })}
           onMouseDown={(e) => e.stopPropagation()}
