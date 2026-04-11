@@ -3,11 +3,13 @@
 import React, { useState, useCallback, useEffect } from 'react'
 import { useCanvasStore } from '../store'
 import { combinationRegistry } from '@/ai-combination/registry'
+import { startMatrixDrag } from '../utils/dragOut'
 import { aiCombinationService } from '@/ai-combination/service'
 import { useAuth } from '@/features/auth/useAuth'
 import { useCredits } from '@/features/credits/useCredits'
 import { Upload, Play, X, Loader2, User, Shirt, Image as ImageIcon, Plus, Equal, Trash2 } from 'lucide-react'
 import { OptimizedImage } from './OptimizedImage'
+import { DIMENSIONS } from '../constants/dimensions'
 import type { SlotDefinition, SlotContent } from '@/ai-combination/types'
 
 interface AICombinationComponentProps {
@@ -33,10 +35,10 @@ interface AICombinationComponentProps {
   }
 }
 
-const SLOT_WIDTH = 140
-const SLOT_HEIGHT = 180
-const SLOT_GAP = 12
-const PADDING = 12
+const SLOT_WIDTH = DIMENSIONS.SLOT.width
+const SLOT_HEIGHT = DIMENSIONS.SLOT.height
+const SLOT_GAP = DIMENSIONS.COMBINATION.GAP
+const PADDING = DIMENSIONS.COMBINATION.PADDING
 const BUTTON_WIDTH = 48
 const EQUAL_WIDTH = 20
 const PLUS_WIDTH = 16
@@ -54,6 +56,7 @@ const SLOT_ICONS: Record<string, React.ReactNode> = {
 interface ImageSlotRendererProps {
   slot: SlotDefinition
   content: SlotContent
+  combinationShapeId: string
   onFileSelect: (slotId: string, fileOrUrl: File | string, source?: 'upload' | 'canvas') => void
   onClear: (slotId: string) => void
   isDragOver: boolean
@@ -64,6 +67,7 @@ interface ImageSlotRendererProps {
 const ImageSlotRenderer: React.FC<ImageSlotRendererProps> = ({
   slot,
   content,
+  combinationShapeId,
   onFileSelect,
   onClear,
   isDragOver,
@@ -99,8 +103,10 @@ const ImageSlotRenderer: React.FC<ImageSlotRendererProps> = ({
 
   return (
     <div
-      className={`group relative bg-gray-200 border-3 overflow-hidden shadow-md transition-colors cursor-pointer ${
-        isDragOver ? 'border-blue-500 bg-blue-50' : 'border-white hover:border-white'
+      data-slot-id={slot.id}
+      data-combination-shape-id={combinationShapeId}
+      className={`group relative bg-gray-200 border-3 overflow-hidden shadow-md transition-colors cursor-pointer drop-slot ${
+        isDragOver ? 'border-blue-500 bg-blue-50 drop-target-active' : 'border-white hover:border-white'
       }`}
       style={{ width: SLOT_WIDTH, height: SLOT_HEIGHT }}
       onDragOver={handleDragOver}
@@ -232,13 +238,23 @@ const OutputSlotContent: React.FC<OutputSlotContentProps> = ({ slot, resultImage
         </div>
       )}
       {(resultImage || isGenerating) && (
-        <div className="absolute inset-0 z-10">
-          <OptimizedImage
-            src={resultImage || ''}
-            width={SLOT_WIDTH}
-            height={SLOT_HEIGHT}
-            isGenerating={isGenerating}
-          />
+        <div 
+          className={`absolute inset-0 z-10 ${resultImage ? 'cursor-grab active:cursor-grabbing' : ''}`}
+          onMouseDown={(e) => {
+            if (resultImage) {
+              e.stopPropagation()
+              startMatrixDrag(e, resultImage)
+            }
+          }}
+        >
+          <div className="w-full h-full pointer-events-none">
+            <OptimizedImage
+              src={resultImage || ''}
+              width={SLOT_WIDTH}
+              height={SLOT_HEIGHT}
+              isGenerating={isGenerating}
+            />
+          </div>
         </div>
       )}
     </div>
@@ -385,6 +401,7 @@ export const AICombinationComponent: React.FC<AICombinationComponentProps> = ({ 
           <ImageSlotRenderer
             slot={slot}
             content={content}
+            combinationShapeId={shape.id}
             onFileSelect={handleFileSelect}
             onClear={clearSlot}
             isDragOver={isDragOver === slot.id}
