@@ -384,13 +384,34 @@ const ShapeComponent: React.FC<ShapeComponentProps> = ({ shape }) => {
         )
 
       case 'image':
-        return shape.imageUrl ? (
+        return shape.imageUrl || shape.isGenerating ? (
           <OptimizedImage
-            src={shape.imageUrl}
+            src={shape.imageUrl || ''}
             width={shape.width}
             height={shape.height}
-            onLoad={() => setImageLoaded(true)}
+            onLoad={(dimensions) => {
+              setImageLoaded(true)
+              if (dimensions && dimensions.naturalWidth > 0 && dimensions.naturalHeight > 0) {
+                const imgRatio = dimensions.naturalWidth / dimensions.naturalHeight
+                const shapeRatio = shape.width / shape.height
+                
+                if (Math.abs(imgRatio - shapeRatio) > 0.01) {
+                  const newHeight = shape.width / imgRatio
+                  const dy = (shape.height - newHeight) / 2
+                  
+                  setTimeout(() => {
+                    useCanvasStore.getState().updateShape(shape.id, {
+                      height: newHeight,
+                      y: shape.y + dy,
+                      imageWidth: dimensions.naturalWidth,
+                      imageHeight: dimensions.naturalHeight,
+                    })
+                  }, 0)
+                }
+              }
+            }}
             onError={() => setImageError(true)}
+            isGenerating={shape.isGenerating}
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">

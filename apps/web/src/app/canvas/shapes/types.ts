@@ -99,6 +99,8 @@ export interface ShapeProps {
   slotLabel?: string
   slotVariant?: 'input' | 'output' | 'standalone'
   imageConfig?: ImageConfig
+  isGenerating?: boolean
+  generationError?: string
 }
 
 export interface ViewportState {
