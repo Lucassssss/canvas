@@ -119,13 +119,11 @@ export function startMatrixDrag(
       const finalCanvasX = canvasPt.x - sourceWidth / 2
       const finalCanvasY = canvasPt.y - sourceHeight / 2
       
-      const newShapeId = `image-${Date.now()}`
-      currentState.addShape({
-        id: newShapeId,
+      const newShape = currentState.addShape({
         type: 'image',
         x: finalCanvasX,
         y: finalCanvasY,
-        width: sourceWidth, // Keep standard proportions
+        width: sourceWidth,
         height: sourceHeight,
         rotation: 0,
         scaleX: 1,
@@ -137,7 +135,7 @@ export function startMatrixDrag(
         strokeWidth: 0,
         opacity: 1
       })
-      currentState.setSelectedIds([newShapeId])
+      currentState.setSelectedIds([newShape.id])
     }
     
     clearDropTarget()

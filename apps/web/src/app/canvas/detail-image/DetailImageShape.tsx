@@ -28,7 +28,7 @@ interface DetailImageShapeProps {
     rotation: number
     imageConfig?: {
       model: string
-      resolution: '1K' | '2K' | '4K'
+      resolution: string
       aspectRatio: string
       count: number
       prompt: string

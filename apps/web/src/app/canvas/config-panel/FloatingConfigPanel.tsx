@@ -226,8 +226,8 @@ export const FloatingConfigPanel: React.FC<FloatingConfigPanelProps> = ({ contai
         // AI 组合组件：收集 slotContents 中的图片
         const slotContents = selectedShape.slotContents || {}
         images = Object.values(slotContents)
-          .filter((s): s is { imageUrl: string } => !!s?.imageUrl)
-          .map(s => s.imageUrl)
+          .map(s => s?.imageUrl)
+          .filter((url): url is string => typeof url === 'string' && url !== '')
       }
 
       const result = await imageGenerationService.generate({
