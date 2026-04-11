@@ -107,7 +107,7 @@ export function startMatrixDrag(
           currentState.updateShape(targetShape.id, {
             slotContents: {
               ...currentSlots,
-              [dropTarget.slotId]: { ...currentSlots[dropTarget.slotId], imageUrl }
+              [dropTarget.slotId]: { imageUrl, source: 'canvas' as const }
             }
           })
         }

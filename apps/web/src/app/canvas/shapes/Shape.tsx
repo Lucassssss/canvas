@@ -276,6 +276,16 @@ const ShapeComponent: React.FC<ShapeComponentProps> = ({ shape }) => {
                 latestState.updateShape(currentDropTarget.combinationShapeId, { customInputSlots: newSlots })
                 latestState.saveHistory()
                 latestState.scheduleAutoSave()
+              } else if (combinationShape?.type === 'ai-combination') {
+                const currentSlots = combinationShape.slotContents || {}
+                latestState.updateShape(currentDropTarget.combinationShapeId, {
+                  slotContents: {
+                    ...currentSlots,
+                    [currentDropTarget.slotId]: { imageUrl: draggedShape.imageUrl, source: 'canvas' as const }
+                  }
+                })
+                latestState.saveHistory()
+                latestState.scheduleAutoSave()
               }
             }
           }
