@@ -40,9 +40,10 @@ interface CanvasStore {
   history: HistoryEntry[]
   historyIndex: number
   isDragging: boolean
-  isResizing: boolean
   isRotating: boolean
   isSpacePressed: boolean
+  isPanning: boolean
+  isZooming: boolean
   alignmentGuides: AlignmentGuide[]
   clipboard: ShapeProps[]
   logoEditingState: {
@@ -51,6 +52,7 @@ interface CanvasStore {
     targetShapeId: string | null
     targetLogoId: string | null
   }
+  previewImage: { url: string; shapeId?: string; slotId?: string; type?: 'result' | 'input' } | null
 
   projectId: string | null
   projectName: string
@@ -88,6 +90,8 @@ interface CanvasStore {
   setIsResizing: (isResizing: boolean) => void
   setIsRotating: (isRotating: boolean) => void
   setIsSpacePressed: (isSpacePressed: boolean) => void
+  setIsPanning: (isPanning: boolean) => void
+  setIsZooming: (isZooming: boolean) => void
   setAlignmentGuides: (guides: AlignmentGuide[]) => void
   clearAlignmentGuides: () => void
   dragData: { shapeId: string; imageUrl: string } | null
@@ -95,6 +99,7 @@ interface CanvasStore {
 
   dropTarget: { combinationShapeId: string; slotId: string } | null
   setDropTarget: (target: { combinationShapeId: string; slotId: string } | null) => void
+  setPreviewImage: (preview: { url: string; shapeId?: string; slotId?: string; type?: 'result' | 'input' } | null) => void
 
   undo: () => void
   redo: () => void
@@ -138,6 +143,8 @@ const initialState = {
   isResizing: false,
   isRotating: false,
   isSpacePressed: false,
+  isPanning: false,
+  isZooming: false,
   alignmentGuides: [] as AlignmentGuide[],
   clipboard: [] as ShapeProps[],
   logoEditingState: {
@@ -155,6 +162,7 @@ const initialState = {
   isSaving: false,
   dragData: null as { shapeId: string; imageUrl: string } | null,
   dropTarget: null as { combinationShapeId: string; slotId: string } | null,
+  previewImage: null as { url: string; shapeId?: string; slotId?: string; type?: 'result' | 'input' } | null,
 }
 
 export const useCanvasStore = create<CanvasStore>()(
@@ -392,11 +400,14 @@ export const useCanvasStore = create<CanvasStore>()(
   setIsResizing: (isResizing) => set({ isResizing }),
   setIsRotating: (isRotating) => set({ isRotating }),
   setIsSpacePressed: (isSpacePressed) => set({ isSpacePressed }),
+  setIsPanning: (isPanning) => set({ isPanning }),
+  setIsZooming: (isZooming) => set({ isZooming }),
   setAlignmentGuides: (guides) => set({ alignmentGuides: guides }),
   clearAlignmentGuides: () => set({ alignmentGuides: [] }),
   setDragData: (data) => set({ dragData: data }),
 
   setDropTarget: (target) => set({ dropTarget: target }),
+  setPreviewImage: (preview) => set({ previewImage: preview }),
 
   undo: () => {
     const { history, historyIndex } = get()

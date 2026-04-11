@@ -6,7 +6,8 @@ import { Shape } from './shapes/Shape'
 import { ToolType, ShapeProps, SHAPE_MIN_SIZE, ShapeType } from './shapes/types'
 import { LogoEditorLayer } from './components/LogoEditorLayer'
 import { LogoMaterialPanel } from './components/LogoMaterialPanel'
-import { FloatingConfigPanel } from './config-panel'
+import { FloatingConfigPanel } from './config-panel/FloatingConfigPanel'
+import { ImagePreviewModal } from './components/ImagePreviewModal'
 import { AlignmentGuides } from './components/AlignmentGuides'
 import { aiCombinationService } from '@/ai-combination/service'
 import { combinationRegistry } from '@/ai-combination/registry'
@@ -609,12 +610,16 @@ export const Canvas: React.FC = () => {
     activeTool,
     isDragging,
     isSpacePressed,
+    isPanning,
+    isZooming,
     setViewport,
     setSelectedIds,
     addToSelection,
     clearSelection,
     setIsDragging,
     setIsSpacePressed,
+    setIsPanning,
+    setIsZooming,
     setActiveTool,
     updateShape,
     saveHistory,
@@ -684,7 +689,8 @@ export const Canvas: React.FC = () => {
         viewportX: viewport.x,
         viewportY: viewport.y,
       }
-      setIsDragging(true)
+      setIsSpaceDragging(true)
+      setIsPanning(true)
       return
     }
 
@@ -713,7 +719,7 @@ export const Canvas: React.FC = () => {
         return
       }
     }
-  }, [effectiveTool, viewport, screenToCanvas, clearSelection, setIsDragging])
+  }, [effectiveTool, viewport, screenToCanvas, clearSelection, setIsDragging, setIsPanning])
 
   const processShapeUpdates = useCallback(() => {
     rafIdRef.current = null
@@ -726,7 +732,7 @@ export const Canvas: React.FC = () => {
   }, [batchUpdateShapes])
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    if (!isDragging) return
+    if (!isDragging && !isSpaceDragging) return
 
     if (viewportDragStartRef.current) {
       const { x, y, viewportX, viewportY } = viewportDragStartRef.current
@@ -991,7 +997,7 @@ export const Canvas: React.FC = () => {
         rafIdRef.current = requestAnimationFrame(processShapeUpdates)
       }
     }
-  }, [isDragging, viewport.zoom, screenToCanvas, shapes, selectionRect, processShapeUpdates])
+  }, [isDragging, isSpaceDragging, viewport.zoom, screenToCanvas, shapes, selectionRect, processShapeUpdates])
 
   const handleMouseUp = useCallback(() => {
     if (rafIdRef.current !== null) {
@@ -1028,6 +1034,9 @@ export const Canvas: React.FC = () => {
         cancelAnimationFrame(viewportRafRef.current)
         viewportRafRef.current = null
       }
+    }
+
+    if (isSpaceDragging) {
       if (pendingViewportRef.current) {
         setViewport({
           x: pendingViewportRef.current.x,
@@ -1036,8 +1045,12 @@ export const Canvas: React.FC = () => {
         })
         pendingViewportRef.current = null
       }
+      setIsSpaceDragging(false)
+      setIsPanning(false)
       viewportDragStartRef.current = null
+      return
     }
+
     if (resizeStartRef.current) {
       resizeStartRef.current = null
       saveHistory()
@@ -1177,10 +1190,17 @@ export const Canvas: React.FC = () => {
         setViewport(pendingWheelRef.current)
         pendingWheelRef.current = null
       }
+      // Call setIsZooming(false) outside the render cycle directly using store if needed to avoid stale closures,
+      // but here we have setIsZooming in dependency array hopefully.
+      useCanvasStore.getState().setIsZooming(false)
     }
 
     const wheelHandler = (e: WheelEvent) => {
       e.preventDefault()
+      const store = useCanvasStore.getState()
+      if (!store.isZooming) {
+        store.setIsZooming(true)
+      }
 
       if (e.metaKey || e.ctrlKey) {
         const delta = e.deltaY > 0 ? 0.9 : 1.1
@@ -1246,6 +1266,7 @@ export const Canvas: React.FC = () => {
       if (wheelRafRef.current !== null) {
         cancelAnimationFrame(wheelRafRef.current)
       }
+      useCanvasStore.getState().setIsZooming(false)
     }
   }, [viewport, setViewport])
 
@@ -1530,7 +1551,7 @@ export const Canvas: React.FC = () => {
         ))}
       </div>
 
-      {!isDragging && (
+      {(!isDragging && !isPanning && !isZooming) && (
         <SelectionBoxLayer
           shapes={shapes}
           selectedIds={selectedIds}
@@ -1542,7 +1563,7 @@ export const Canvas: React.FC = () => {
         />
       )}
 
-      {!isDragging && (
+      {(!isDragging && !isPanning && !isZooming) && (
         <ShapeInfoLayer
           shapes={shapes}
           selectedIds={selectedIds}
@@ -1558,9 +1579,11 @@ export const Canvas: React.FC = () => {
 
       <LogoMaterialPanel />
 
-      {!isDragging && <FloatingConfigPanel containerRef={containerRef} />}
+      {(!isDragging && !isPanning && !isZooming) && <FloatingConfigPanel containerRef={containerRef} />}
 
       <AlignmentGuides />
+
+      <ImagePreviewModal />
 
       {renderSelectionRect()}
 
@@ -1577,6 +1600,7 @@ export const Canvas: React.FC = () => {
               viewportY: viewport.y,
             }
             setIsSpaceDragging(true)
+            setIsPanning(true)
           }}
           onMouseMove={(e) => {
             if (!isSpaceDragging || !viewportDragStartRef.current) return
@@ -1603,13 +1627,17 @@ export const Canvas: React.FC = () => {
             }
             viewportDragStartRef.current = null
             setIsSpaceDragging(false)
+            setIsPanning(false)
           }}
           onMouseLeave={() => {
-            if (pendingViewportRef.current) {
-              setViewport(pendingViewportRef.current)
+            if (isSpaceDragging) {
+              if (pendingViewportRef.current) {
+                setViewport(pendingViewportRef.current)
+              }
+              viewportDragStartRef.current = null
+              setIsSpaceDragging(false)
+              setIsPanning(false)
             }
-            viewportDragStartRef.current = null
-            setIsSpaceDragging(false)
           }}
         />
       )}

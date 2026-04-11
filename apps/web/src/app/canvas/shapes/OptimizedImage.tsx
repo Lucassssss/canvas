@@ -2,6 +2,7 @@
 
 import React, { useRef, useEffect, useState, memo, useMemo } from 'react'
 import { Loader2 } from 'lucide-react'
+import { useCanvasStore } from '../store'
 
 interface OptimizedImageProps {
   src: string
@@ -29,6 +30,15 @@ function OptimizedImageComponent({
   })
   const [error, setError] = useState(false)
   const loadingRef = useRef(false)
+  
+  const setPreviewImage = useCanvasStore((state) => state.setPreviewImage)
+
+  const handleDoubleClick = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (src && loaded) {
+      setPreviewImage({ url: src })
+    }
+  }
 
   useEffect(() => {
     if (!src) return
@@ -94,6 +104,7 @@ function OptimizedImageComponent({
           className={`w-full h-full ${isGenerating ? 'opacity-50 blur-sm' : ''}`}
           style={imgStyle}
           draggable={false}
+          onDoubleClick={handleDoubleClick}
         />
       )}
 

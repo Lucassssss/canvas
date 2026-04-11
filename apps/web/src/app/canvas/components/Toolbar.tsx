@@ -97,11 +97,27 @@ function getSmartSpawnPosition(width: number, height: number): { x: number; y: n
   }
 }
 
+function ensureVisible(x: number, y: number, width: number, height: number): void {
+  const state = useCanvasStore.getState()
+  const { viewport, setViewport, canvasToScreen } = state
+  
+  const bottomScreenTarget = canvasToScreen(x, y + height)
+  
+  const bottomOffset = 80
+  const screenBottom = window.innerHeight - bottomOffset
+  
+  if (bottomScreenTarget.y > screenBottom) {
+    const overflowDiff = bottomScreenTarget.y - screenBottom
+    setViewport({ y: viewport.y - overflowDiff }) 
+  }
+}
+
 function createShape(type: ToolType): void {
   const { addShape, setSelectedIds } = useCanvasStore.getState()
   
   const size = SHAPE_SIZES[type] || DIMENSIONS.SHAPE
   const pos = getSmartSpawnPosition(size.width, size.height)
+  ensureVisible(pos.x, pos.y, size.width, size.height)
 
   let newShape: ReturnType<typeof addShape>
 
@@ -282,6 +298,7 @@ function createAICombinationShape(categoryId: string): void {
   const totalHeight = slotHeight + 30 + padding * 2
   
   const pos = getSmartSpawnPosition(totalWidth, totalHeight)
+  ensureVisible(pos.x, pos.y, totalWidth, totalHeight)
   
   const slotContents: Record<string, SlotContent> = {}
   combinationType.slots.forEach((slot) => {
@@ -337,6 +354,7 @@ function createCustomCombination(): void {
   const totalHeight = slotHeight + 100 + 200
 
   const pos = getSmartSpawnPosition(totalWidth, totalHeight)
+  ensureVisible(pos.x, pos.y, totalWidth, totalHeight)
 
   const newId = addShape({
     type: 'custom-combination',
