@@ -16,6 +16,7 @@ export const canvasToolExecutor = {
       
       switch (toolName) {
         case 'canvasGenerateImage':
+        case 'canvasRedrawImage':
           this.handleGenerateImage(outputData);
           break;
         // 后续可以在这里扩展更多，如 canvasGenerateLayout, canvasUpdateShape 等

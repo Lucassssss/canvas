@@ -98,7 +98,7 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({ isOpen, onClose }) =
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  const handleSend = async (options?: { model?: string, resolution?: string, aspectRatio?: string }) => {
+  const handleSend = async (options?: { model?: string, resolution?: string, aspectRatio?: string, images?: string[] }) => {
     if (!input.trim() || isLoading) return
     const content = input
     setInput('')

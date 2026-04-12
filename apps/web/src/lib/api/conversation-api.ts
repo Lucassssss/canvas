@@ -18,6 +18,7 @@ export interface Message {
   conversationId: string
   role: 'user' | 'assistant' | 'system'
   content: string
+  images?: string[]
   createdAt: string
 }
 

@@ -92,8 +92,22 @@ export const ChatMessage = memo(function ChatMessage({ message, isStreaming }: C
             }`}
           >
             {isUser ? (
-              <div className="whitespace-pre-wrap  break-words overflow-hidden bg-black text-white p-2 rounded">
-                {message.content}
+              <div className="flex flex-col gap-1.5 items-end">
+                {message.images && message.images.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 justify-end">
+                    {message.images.map((url, idx) => (
+                      <img 
+                        key={idx} 
+                        src={url} 
+                        alt={`参考图 ${idx + 1}`} 
+                        className="w-14 h-14 object-cover rounded-md shadow-sm border border-neutral-200 bg-white" 
+                      />
+                    ))}
+                  </div>
+                )}
+                <div className="whitespace-pre-wrap break-words overflow-hidden bg-black text-white px-3 py-2 text-sm rounded-lg rounded-tr-md">
+                  {message.content}
+                </div>
               </div>
             ) : (
               <div className="space-y-3 min-w-0 w-full">

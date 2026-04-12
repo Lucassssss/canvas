@@ -7,6 +7,7 @@ import apiClient, { ApiError } from './client'
 export interface ChatMessage {
   role: 'user' | 'assistant' | 'system'
   content: string
+  images?: string[]
 }
 
 export interface StreamEvent {

@@ -193,6 +193,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
             id: msg.id,
             role: msg.role as 'user' | 'assistant',
             content: msg.content,
+            images: msg.images,
             timestamp: msg.createdAt,
             blocks: [],
           }))
@@ -249,7 +250,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 
   setConversationId: (id) => set({ conversationId: id }),
 
-  sendMessage: async (content: string, options?: { model?: string, resolution?: string, aspectRatio?: string }) => {
+  sendMessage: async (content: string, options?: { model?: string, resolution?: string, aspectRatio?: string, images?: string[] }) => {
     const { 
       addMessage, 
       setLoading, 
@@ -269,6 +270,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
       id: `msg-${generateId()}`,
       role: 'user',
       content,
+      images: options?.images,
       timestamp: Date.now(),
     }
 
@@ -287,7 +289,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
     const currentMessages = get().messages
     const uiMessages = currentMessages
       .filter((m) => m.role === 'user' || m.role === 'assistant')
-      .map((m) => ({ role: m.role, content: m.content }))
+      .map((m) => ({ role: m.role, content: m.content, images: m.images }))
 
     // Init AbortController
     const controller = new AbortController()
