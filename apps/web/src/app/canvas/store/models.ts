@@ -43,7 +43,7 @@ interface ModelsActions {
 
 type ModelsStore = ModelsState & ModelsActions
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
 
 export const useModelsStore = create<ModelsStore>((set, get) => ({
   models: [],
@@ -63,7 +63,7 @@ export const useModelsStore = create<ModelsStore>((set, get) => ({
     try {
       set({ loading: true })
 
-      const response = await fetch(`${API_BASE_URL}/models`)
+      const response = await fetch(`${API_BASE_URL}/api/models`)
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)

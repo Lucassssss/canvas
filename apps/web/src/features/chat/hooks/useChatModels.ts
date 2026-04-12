@@ -14,10 +14,10 @@ export function useChatModels() {
   const [models, setModels] = useState<ChatModel[]>([])
   const [loading, setLoading] = useState(true)
 
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
 
   useEffect(() => {
-    fetch(`${API_BASE_URL}/credits/pricing`)
+    fetch(`${API_BASE_URL}/api/credits/pricing`)
       .then(res => res.json())
       .then(data => {
         if (data.models) {
