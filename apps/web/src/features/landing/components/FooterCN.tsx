@@ -17,7 +17,7 @@ export function FooterCN() {
               <span>系统运行正常</span>
             </div>
           </div>
-          
+
           <div className="col-span-6 md:col-span-2 md:col-start-7">
             <h4 className="font-sans-zh font-medium text-xs text-neutral-400 tracking-widest uppercase mb-6">解决方案</h4>
             <ul className="space-y-4 font-sans-zh text-sm text-neutral-600">
@@ -27,7 +27,7 @@ export function FooterCN() {
               <li><Link href="/dashboard" className="hover:text-neutral-950 transition-colors">主图合规过检</Link></li>
             </ul>
           </div>
-          
+
           <div className="col-span-6 md:col-span-2">
             <h4 className="font-sans-zh font-medium text-xs text-neutral-400 tracking-widest uppercase mb-6">资源</h4>
             <ul className="space-y-4 font-sans-zh text-sm text-neutral-600">
@@ -37,7 +37,7 @@ export function FooterCN() {
               <li><a href="#" className="hover:text-neutral-950 transition-colors">联系我们</a></li>
             </ul>
           </div>
-          
+
           <div className="col-span-6 md:col-span-2">
             <h4 className="font-sans-zh font-medium text-xs text-neutral-400 tracking-widest uppercase mb-6">法律</h4>
             <ul className="space-y-4 font-sans-zh text-sm text-neutral-600">
@@ -47,9 +47,13 @@ export function FooterCN() {
             </ul>
           </div>
         </div>
-        
+
         <div className="pt-8 border-t border-neutral-200 flex flex-col md:flex-row items-center justify-between gap-4">
-          <p className="font-sans-zh text-xs text-neutral-400">© 2026 Joii AI Inc. 保留所有权利</p>
+          <div className="flex flex-col md:flex-row items-center gap-2 md:gap-4 font-sans-zh text-xs text-neutral-400">
+            <span>© 2026 Joii AI Inc. 保留所有权利</span>
+            <span className="hidden md:inline">|</span>
+            <a href="https://beian.miit.gov.cn/#/Integrated/index" target="_blank" rel="noopener noreferrer" className="hover:text-neutral-950 transition-colors">陇ICP备19004300号</a>
+          </div>
           <div className="flex items-center gap-6">
             <a href="#" className="font-sans-zh text-xs text-neutral-400 hover:text-neutral-950 transition-colors">中文</a>
             <a href="#" className="font-sans-zh text-xs text-neutral-400 hover:text-neutral-950 transition-colors">English</a>
