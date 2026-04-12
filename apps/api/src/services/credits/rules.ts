@@ -6,6 +6,9 @@ export const CREDITS_PER_CNY = 100
 // 目标利润倍数 (可根据需要随时调整为 4, 5 或者带小数的 3.5)
 export const TARGET_PROFIT_MARGIN = 2
 
+// 新用户注册赠送积分
+export const SIGNUP_CREDITS = 1000
+
 /**
  * 动态积分计算公式
  * @param pricing 包含 low 和 high 价格范围的对象。一般指调用该模型一次预估的人民币金额。
