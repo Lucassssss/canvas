@@ -106,7 +106,6 @@ export const useProjectStore = create<ProjectStore>()(
       // ========== 基础状态管理 ==========
 
       setCurrentProject: (id, name) => {
-        console.log(`[Project Store] Setting current project: ${name} (${id})`)
         set({ 
           currentProjectId: id, 
           currentProjectName: name,
@@ -118,25 +117,22 @@ export const useProjectStore = create<ProjectStore>()(
       markDirty: () => {
         const { isDirty } = get()
         if (!isDirty) {
-          console.log('[Project Store] Marking project as dirty')
           set({ isDirty: true })
         }
       },
 
       markSaved: () => {
-        console.log('[Project Store] Marking project as saved')
         set({ isDirty: false, lastSavedAt: Date.now() })
       },
 
       // ========== 项目列表管理 ==========
 
       loadProjects: async () => {
-        console.log('[Project Store] Loading projects')
+
         set({ isLoadingProjects: true, projectsError: null })
 
         try {
           const projects = await projectApi.getProjects()
-          console.log(`[Project Store] Loaded ${projects.length} projects`)
           set({ projects, isLoadingProjects: false })
         } catch (error) {
           const message = error instanceof ApiError ? error.message : 'Failed to load projects'
@@ -146,11 +142,8 @@ export const useProjectStore = create<ProjectStore>()(
       },
 
       createProject: async (name, canvasData) => {
-        console.log('[Project Store] Creating project:', name || 'Untitled')
-
         try {
           const result = await projectApi.createProject({ name, canvasData })
-          console.log(`[Project Store] Project created: ${result.id}`)
           
           // 重新加载项目列表
           await get().loadProjects()
@@ -171,16 +164,13 @@ export const useProjectStore = create<ProjectStore>()(
         }
 
         if (isSaving) {
-          console.log('[Project Store] Save already in progress, skipping')
           return
         }
 
-        console.log(`[Project Store] Saving project: ${currentProjectId}`)
         set({ isSaving: true })
 
         try {
           await projectApi.saveCanvasData(currentProjectId, canvasData)
-          console.log('[Project Store] Project saved successfully')
           get().markSaved()
         } catch (error) {
           console.error('[Project Store] Failed to save project:', error)
@@ -191,11 +181,11 @@ export const useProjectStore = create<ProjectStore>()(
       },
 
       updateProjectName: async (id, name) => {
-        console.log(`[Project Store] Updating project name: ${id} -> ${name}`)
+
+
 
         try {
           await projectApi.updateProject(id, { name })
-          console.log('[Project Store] Project name updated')
           
           // 更新列表中的项目名称
           set((state) => ({
@@ -211,11 +201,8 @@ export const useProjectStore = create<ProjectStore>()(
       },
 
       deleteProject: async (id) => {
-        console.log(`[Project Store] Deleting project: ${id}`)
-
         try {
           await projectApi.deleteProject(id)
-          console.log('[Project Store] Project deleted')
           
           // 从列表中移除
           set((state) => ({
@@ -231,11 +218,8 @@ export const useProjectStore = create<ProjectStore>()(
       },
 
       loadProject: async (id) => {
-        console.log(`[Project Store] Loading project: ${id}`)
-
         try {
           const project = await projectApi.getProject(id)
-          console.log('[Project Store] Project loaded')
           
           // 设置为当前项目
           get().setCurrentProject(project.id, project.name)
@@ -258,12 +242,9 @@ export const useProjectStore = create<ProjectStore>()(
       // ========== 会话管理 ==========
 
       loadProjectConversations: async (projectId) => {
-        console.log(`[Project Store] Loading conversations for project: ${projectId}`)
         set({ isLoadingConversations: true, conversationsError: null })
-
         try {
           const conversations = await projectApi.getProjectConversations(projectId)
-          console.log(`[Project Store] Loaded ${conversations.length} conversations`)
           set({ projectConversations: conversations, isLoadingConversations: false })
         } catch (error) {
           const message = error instanceof ApiError ? error.message : 'Failed to load conversations'
@@ -278,13 +259,8 @@ export const useProjectStore = create<ProjectStore>()(
         if (!currentProjectId) {
           throw new Error('No current project')
         }
-
-        console.log(`[Project Store] Creating conversation for project: ${currentProjectId}`)
-
         try {
           const result = await projectApi.createConversation(currentProjectId, title, model)
-          console.log(`[Project Store] Conversation created: ${result.id}`)
-          
           // 重新加载会话列表
           await get().loadProjectConversations(currentProjectId)
           
@@ -301,13 +277,8 @@ export const useProjectStore = create<ProjectStore>()(
         if (!currentProjectId) {
           throw new Error('No current project')
         }
-
-        console.log(`[Project Store] Linking conversation: ${conversationId}`)
-
         try {
-          await projectApi.linkConversation(currentProjectId, conversationId)
-          console.log('[Project Store] Conversation linked')
-          
+          await projectApi.linkConversation(currentProjectId, conversationId)          
           // 重新加载会话列表
           await get().loadProjectConversations(currentProjectId)
         } catch (error) {
@@ -322,12 +293,8 @@ export const useProjectStore = create<ProjectStore>()(
         if (!currentProjectId) {
           throw new Error('No current project')
         }
-
-        console.log(`[Project Store] Unlinking conversation: ${conversationId}`)
-
         try {
           await projectApi.unlinkConversation(currentProjectId, conversationId)
-          console.log('[Project Store] Conversation unlinked')
           
           // 从列表中移除
           set((state) => ({
@@ -344,7 +311,6 @@ export const useProjectStore = create<ProjectStore>()(
       // ========== 重置 ==========
 
       reset: () => {
-        console.log('[Project Store] Resetting state')
         set(initialState)
       },
     }),
