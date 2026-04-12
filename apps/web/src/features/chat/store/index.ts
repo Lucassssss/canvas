@@ -240,9 +240,6 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 
   sendMessage: async (content: string, options?: { model?: string, resolution?: string, aspectRatio?: string }) => {
     const { 
-      conversationId, 
-      currentThreadId,
-      currentProjectId,
       addMessage, 
       setLoading, 
       updateMessage, 
@@ -253,8 +250,8 @@ export const useChatStore = create<ChatStore>((set, get) => ({
     if (!content.trim() || get().isLoading) return
 
     // 如果有项目但没有当前会话，先创建会话
-    if (currentProjectId && !currentThreadId) {
-      await createProjectConversation(currentProjectId, '新对话')
+    if (get().currentProjectId && !get().currentThreadId) {
+      await createProjectConversation(get().currentProjectId!, '新对话')
     }
 
     const userMessage: Message = {
@@ -283,7 +280,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 
     try {
       for await (const event of streamChat(uiMessages, {
-        conversationId: conversationId || undefined,
+        conversationId: get().conversationId || undefined,
         mode: 'agent',
         model: '',
         imageModel: options?.model, // Treat the passed generic model as the image generation model
@@ -295,9 +292,10 @@ export const useChatStore = create<ChatStore>((set, get) => ({
           setConversationId(newConvId)
           
           // 如果有项目，关联会话到项目
-          if (currentProjectId && currentThreadId) {
+          const projectId = get().currentProjectId
+          if (projectId) {
             try {
-              await projectApi.linkConversation(currentProjectId, newConvId)
+              await projectApi.linkConversation(projectId, newConvId)
               console.log('[Chat Store] Conversation linked to project')
             } catch (error) {
               console.error('[Chat Store] Failed to link conversation:', error)
