@@ -34,12 +34,14 @@ export async function* streamChat(
     resolution?: string
     aspectRatio?: string
     onEvent?: StreamHandler
+    signal?: AbortSignal
   }
 ): AsyncGenerator<StreamEvent> {
-  const { conversationId, mode = 'agent', model, imageModel, resolution, aspectRatio, onEvent } = options || {}
+  const { conversationId, mode = 'agent', model, imageModel, resolution, aspectRatio, onEvent, signal } = options || {}
 
   const { response } = await apiClient.stream('/api/chat', {
     method: 'POST',
+    signal,
     body: JSON.stringify({
       conversationId,
       messages,

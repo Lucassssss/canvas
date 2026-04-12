@@ -59,6 +59,7 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({ isOpen, onClose }) =
     selectThread,
     setCurrentProjectId,
     loadProjectConversations,
+    stopMessage,
   } = useChat()
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -99,7 +100,9 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({ isOpen, onClose }) =
 
   const handleSend = async (options?: { model?: string, resolution?: string, aspectRatio?: string }) => {
     if (!input.trim() || isLoading) return
-    await sendMessage(input, options)
+    const content = input
+    setInput('')
+    await sendMessage(content, options)
   }
 
   const handleNewChat = () => {
@@ -296,6 +299,7 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({ isOpen, onClose }) =
                 value={input}
                 onChange={setInput}
                 onSend={handleSend}
+                onStop={stopMessage}
                 isLoading={isLoading}
               />
             </div>

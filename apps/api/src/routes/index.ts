@@ -471,6 +471,8 @@ router.post("/api/chat", authMiddleware, async (req, res) => {
   }
 });
 
+import { calculateCredits } from "../services/credits/rules.js";
+
 // ========== 系统端点 ==========
 router.get("/health", (req, res) => {
   res.json({ status: "ok" });
@@ -478,7 +480,11 @@ router.get("/health", (req, res) => {
 
 router.get("/api/models", (req, res) => {
   const stats = getModelStats();
-  const models = getEnabledModels();
+  const rawModels = getEnabledModels();
+  const models = rawModels.map(model => ({
+    ...model,
+    credits: calculateCredits(model.pricing, model.credits)
+  }));
 
   res.json({
     success: true,
