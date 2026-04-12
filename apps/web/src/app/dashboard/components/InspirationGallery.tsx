@@ -14,16 +14,20 @@ interface InspirationItem {
 }
 
 const imageUrls = [
-  'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&h=500&fit=crop',
-  'https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=400&h=300&fit=crop',
-  'https://images.unsplash.com/photo-1561070791-2526d30994b5?w=400&h=600&fit=crop',
-  'https://images.unsplash.com/photo-1549490349-8643362247b5?w=400&h=400&fit=crop',
-  'https://images.unsplash.com/photo-1586075010923-2dd4570fb338?w=400&h=350&fit=crop',
-  'https://images.unsplash.com/photo-1555421689-d68471e189f2?w=400&h=550&fit=crop',
-  'https://images.unsplash.com/photo-1561998338-13ad7883b20f?w=400&h=300&fit=crop',
-  'https://images.unsplash.com/photo-1614850523459-c2f4c699c52e?w=400&h=450&fit=crop',
-  'https://images.unsplash.com/photo-1626785774573-4b799315345d?w=400&h=320&fit=crop',
-  'https://images.unsplash.com/photo-1558655146-d09347e92766?w=400&h=480&fit=crop',
+  'https://d-assets-cn.joii.cc/ai-generated/e0fff5b8-b243-4cf1-97ab-ae6d0b988160.png?fmt=webp&w=800',
+  'https://d-assets-cn.joii.cc/ai-generated/3944e695-e53b-4d84-842c-909f55b2aca7.png?fmt=webp&w=800',
+  'https://d-assets-cn.joii.cc/ai-generated/0c6ec393-4569-4378-b38c-5b6c9b0649d7.png?fmt=webp&w=800',
+  'https://d-assets-cn.joii.cc/ai-generated/715c8ad3-e596-4c45-980b-752aa9a0008a.png?fmt=webp&w=800',
+  'https://d-assets-cn.joii.cc/ai-generated/d9a9ea2b-cf1c-4593-a6ee-77f078dfb9c5.png?fmt=webp&w=800',
+  'https://d-assets-cn.joii.cc/ai-generated/bc6ad51b-833c-4f80-9d54-83a3188dc569.png?fmt=webp&w=800',
+  'https://d-assets-cn.joii.cc/ai-generated/2d452cc6-6f20-4253-8a71-8bdce71f806b.png?fmt=webp&w=800',
+  'https://d-assets-cn.joii.cc/ai-generated/95c050ff-dc6f-4dae-bc4f-a8e3d18824b2.png?fmt=webp&w=800',
+  'https://d-assets-cn.joii.cc/ai-generated/dcc2a007-0672-4369-a887-7d22c8cdcbfe.png?fmt=webp&w=800',
+  'https://d-assets-cn.joii.cc/ai-generated/25ba2f9f-c4f5-4399-a250-479c726a971b.png?fmt=webp&w=800',
+  'https://d-assets-cn.joii.cc/ai-generated/d2efa344-be2a-4dd3-9085-2f3cfa5062ce.png?fmt=webp&w=800',
+  'https://d-assets-cn.joii.cc/ai-generated/e5fccb7b-6406-4f44-8868-2a941138ed09.png?fmt=webp&w=800',
+  'https://d-assets-cn.joii.cc/ai-generated/30d91813-85b1-432d-b2d8-a816b8d85864.png?fmt=webp&w=800',
+  'https://d-assets-cn.joii.cc/ai-generated/353492d9-ef86-46a8-8e59-a9a9aac90c0c.png?fmt=webp&w=800',
 ]
 
 const heights = ['h-48', 'h-56', 'h-64', 'h-72', 'h-80', 'h-44', 'h-52', 'h-68', 'h-60', 'h-96']
@@ -134,11 +138,11 @@ export function InspirationGallery() {
                 onClick={() => handleItemClick(item.id)}
                 className="group cursor-pointer break-inside-avoid mb-4"
               >
-                <div className={`relative ${item.height || 'h-56'} bg-neutral-100`}>
+                <div className="relative bg-neutral-100">
                   <img
                     src={item.imageUrl}
                     alt={item.title}
-                    className="w-full h-full object-cover transition-opacity duration-200 group-hover:opacity-90"
+                    className="w-full h-auto block transition-opacity duration-200 group-hover:opacity-90"
                   />
                   
                   <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
