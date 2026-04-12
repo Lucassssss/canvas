@@ -362,7 +362,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
             const lastBlock = targetMsg.blocks[targetMsg.blocks.length - 1]
             if (lastBlock && lastBlock.type === 'tool-call' && lastBlock.status === 'running') {
               // 拦截并独立处理画布相关的 Tool Calls
-              canvasToolExecutor.executeTool(lastBlock.name || '', event.output);
+              canvasToolExecutor.executeTool(lastBlock.name || '', event.output || '');
 
               updateMessage(targetMsg.id, {
                 blocks: targetMsg.blocks.map((b) =>
