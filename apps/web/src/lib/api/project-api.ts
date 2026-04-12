@@ -54,7 +54,7 @@ export const projectApi = {
    * 获取所有项目列表
    */
   async getProjects(): Promise<ProjectMetadata[]> {
-    console.log('[Project API] Fetching projects')
+
     const response = await fetch(`${API_BASE_URL}/api/projects`, {
       cache: 'no-store',
       credentials: 'include',
@@ -66,7 +66,6 @@ export const projectApi = {
    * 获取单个项目详情
    */
   async getProject(id: string): Promise<Project> {
-    console.log(`[Project API] Fetching project: ${id}`)
     const response = await fetch(`${API_BASE_URL}/api/projects/${id}`, {
       cache: 'no-store',
       credentials: 'include',
@@ -78,7 +77,6 @@ export const projectApi = {
    * 创建新项目
    */
   async createProject(params: CreateProjectParams = {}): Promise<{ id: string; name: string; createdAt: number }> {
-    console.log('[Project API] Creating project:', params.name || 'Untitled')
     const response = await fetch(`${API_BASE_URL}/api/projects`, {
       method: 'POST',
       credentials: 'include',
@@ -92,7 +90,6 @@ export const projectApi = {
    * 更新项目
    */
   async updateProject(id: string, params: UpdateProjectParams): Promise<{ success: boolean; id: string; updatedAt: number }> {
-    console.log(`[Project API] Updating project: ${id}`)
     const response = await fetch(`${API_BASE_URL}/api/projects/${id}`, {
       method: 'PUT',
       credentials: 'include',
@@ -106,7 +103,6 @@ export const projectApi = {
    * 更新项目缩略图（fire-and-forget，不阻塞画布保存流程）
    */
   async saveThumbnail(id: string, thumbnail: string): Promise<void> {
-    console.log(`[Project API] Saving thumbnail for project: ${id}`)
     try {
       const response = await fetch(`${API_BASE_URL}/api/projects/${id}`, {
         method: 'PUT',
@@ -127,7 +123,6 @@ export const projectApi = {
    * 删除项目
    */
   async deleteProject(id: string): Promise<{ success: boolean; id: string; deletedAt: number }> {
-    console.log(`[Project API] Deleting project: ${id}`)
     const response = await fetch(`${API_BASE_URL}/api/projects/${id}`, {
       method: 'DELETE',
       credentials: 'include',
@@ -139,7 +134,6 @@ export const projectApi = {
    * 保存画布数据
    */
   async saveCanvasData(projectId: string, canvasData: CanvasData): Promise<{ success: boolean; id: string; savedAt: number }> {
-    console.log(`[Project API] Saving canvas data for project: ${projectId}`)
     const response = await fetch(`${API_BASE_URL}/api/projects/${projectId}/canvas`, {
       method: 'PUT',
       credentials: 'include',
@@ -153,7 +147,6 @@ export const projectApi = {
    * 获取项目的会话列表
    */
   async getProjectConversations(projectId: string): Promise<Conversation[]> {
-    console.log(`[Project API] Fetching conversations for project: ${projectId}`)
     const response = await fetch(`${API_BASE_URL}/api/projects/${projectId}/conversations`, {
       cache: 'no-store',
       credentials: 'include',
@@ -165,7 +158,6 @@ export const projectApi = {
    * 为项目创建新会话
    */
   async createConversation(projectId: string, title?: string, model?: string): Promise<{ id: string; projectId: string; createdAt: number }> {
-    console.log(`[Project API] Creating conversation for project: ${projectId}`)
     const response = await fetch(`${API_BASE_URL}/api/projects/${projectId}/conversations`, {
       method: 'POST',
       credentials: 'include',
@@ -179,7 +171,6 @@ export const projectApi = {
    * 关联现有会话到项目
    */
   async linkConversation(projectId: string, conversationId: string): Promise<{ success: boolean }> {
-    console.log(`[Project API] Linking conversation ${conversationId} to project ${projectId}`)
     const response = await fetch(`${API_BASE_URL}/api/projects/${projectId}/conversations/${conversationId}`, {
       method: 'POST',
       credentials: 'include',
@@ -191,7 +182,6 @@ export const projectApi = {
    * 取消会话与项目的关联
    */
   async unlinkConversation(projectId: string, conversationId: string): Promise<{ success: boolean }> {
-    console.log(`[Project API] Unlinking conversation ${conversationId} from project ${projectId}`)
     const response = await fetch(`${API_BASE_URL}/api/projects/${projectId}/conversations/${conversationId}`, {
       method: 'DELETE',
       credentials: 'include',
@@ -203,7 +193,6 @@ export const projectApi = {
    * 获取会话的消息列表
    */
   async getConversationMessages(conversationId: string): Promise<any[]> {
-    console.log(`[Project API] Fetching messages for conversation: ${conversationId}`)
     const response = await fetch(`${API_BASE_URL}/conversations/${conversationId}/messages`, {
       cache: 'no-store',
       credentials: 'include',

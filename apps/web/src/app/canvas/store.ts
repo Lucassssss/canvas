@@ -601,8 +601,6 @@ export const useCanvasStore = create<CanvasStore>()(
        * 从服务器加载项目的画布数据
        */
       loadProject: async (projectId: string) => {
-        console.log(`[Canvas Store] Loading project: ${projectId}`)
-
         // CRITICAL: Immediately clear shapes BEFORE the async API call.
         // Without this, zustand's persist middleware hydrates the previous project's 
         // shapes from localStorage on page mount, causing React to render stale 
@@ -619,8 +617,6 @@ export const useCanvasStore = create<CanvasStore>()(
           const project = await projectApi.getProject(projectId)
 
           if (project && project.canvasData) {
-            console.log(`[Canvas Store] Project loaded: ${project.name}`)
-
             set({
               projectId: project.id,
               projectName: project.name,
@@ -642,7 +638,6 @@ export const useCanvasStore = create<CanvasStore>()(
           // 尝试从本地备份恢复
           const backup = localStorage.getItem(`canvas-backup-${projectId}`)
           if (backup) {
-            console.log('[Canvas Store] Restoring from local backup')
             const data = JSON.parse(backup)
             set({
               projectId,
@@ -668,7 +663,6 @@ export const useCanvasStore = create<CanvasStore>()(
           return
         }
 
-        console.log(`[Canvas Store] Saving to server: ${projectId}`)
         set({ isSaving: true })
 
         try {
@@ -695,8 +689,6 @@ export const useCanvasStore = create<CanvasStore>()(
             saveTrigger: state.saveTrigger + 1
           }))
 
-          console.log('[Canvas Store] Saved successfully')
-
           // 清除本地备份
           localStorage.removeItem(`canvas-backup-${projectId}`)
         } catch (error) {
@@ -708,8 +700,6 @@ export const useCanvasStore = create<CanvasStore>()(
             `canvas-backup-${projectId}`,
             JSON.stringify({ shapes, viewport, timestamp: Date.now() })
           )
-
-          console.log('[Canvas Store] Saved to local backup')
         } finally {
           set({ isSaving: false })
         }

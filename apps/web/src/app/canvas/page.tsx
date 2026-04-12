@@ -88,13 +88,11 @@ const CanvasPageContent: React.FC = () => {
    */
   useEffect(() => {
     if (projectIdFromUrl && projectIdFromUrl !== projectId) {
-      console.log('[Canvas Page] Loading project from URL:', projectIdFromUrl)
       setIsLoading(true)
       setLoadError(null)
       
       loadProject(projectIdFromUrl)
         .then(() => {
-          console.log('[Canvas Page] Project loaded successfully')
           setIsLoading(false)
         })
         .catch((error) => {
@@ -123,7 +121,6 @@ const CanvasPageContent: React.FC = () => {
         e.preventDefault() // 阻止浏览器默认保存行为
         
         if (projectId) {
-          console.log('[Canvas Page] Manual save triggered (Ctrl+S)')
           
           // 取消自动保存定时器
           cancelAutoSave()
@@ -131,7 +128,6 @@ const CanvasPageContent: React.FC = () => {
           // 立即保存
           saveToServer()
             .then(() => {
-              console.log('[Canvas Page] Manual save completed')
             })
             .catch((error) => {
               console.error('[Canvas Page] Manual save failed:', error)
