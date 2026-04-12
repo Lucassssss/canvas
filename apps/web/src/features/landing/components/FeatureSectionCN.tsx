@@ -9,9 +9,9 @@ export function FeatureSectionCN() {
             核心能力
           </div>
           <h2 className="font-serif-display text-4xl md:text-5xl lg:text-6xl tracking-tight leading-tight">
-            为电商视觉<br />
-            <span className="font-sans-zh font-extralight text-neutral-400">重新定义</span><br />
-            创作工作流
+            重塑电商视觉，用 AI<br />
+            <span className="font-sans-zh font-extralight text-neutral-400">驱动全域</span><br />
+            生意增长
           </h2>
         </div>
 
@@ -22,11 +22,10 @@ export function FeatureSectionCN() {
               <ImageIcon className="w-10 h-10 text-white/80" />
             </div>
             <h3 className="font-serif-display text-3xl md:text-4xl mb-4">
-              智能换装
-              <span className="text-xs font-sans-zh font-normal text-neutral-400 ml-2">2.0</span>
+              实拍级自然模特
             </h3>
             <p className="font-sans-zh text-neutral-300 leading-relaxed mb-8">
-              物理级贴合，精准识别衣服材质，自动计算自然光影与褶皱，告别生硬贴图感。
+              深度学习面料材质，自适应张力与光影褶皱。完美告别“一眼假”的塑料感，有效提升转化并降低退货率。
             </p>
             
             <div className="absolute bottom-0 right-0 w-48 h-48 bg-gradient-to-t from-indigo-500/20 to-transparent" />
@@ -39,9 +38,9 @@ export function FeatureSectionCN() {
                 <div className="mb-4">
                   <ZoomIn className="w-8 h-8 text-neutral-950" />
                 </div>
-                <h3 className="font-serif-display text-2xl md:text-3xl mb-3">4K 无损放大</h3>
+                <h3 className="font-serif-display text-2xl md:text-3xl mb-3">主图过检合规</h3>
                 <p className="font-sans-zh text-neutral-500 text-sm leading-relaxed max-w-sm">
-                  AI 智能补充纹理细节，放大后布料与五官依然清晰锐利。
+                  满足淘宝/得物等严苛的主图清晰度规范。放大镜视效下细节依然锐利，拒绝残影噪点。
                 </p>
               </div>
               <div className="text-6xl font-serif-display text-neutral-100">4K</div>
@@ -53,9 +52,9 @@ export function FeatureSectionCN() {
             <div className="mb-4">
               <Layers className="w-7 h-7 text-neutral-950" />
             </div>
-            <h3 className="font-serif-display text-xl md:text-2xl mb-3">无限画布</h3>
+            <h3 className="font-serif-display text-xl md:text-2xl mb-3">海量 SKU 快反</h3>
             <p className="font-sans-zh text-neutral-500 text-sm leading-relaxed">
-              自由拖拽排版，支持海量图层同时编辑与处理。
+              突破单图处理瓶颈。支持大批量同时编辑，应对“小单快反”高频上新需求。
             </p>
           </div>
           
@@ -64,9 +63,9 @@ export function FeatureSectionCN() {
             <div className="mb-4">
               <Users className="w-7 h-7 text-white/80" />
             </div>
-            <h3 className="font-serif-display text-xl md:text-2xl mb-3">云端协作</h3>
+            <h3 className="font-serif-display text-xl md:text-2xl mb-3">全渠道资产云</h3>
             <p className="font-sans-zh text-neutral-400 text-sm leading-relaxed">
-              企业级资产库，团队共享设计规范与灵感，一键分发复用。
+              一套素材多端复用。全员云端共享出海与内销素材库，一键分发变体至各平台。
             </p>
             
             <div className="absolute bottom-4 right-4 text-5xl font-serif-display text-white/5">∞</div>

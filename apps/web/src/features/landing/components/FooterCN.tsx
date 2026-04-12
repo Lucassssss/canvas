@@ -10,7 +10,7 @@ export function FooterCN() {
               <img src="/joii_logo_fa.svg" alt="Joii" className="h-8 w-8" width="32" height="32" />
             </Link>
             <p className="font-sans-zh text-neutral-500 max-w-sm text-sm leading-relaxed mb-6">
-              Joii 致力于为电商设计师和商家提供基于前沿大模型的视觉创作工具，通过无限画布和智能算法，大幅提升生产效率与视觉质量。
+              Joii 为出海与内销头部商家提供实战级商品视觉增长工具。彻底告别传统实拍与模特的高昂成本，用极速测款和极致真实感驱动全域生意增长。
             </p>
             <div className="flex items-center gap-2 text-xs font-sans-zh text-neutral-400">
               <span className="w-2 h-2 rounded-full bg-emerald-500" />
@@ -19,12 +19,12 @@ export function FooterCN() {
           </div>
           
           <div className="col-span-6 md:col-span-2 md:col-start-7">
-            <h4 className="font-sans-zh font-medium text-xs text-neutral-400 tracking-widest uppercase mb-6">产品</h4>
+            <h4 className="font-sans-zh font-medium text-xs text-neutral-400 tracking-widest uppercase mb-6">解决方案</h4>
             <ul className="space-y-4 font-sans-zh text-sm text-neutral-600">
-              <li><Link href="/dashboard" className="hover:text-neutral-950 transition-colors">智能换装</Link></li>
-              <li><Link href="/dashboard" className="hover:text-neutral-950 transition-colors">无限画布</Link></li>
-              <li><Link href="/dashboard" className="hover:text-neutral-950 transition-colors">4K 放大</Link></li>
-              <li><Link href="/news" className="hover:text-neutral-950 transition-colors">更新日志</Link></li>
+              <li><Link href="/dashboard" className="hover:text-neutral-950 transition-colors">淘系爆款主图</Link></li>
+              <li><Link href="/dashboard" className="hover:text-neutral-950 transition-colors">跨境多区模特</Link></li>
+              <li><Link href="/dashboard" className="hover:text-neutral-950 transition-colors">社交平台种草</Link></li>
+              <li><Link href="/dashboard" className="hover:text-neutral-950 transition-colors">主图合规过检</Link></li>
             </ul>
           </div>
           

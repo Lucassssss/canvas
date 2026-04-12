@@ -16,13 +16,13 @@ export function HeroSectionCN() {
               </div>
 
               <h1 className="font-serif-display text-5xl md:text-7xl lg:text-[5.5rem] leading-[1.05] tracking-tight mb-6">
-                <span className="block">智能</span>
-                <span className="block font-sans-zh font-extralight text-neutral-500">换装</span>
-                <span className="block">无限</span>
+                <span className="block">真实</span>
+                <span className="block font-sans-zh font-extralight text-neutral-500">质感</span>
+                <span className="block">极速测款</span>
               </h1>
 
               <p className="font-sans-zh text-base md:text-lg text-neutral-500 max-w-md leading-relaxed">
-                基于大模型的电商视觉基础设施，打破创意边界。物理级贴合，4K无损放大，让每一帧都成为可能。
+                告别“一眼假”的 AI 塑料感。100% 保留衣物真实面料与垂坠感，拒绝退货纠纷。零成本极速测款，帮助店铺抢占流量先机。
               </p>
 
               <div className="flex items-center gap-4 mt-8">
@@ -30,12 +30,17 @@ export function HeroSectionCN() {
                   href="/dashboard"
                   className="group inline-flex items-center gap-3 px-8 py-4 bg-neutral-950 text-white font-sans-zh font-medium text-sm tracking-wide hover:bg-neutral-800 transition-colors"
                 >
-                  <span>开始创作</span>
+                  <span>免费注册 · 领 1000 积分</span>
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </Link>
-                <span className="text-xs font-sans-zh text-neutral-400 tracking-wider">
-                  v1.1.0 现已发布
-                </span>
+                <div className="flex flex-col gap-1">
+                  <span className="text-xs font-sans-zh text-neutral-400 tracking-wider">
+                    v1.1.0 现已发布
+                  </span>
+                  <span className="text-[10px] font-sans-zh text-neutral-400/80 tracking-wider">
+                    已支持微信 / 支付宝闭环
+                  </span>
+                </div>
               </div>
             </div>
           </div>
@@ -49,12 +54,12 @@ export function HeroSectionCN() {
           <div className="col-span-12 lg:col-span-6 py-12">
             <div className="grid grid-cols-2 gap-8">
               <div>
-                <div className="font-serif-display text-3xl md:text-4xl text-neutral-950 mb-2">300%</div>
-                <div className="font-sans-zh text-xs text-neutral-400 tracking-wider">贴合度提升</div>
+                <div className="font-sans-zh font-medium text-xl md:text-2xl text-neutral-950 mb-2">面料级保真</div>
+                <div className="font-sans-zh text-xs text-neutral-500 tracking-wide leading-relaxed">精准锁定原图服饰纹理与光影，解决AI换模导致的退货差异。</div>
               </div>
               <div>
-                <div className="font-serif-display text-3xl md:text-4xl text-neutral-950 mb-2">4K</div>
-                <div className="font-sans-zh text-xs text-neutral-400 tracking-wider">无损放大输出</div>
+                <div className="font-sans-zh font-medium text-xl md:text-2xl text-neutral-950 mb-2">跨模全肤色</div>
+                <div className="font-sans-zh text-xs text-neutral-500 tracking-wide leading-relaxed">提供欧美、日韩等多地模特骨架，无缝适配跨境出海需求。</div>
               </div>
             </div>
           </div>
@@ -62,12 +67,12 @@ export function HeroSectionCN() {
           <div className="col-span-12 lg:col-span-6 py-12">
             <div className="grid grid-cols-2 gap-8">
               <div>
-                <div className="font-serif-display text-3xl md:text-4xl text-neutral-950 mb-2">∞</div>
-                <div className="font-sans-zh text-xs text-neutral-400 tracking-wider">无限画布创作</div>
+                <div className="font-sans-zh font-medium text-xl md:text-2xl text-neutral-950 mb-2">极速秒测款</div>
+                <div className="font-sans-zh text-xs text-neutral-500 tracking-wide leading-relaxed">告别模特排期限制。仅需平铺图，几分钟完成全店上新视觉铺货。</div>
               </div>
               <div>
-                <div className="font-serif-display text-3xl md:text-4xl text-neutral-950 mb-2">10x</div>
-                <div className="font-sans-zh text-xs text-neutral-400 tracking-wider">效率倍增</div>
+                <div className="font-sans-zh font-medium text-xl md:text-2xl text-neutral-950 mb-2">4K 商业直出</div>
+                <div className="font-sans-zh text-xs text-neutral-500 tracking-wide leading-relaxed">满足严苛电商的高清画质要求，直接可用作淘宝、小红书主图。</div>
               </div>
             </div>
           </div>
