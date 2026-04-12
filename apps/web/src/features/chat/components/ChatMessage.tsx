@@ -6,6 +6,7 @@ import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism'
 import { ReasoningContent } from './ReasoningContent'
 import { ToolResultContent } from './ToolResultContent'
 import type { Message } from '../types'
+import { getOptimizedImageUrl } from '@/app/canvas/utils/imageOptimization'
 
 function formatMessageTime(timestamp: number): string {
   const date = new Date(timestamp)
@@ -98,7 +99,7 @@ export const ChatMessage = memo(function ChatMessage({ message, isStreaming }: C
                     {message.images.map((url, idx) => (
                       <img 
                         key={idx} 
-                        src={url} 
+                        src={getOptimizedImageUrl(url, 200)} 
                         alt={`参考图 ${idx + 1}`} 
                         className="w-14 h-14 object-cover rounded-md shadow-sm border border-neutral-200 bg-white" 
                       />
