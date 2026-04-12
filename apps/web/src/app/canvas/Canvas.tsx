@@ -1062,7 +1062,7 @@ export const Canvas: React.FC = () => {
       scheduleAutoSave()
     }
     setIsDragging(false)
-  }, [selectionRect, setSelectedIds, saveHistory, setIsDragging, scheduleAutoSave, processShapeUpdates])
+  }, [selectionRect, setSelectedIds, saveHistory, setIsDragging, scheduleAutoSave, processShapeUpdates, isSpaceDragging, setViewport, setIsPanning])
 
   const handleSingleResizeStart = useCallback((e: React.MouseEvent, handle: string, shapeId: string) => {
     e.stopPropagation()

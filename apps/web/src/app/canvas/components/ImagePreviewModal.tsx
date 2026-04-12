@@ -8,19 +8,19 @@ import { aiCombinationService } from '@/ai-combination/service'
 
 export const ImagePreviewModal: React.FC = () => {
   const { previewImage, setPreviewImage } = useCanvasStore()
-  
+
   const [scale, setScale] = useState(1)
   const [position, setPosition] = useState({ x: 0, y: 0 })
   const [isFitScreen, setIsFitScreen] = useState(true)
   const [isDragging, setIsDragging] = useState(false)
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
-  
+
   const [isCropMode, setIsCropMode] = useState(false)
   const [crop, setCrop] = useState<Crop>()
   const [completedCrop, setCompletedCrop] = useState<PixelCrop>()
   const [isUploadingCrop, setIsUploadingCrop] = useState(false)
-  const [dimensions, setDimensions] = useState<{w: number, h: number} | null>(null)
-  
+  const [dimensions, setDimensions] = useState<{ w: number, h: number } | null>(null)
+
   const containerRef = useRef<HTMLDivElement>(null)
   const imgRef = useRef<HTMLImageElement>(null)
 
@@ -40,7 +40,7 @@ export const ImagePreviewModal: React.FC = () => {
   const handleWheel = useCallback((e: React.WheelEvent) => {
     e.stopPropagation()
     e.nativeEvent.stopImmediatePropagation()
-    
+
     if (isCropMode) return
     setIsFitScreen(false)
     const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1
@@ -108,7 +108,23 @@ export const ImagePreviewModal: React.FC = () => {
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [isCropMode, setPreviewImage])
-  
+
+  // 弹窗开启时：在捕获阶段拦截所有 wheel 事件并 preventDefault，
+  // 彻底阻止 Mac Chrome 触控板双指侧滑触发浏览器前进/后退手势。
+  // 关键: capture:true 在事件到达目标元素之前就拦截，决不容错过。
+  // 关键: 依赖 previewImage 确保弹窗关闭后立即清除监听。
+  useEffect(() => {
+    if (!previewImage) return
+
+    const blockWheel = (e: WheelEvent) => {
+      e.preventDefault()
+    }
+
+    // capture:true 让我们在捕获阶段就拦截，优先于浏览器自己的手势处理
+    document.addEventListener('wheel', blockWheel, { passive: false, capture: true })
+    return () => document.removeEventListener('wheel', blockWheel, { capture: true })
+  }, [previewImage])
+
   const stopNativeEvents = (e: React.MouseEvent | React.WheelEvent | React.TouchEvent) => {
     e.stopPropagation()
     // Depending on React version, native stopImmediatePropagation helps isolate from window global listeners
@@ -157,7 +173,7 @@ export const ImagePreviewModal: React.FC = () => {
 
       canvas.toBlob(async (blob) => {
         if (!blob) return
-        
+
         setIsUploadingCrop(true)
         try {
           const file = new File([blob], `cropped-${Date.now()}.png`, { type: 'image/png' })
@@ -188,8 +204,8 @@ export const ImagePreviewModal: React.FC = () => {
   if (typeof document === 'undefined') return null
 
   return createPortal(
-    <div 
-      className="fixed inset-0 z-[99999] bg-black/90 flex flex-col backdrop-blur-sm"
+    <div
+      className="fixed inset-0 z-[99999] bg-black/90 flex flex-col backdrop-blur-sm overscroll-none"
       onWheel={handleWheel}
       onMouseMove={(e) => {
         stopNativeEvents(e)
@@ -225,7 +241,7 @@ export const ImagePreviewModal: React.FC = () => {
             </div>
           )}
         </div>
-        
+
         <div className="flex gap-2 pointer-events-auto bg-black/40 p-2 rounded-full backdrop-blur-md border border-white/10 shadow-xl">
           {!isCropMode ? (
             <>
@@ -235,9 +251,9 @@ export const ImagePreviewModal: React.FC = () => {
               <button onClick={() => { setIsFitScreen(false); setScale(s => s * 1.1) }} className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-white hover:bg-white/10 rounded-full transition-colors" title="放大">
                 <ZoomIn size={16} /> 放大
               </button>
-              
+
               <div className="w-px h-5 bg-white/20 my-auto mx-1" />
-              
+
               <button onClick={handleFitScreen} className={`flex items-center gap-1.5 px-3 py-1.5 text-sm text-white hover:bg-white/10 rounded-full transition-colors ${isFitScreen ? 'bg-white/20' : ''}`} title="适应屏幕">
                 <Maximize size={16} /> 适应屏幕
               </button>
@@ -259,8 +275,8 @@ export const ImagePreviewModal: React.FC = () => {
               <button onClick={() => setIsCropMode(false)} disabled={isUploadingCrop} className="px-4 py-1.5 text-sm text-white hover:bg-white/10 rounded-full transition-colors disabled:opacity-50">
                 取消裁剪
               </button>
-              <button 
-                onClick={handleConfirmCrop} 
+              <button
+                onClick={handleConfirmCrop}
                 disabled={isUploadingCrop}
                 className="px-4 py-1.5 text-sm bg-blue-600 text-white hover:bg-blue-700 rounded-full transition-colors flex items-center gap-1.5 shadow-lg shadow-blue-500/20 disabled:opacity-50"
               >
@@ -277,7 +293,7 @@ export const ImagePreviewModal: React.FC = () => {
         </div>
       </div>
 
-      <div 
+      <div
         ref={containerRef}
         className="flex-1 w-full h-full overflow-hidden flex items-center justify-center cursor-move"
         onMouseDown={(e) => {
@@ -285,16 +301,16 @@ export const ImagePreviewModal: React.FC = () => {
           if (!isCropMode) handleMouseDown(e)
         }}
         onWheel={(e) => {
-            stopNativeEvents(e)
-            handleWheel(e)
+          stopNativeEvents(e)
+          handleWheel(e)
         }}
       >
         {isCropMode ? (
-          <ReactCrop 
-            crop={crop} 
-            onChange={(c) => setCrop(c)} 
+          <ReactCrop
+            crop={crop}
+            onChange={(c) => setCrop(c)}
             onComplete={(c) => setCompletedCrop(c)}
-             className="max-h-[85vh] max-w-[90vw]"
+            className="max-h-[85vh] max-w-[90vw]"
           >
             <img
               ref={imgRef}
@@ -322,9 +338,9 @@ export const ImagePreviewModal: React.FC = () => {
             }}
             className="transition-all duration-75 block"
             style={
-              isFitScreen 
-               ? { maxHeight: '90vh', maxWidth: '90vw', objectFit: 'contain', transform: `translate(${position.x}px, ${position.y}px)` }
-               : { transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`, transformOrigin: 'center' }
+              isFitScreen
+                ? { maxHeight: '90vh', maxWidth: '90vw', objectFit: 'contain', transform: `translate(${position.x}px, ${position.y}px)` }
+                : { transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`, transformOrigin: 'center' }
             }
           />
         )}

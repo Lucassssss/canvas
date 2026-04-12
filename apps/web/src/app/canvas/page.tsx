@@ -62,6 +62,16 @@ const CanvasPageContent: React.FC = () => {
     if (stored !== null) {
       setIsChatOpen(stored === 'true')
     }
+
+    // 在捕获阶段拦截所有 wheel 事件并 preventDefault，
+    // 彻底阻止 Mac Chrome 触控板双指侧滑触发浏览器前进/后退手势。
+    // capture:true 让我们在浏览器手势识别之前就介入。
+    // Canvas 的自身 zoom/pan 逻辑不受影响（preventDefault 只阻止浏览器默认行为）。
+    const blockNavigation = (e: WheelEvent) => {
+      e.preventDefault()
+    }
+    document.addEventListener('wheel', blockNavigation, { passive: false, capture: true })
+    return () => document.removeEventListener('wheel', blockNavigation, { capture: true })
   }, [])
 
   /**

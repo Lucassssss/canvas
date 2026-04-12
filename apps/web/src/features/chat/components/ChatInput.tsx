@@ -9,6 +9,7 @@ import { ResolutionSelect, type Resolution } from '@/app/canvas/config-panel/Res
 import { useModelsStore } from '@/app/canvas/store/models'
 import { useCanvasStore } from '@/app/canvas/store'
 import { Image as ImageIcon } from 'lucide-react'
+import { getOptimizedImageUrl } from '@/app/canvas/utils/imageOptimization'
 
 interface ChatInputProps {
   value: string
@@ -34,7 +35,11 @@ export const ChatInput: React.FC<ChatInputProps> = ({ value, onChange, onSend, o
     return shapes
       .filter(s => selectedIds.includes(s.id))
       .filter(s => s.imageUrl) // 只提取带图片的 shapes
-      .map(s => ({ id: s.id, url: s.imageUrl!, name: s.imageName || '参考图' }))
+      .map(s => ({ 
+        id: s.id, 
+        url: getOptimizedImageUrl(s.imageUrl!, 2048), // Resize to at most 2K for AI reasoning
+        name: s.imageName || '参考图' 
+      }))
   }, [shapes, selectedIds])
 
   useEffect(() => {
