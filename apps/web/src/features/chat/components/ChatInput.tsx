@@ -1,81 +1,115 @@
-import React, { useRef, useEffect } from 'react'
+import React, { useEffect } from 'react'
+import TextareaAutosize from 'react-textarea-autosize'
+import { InputGroup, InputGroupAddon } from '@/components/ui/input-group'
+import { Button } from '@/components/ui/button'
+import { ArrowUp, Loader2 } from 'lucide-react'
+import { ModelSelect } from '@/app/canvas/config-panel/ModelSelect'
+import { AspectRatioSelect } from '@/app/canvas/config-panel/AspectRatioSelect'
+import { ResolutionSelect, type Resolution } from '@/app/canvas/config-panel/ResolutionSelect'
+import { useModelsStore } from '@/app/canvas/store/models'
 
 interface ChatInputProps {
   value: string
   onChange: (value: string) => void
-  onSend: () => void
+  onSend: (options?: { model?: string, resolution?: string, aspectRatio?: string }) => void
   isLoading?: boolean
 }
 
+let cachedModel = ''
+let cachedResolution = '1K'
+let cachedAspectRatio = '1:1'
+
 export const ChatInput: React.FC<ChatInputProps> = ({ value, onChange, onSend, isLoading }) => {
-  const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const { models } = useModelsStore()
+  const [selectedModel, setSelectedModel] = React.useState(cachedModel || (models.length > 0 ? models[0].id : ''))
+  const [resolution, setResolution] = React.useState<Resolution>(cachedResolution)
+  const [aspectRatio, setAspectRatio] = React.useState(cachedAspectRatio)
 
   useEffect(() => {
-    if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto'
-      const newHeight = Math.min(Math.max(textareaRef.current.scrollHeight, 52), 320)
-      textareaRef.current.style.height = `${newHeight}px`
+    if (!selectedModel && models.length > 0) {
+      setSelectedModel(models[0].id)
+      cachedModel = models[0].id
     }
-  }, [value])
+  }, [models, selectedModel])
+
+  const handleModelChange = (val: string) => {
+    setSelectedModel(val)
+    cachedModel = val
+  }
+  
+  const handleResolutionChange = (val: Resolution) => {
+    setResolution(val)
+    cachedResolution = val
+  }
+  
+  const handleAspectRatioChange = (val: string) => {
+    setAspectRatio(val)
+    cachedAspectRatio = val
+  }
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
       if (!isLoading && value.trim()) {
-        onSend()
+        onSend({ model: selectedModel, resolution, aspectRatio: aspectRatio })
       }
     }
   }
 
+  const handleSend = () => {
+    onSend({ model: selectedModel, resolution, aspectRatio: aspectRatio })
+  }
+
   return (
-    <div className="relative">
-      <textarea
-        ref={textareaRef}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        onKeyDown={handleKeyDown}
-        placeholder="输入消息..."
-        disabled={isLoading}
-        rows={4}
-        className={`
-          w-full resize-none rounded-xl border border-neutral-300 bg-white px-2 py-2 pr-14
-          text-sm text-black placeholder-neutral-400
-          transition-all
-          focus:border-gray-300 focus:ring-2 focus:ring-black/5 focus:outline-none
-          ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}
-        `}
-        style={{
-          minHeight: '52px',
-          maxHeight: '320px',
-          height: 'auto',
-        }}
-      />
-      <button
-        onClick={onSend}
-        disabled={isLoading || !value.trim()}
-        className={`
-          absolute right-2 bottom-3 p-2 rounded-full
-          transition-all
-          ${value.trim() && !isLoading
-            ? 'bg-black text-white hover:bg-neutral-800 cursor-pointer'
-            : 'bg-neutral-200 text-neutral-400 cursor-not-allowed'
-          }
-        `}
-      >
-        <svg
-          width="16"
-          height="16"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <line x1="12" y1="19" x2="12" y2="5" />
-          <polyline points="5 12 12 5 19 12" />
-        </svg>
-      </button>
-    </div>
+    <InputGroup className="h-auto flex-col rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden transition-all focus-within:border-gray-300 focus-within:ring-2 focus-within:ring-black/5 !bg-white">
+      <div className="w-full relative px-0 flex flex-col">
+        <TextareaAutosize
+          className={`w-full resize-none bg-transparent py-3 px-4 text-sm outline-none placeholder:text-gray-400 ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+          placeholder="输入消息..."
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          onKeyDown={handleKeyDown}
+          disabled={isLoading}
+          minRows={3}
+          maxRows={8}
+        />
+      </div>
+
+      <InputGroupAddon align="block-end" className="w-full pt-1 pb-2 px-3">
+        <div className="flex items-center justify-between w-full">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <ModelSelect
+              value={selectedModel}
+              onChange={handleModelChange}
+              disabled={isLoading}
+              className="h-8 text-sm bg-transparent border-0 ring-1 ring-inset ring-gray-200 hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 max-w-[150px]"
+            />
+            <AspectRatioSelect
+              value={aspectRatio}
+              onChange={handleAspectRatioChange}
+              className="h-8 text-sm bg-transparent border-0 ring-1 ring-inset ring-gray-200 hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 w-auto min-w-[70px]"
+            />
+            <ResolutionSelect
+              value={resolution}
+              onChange={handleResolutionChange}
+              className="h-8 text-sm bg-transparent border-0 ring-1 ring-inset ring-gray-200 hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 w-auto min-w-[70px]"
+            />
+          </div>
+
+          <Button
+            size="sm"
+            onClick={handleSend}
+            disabled={isLoading || !value.trim()}
+            className={`shrink-0 ml-4 pb-0 h-8 w-8 px-0 rounded-full transition-all ${value.trim() && !isLoading ? 'bg-black text-white hover:bg-neutral-800' : 'bg-neutral-200 text-neutral-400'}`}
+          >
+            {isLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <ArrowUp className="h-4 w-4" />
+            )}
+          </Button>
+        </div>
+      </InputGroupAddon>
+    </InputGroup>
   )
 }

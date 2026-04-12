@@ -1,5 +1,5 @@
 import { ModelMessage, stepCountIs, streamText, ToolLoopAgent, ToolSet } from 'ai';
-import { tools } from '../tools/index.js';
+import { getTools } from '../tools/index.js';
 import prompts from '../prompts/index.js';
 import "dotenv/config";
 import Model from './model.js';
@@ -25,14 +25,29 @@ export const runChat = async (
   mode: string = "auto",
   onAssistantMessage?: (content: string, isComplete: boolean) => void,
   options?: RunChatOptions,
+  imageModel?: string,
+  resolution?: string,
+  aspectRatio?: string,
+  userId?: string
 ) => {
   const { onArtifact } = options || {};
   let result: any = null;
   let assistantContent = "";
   
+  let currentPrompts = prompts;
+  if (imageModel) {
+    currentPrompts += `\n\nWhen invoking the canvasGenerateImage tool, you MUST pass "${imageModel}" exactly as the modelId.`;
+  }
+  if (resolution) {
+    currentPrompts += `\n\nWhen invoking the canvasGenerateImage tool, you MUST pass "${resolution}" as the resolution.`;
+  }
+  if (aspectRatio) {
+    currentPrompts += `\n\nWhen invoking the canvasGenerateImage tool, you MUST pass "${aspectRatio}" as the aspectRatio.`;
+  }
+  
   messages = [{
     role: "system",
-    content: prompts,
+    content: currentPrompts,
   }, ...messages];
 
   if(mode === "auto") {
@@ -42,10 +57,10 @@ export const runChat = async (
     });
   } else if(mode === "agent") {
     result = await streamText({
-      system: prompts,
+      system: currentPrompts,
       model: Model.create(modelName),
       messages: messages,
-      tools: tools,
+      tools: getTools(userId),
       stopWhen: stepCountIs(100),
     });
   } 

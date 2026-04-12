@@ -1,5 +1,5 @@
 import { ToolLoopAgent } from "ai";
-import { tools } from "../tools";
+import { getTools } from "../tools";
 import Model from "./model";
 
 // 模块级缓存：存储 Agent 实例
@@ -23,7 +23,7 @@ export default class Agent {
     // 3. 创建 Agent 实例（只在第一次调用时执行）
     const newAgent = new ToolLoopAgent({
       model: modelInstance,
-      tools: tools,
+      tools: getTools(),
     });
 
     // 4. 存入缓存

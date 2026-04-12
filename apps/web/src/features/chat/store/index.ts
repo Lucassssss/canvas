@@ -3,6 +3,7 @@ import type { Message, ChatThread, MessageBlock } from '../types'
 import { streamChat } from '../services/api'
 import { projectApi } from '@/lib/api/project-api'
 import { useAuth } from '@/features/auth/useAuth'
+import { canvasToolExecutor } from '../services/canvas-executor'
 
 function generateId(): string {
   return Math.random().toString(36).substring(2, 11)
@@ -26,7 +27,7 @@ interface ChatStore {
   selectThread: (id: string) => Promise<void>
   addBlockToMessage: (messageId: string, block: MessageBlock) => void
   updateBlock: (messageId: string, blockId: string, updates: Partial<MessageBlock>) => void
-  sendMessage: (content: string) => Promise<void>
+  sendMessage: (content: string, options?: { model?: string, resolution?: string, aspectRatio?: string }) => Promise<void>
   setConversationId: (id: string | null) => void
   setCurrentProjectId: (id: string | null) => void
   loadProjectConversations: (projectId: string) => Promise<void>
@@ -237,7 +238,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 
   setConversationId: (id) => set({ conversationId: id }),
 
-  sendMessage: async (content) => {
+  sendMessage: async (content: string, options?: { model?: string, resolution?: string, aspectRatio?: string }) => {
     const { 
       conversationId, 
       currentThreadId,
@@ -284,8 +285,10 @@ export const useChatStore = create<ChatStore>((set, get) => ({
       for await (const event of streamChat(uiMessages, {
         conversationId: conversationId || undefined,
         mode: 'agent',
-        // model: 'deepseek/deepseek-chat',
         model: '',
+        imageModel: options?.model, // Treat the passed generic model as the image generation model
+        resolution: options?.resolution,
+        aspectRatio: options?.aspectRatio,
       })) {
         if (event.type === 'conversation_created') {
           const newConvId = event.id as string
@@ -353,6 +356,9 @@ export const useChatStore = create<ChatStore>((set, get) => ({
           if (targetMsg && targetMsg.role === 'assistant' && targetMsg.blocks) {
             const lastBlock = targetMsg.blocks[targetMsg.blocks.length - 1]
             if (lastBlock && lastBlock.type === 'tool-call' && lastBlock.status === 'running') {
+              // 拦截并独立处理画布相关的 Tool Calls
+              canvasToolExecutor.executeTool(lastBlock.name, event.output);
+
               updateMessage(targetMsg.id, {
                 blocks: targetMsg.blocks.map((b) =>
                   b.id === lastBlock.id

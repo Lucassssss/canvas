@@ -13,6 +13,9 @@ export async function* streamChat(
     conversationId?: string
     mode?: 'auto' | 'agent'
     model?: string
+    imageModel?: string
+    resolution?: string
+    aspectRatio?: string
     onEvent?: StreamHandler
   }
 ): AsyncGenerator<ApiStreamEvent> {

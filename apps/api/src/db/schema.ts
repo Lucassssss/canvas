@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, integer, index, uniqueIndex, json, pgEnum } from 'drizzle-orm/pg-core'
+import { pgTable, text, timestamp, integer, index, uniqueIndex, json, pgEnum, doublePrecision } from 'drizzle-orm/pg-core'
 import { z } from 'zod'
 
 export const vipLevelEnum = pgEnum('vip_level', ['free', 'pro', 'enterprise'])
@@ -25,8 +25,8 @@ export const users = pgTable('users', {
   phone: text('phone').unique().notNull(),
   nickname: text('nickname'),
   avatarUrl: text('avatar_url'),
-  credits: integer('credits').notNull().default(0),
-  creditsUsed: integer('credits_used').notNull().default(0),
+  credits: doublePrecision('credits').notNull().default(0),
+  creditsUsed: doublePrecision('credits_used').notNull().default(0),
   vipLevel: vipLevelEnum('vip_level').default('free').notNull(),
   vipExpiresAt: timestamp('vip_expires_at', { mode: 'date' }),
   createdAt: timestamp('created_at').defaultNow().notNull(),
@@ -99,9 +99,9 @@ export const creditTransactions = pgTable('credit_transactions', {
   id: text('id').primaryKey(),
   userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   type: transactionTypeEnum('type').notNull(),
-  amount: integer('amount').notNull(),
-  balanceBefore: integer('balance_before').notNull(),
-  balanceAfter: integer('balance_after').notNull(),
+  amount: doublePrecision('amount').notNull(),
+  balanceBefore: doublePrecision('balance_before').notNull(),
+  balanceAfter: doublePrecision('balance_after').notNull(),
   description: text('description'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 }, (table) => ({
@@ -112,7 +112,7 @@ export const usageLogs = pgTable('usage_logs', {
   id: text('id').primaryKey(),
   userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   action: text('action').notNull(),
-  creditsCost: integer('credits_cost').default(0),
+  creditsCost: doublePrecision('credits_cost').default(0),
   details: text('details'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 }, (table) => ({
