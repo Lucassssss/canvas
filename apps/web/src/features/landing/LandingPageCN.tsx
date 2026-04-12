@@ -30,41 +30,56 @@ const NavbarFallback: React.FC = () => (
 
 export function LandingPageCN() {
   return (
-    <div className="min-h-screen w-full bg-white text-neutral-950 font-sans overflow-x-hidden">
-      <Suspense fallback={<NavbarFallback />}>
-        <NavbarCN />
-      </Suspense>
+    <div className="min-h-screen w-full bg-white text-neutral-950 font-sans overflow-x-hidden relative">
 
-      <main className="w-full">
-        <HeroSectionCN />
-        <FeatureSectionCN />
-        <ShowcaseSectionCN />
-        <NewsSectionCN />
+      {/* 全局材质视觉差背景 */}
+      {/* <div className="fixed top-0 left-0 w-full md:w-[38vw] h-screen z-0 pointer-events-none select-none">
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-white w-full h-full z-10" />
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/50 to-white w-full h-full z-10" />
+        <img
+          // src="/images/ultra_texture_fabric.png" 
+          src="https://d-assets-cn.joii.cc/ai-generated/5e3e910c-9543-4a2d-9232-40424c4b8bed.png"
+          alt="真实质感细节"
+          className="w-full h-full object-cover opacity-90 mix-blend-multiply"
+        />
+      </div> */}
 
-        <section className="py-24 md:py-32 bg-neutral-950 text-white relative overflow-hidden">
-          <div className="max-w-[1600px] mx-auto px-6 md:px-12 text-center">
-            <h2 className="font-serif-display text-4xl md:text-5xl lg:text-7xl tracking-tight mb-8">
-              引爆<br />
-              <span className="font-sans-zh font-extralight text-neutral-500">利润</span><br />
-              增长
-            </h2>
-            <p className="font-sans-zh text-neutral-500 mb-12 max-w-md mx-auto">
-              加入 500+ 出海与内销头部卖家的行列，彻底告别高昂场地模特费，将商品视觉转化为销冠引擎。
-            </p>
-            <Link 
-              href="/dashboard" 
-              className="group inline-flex items-center gap-3 px-10 py-5 bg-white text-neutral-950 font-sans-zh font-medium text-sm hover:bg-neutral-100 transition-colors"
-            >
-              <span>立即注册 · 领 1000 积分</span>
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </Link>
-          </div>
-          
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-indigo-500/10 rounded-full blur-[150px] -z-10" />
-        </section>
-      </main>
+      <div className="relative z-10">
+        <Suspense fallback={<NavbarFallback />}>
+          <NavbarCN />
+        </Suspense>
 
-      <FooterCN />
+        <main className="w-full">
+          <HeroSectionCN />
+          <FeatureSectionCN />
+          <ShowcaseSectionCN />
+          <NewsSectionCN />
+
+          <section className="py-24 md:py-32 bg-neutral-950 text-white relative overflow-hidden">
+            <div className="max-w-[1600px] mx-auto px-6 md:px-12 text-center">
+              <h2 className="font-serif-display text-4xl md:text-5xl lg:text-7xl tracking-tight mb-8">
+                马上<br />
+                <span className="font-sans-zh font-extralight text-neutral-500">开始</span><br />
+                增长
+              </h2>
+              <p className="font-sans-zh text-neutral-500 mb-12 max-w-md mx-auto">
+                加入 500+ 出海与内销头部卖家的行列，彻底告别高昂场地模特费，将商品视觉转化为销冠引擎。
+              </p>
+              <Link
+                href="/dashboard"
+                className="group inline-flex items-center gap-3 px-10 py-5 bg-white text-neutral-950 font-sans-zh font-medium text-sm hover:bg-neutral-100 transition-colors"
+              >
+                <span>立即注册 · 领 1000 积分</span>
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              </Link>
+            </div>
+
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-indigo-500/10 rounded-full blur-[150px] -z-10" />
+          </section>
+        </main>
+
+        <FooterCN />
+      </div>
     </div>
   )
 }

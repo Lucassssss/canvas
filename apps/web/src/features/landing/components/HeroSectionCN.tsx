@@ -4,7 +4,7 @@ import { HeroCanvas } from './HeroCanvas'
 
 export function HeroSectionCN() {
   return (
-    <section className="relative overflow-hidden bg-white text-neutral-950 mt-20">
+    <section className="relative overflow-hidden text-neutral-950 mt-20">
       <div className="absolute top-0 right-0 w-1/2 bottom-0 bg-neutral-100/50" />
 
       <div className="max-w-[1600px] mx-auto px-6 md:px-12 relative">
