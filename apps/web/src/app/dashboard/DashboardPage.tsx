@@ -1,7 +1,7 @@
 import React from 'react'
 import { Header } from './components/Header'
 import { ChatSection } from './components/ChatSection'
-import { QuickTags } from './components/QuickTags'
+
 import { LeftSidebar } from '@/components/LeftSidebar'
 import { EcommerceMaster } from './components/EcommerceMaster'
 import { RecentProjects } from './components/RecentProjects'
@@ -31,10 +31,6 @@ export function DashboardPage() {
 
             <div className="w-full max-w-2xl mb-6">
               <ChatSection />
-            </div>
-
-            <div className="w-full max-w-2xl flex justify-center">
-              <QuickTags />
             </div>
           </div>
         </div>

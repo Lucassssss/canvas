@@ -128,6 +128,7 @@ export const useProjectStore = create<ProjectStore>()(
       // ========== 项目列表管理 ==========
 
       loadProjects: async () => {
+        if (get().isLoadingProjects) return
 
         set({ isLoadingProjects: true, projectsError: null })
 
