@@ -46,11 +46,11 @@ const tools = [
 type Step = 'idle' | 'generating' | 'result'
 type CursorState = 'hidden' | 'entering' | 'over-button' | 'clicking' | 'clicked'
 
-function ImageSlot({ image, isLoading }: { image: string | null; isLoading?: boolean }) {
+function ImageSlot({ image, isLoading, className }: { image: string | null; isLoading?: boolean; className?: string }) {
   return (
     <div
-      className="relative bg-white/80 backdrop-blur-sm overflow-hidden shadow-md ring-1 ring-neutral-200"
-      style={{ width: SLOT_WIDTH, height: SLOT_HEIGHT }}
+      className={`relative bg-white/80 backdrop-blur-sm overflow-hidden shadow-md ring-1 ring-neutral-200 ${className || ''}`}
+      style={!className ? { width: SLOT_WIDTH, height: SLOT_HEIGHT } : undefined}
     >
       {isLoading ? (
         <div className="absolute inset-0 flex items-center justify-center bg-white/80">
@@ -262,17 +262,70 @@ export function HeroCanvas({ className }: HeroCanvasProps) {
         </div>
       </div>
 
-      <div className="md:hidden flex flex-col items-center justify-center h-full gap-4 p-6">
-        <div className="text-center text-sm text-neutral-600 mb-2">
-          <span className="font-sans-zh">AI 换装</span>
+      <div className="md:hidden absolute inset-0 bg-white/60 overflow-hidden">
+        <div
+          className="absolute inset-0 opacity-40 mix-blend-multiply"
+          style={{
+            backgroundImage: 'radial-gradient(circle, #d4d4d4 1px, transparent 1px)',
+            backgroundSize: '16px 16px',
+          }}
+        />
+        <div className="absolute top-4 left-4 sm:top-6 sm:left-6">
+          <div className="font-serif-display text-xl sm:text-2xl text-neutral-300">真</div>
+          <div className="font-serif-display text-base sm:text-lg text-neutral-950 tracking-tight">一键换装，稳定可控</div>
         </div>
-        <button
-          onClick={handleGenerate}
-          disabled={step === 'generating'}
-          className="px-4 py-2 bg-blue-500 text-white text-xs rounded-lg"
-        >
-          {step === 'generating' ? '生成中...' : '开始演示'}
-        </button>
+
+        <div className="absolute inset-0 flex flex-col justify-center items-center py-6 px-4">
+
+          <div className="flex flex-col items-center justify-center w-full flex-1">
+            <div className="flex items-center justify-center gap-2 sm:gap-3 w-full">
+              {/* Model */}
+              <div className="flex flex-col items-center gap-2">
+                <ImageSlot image={modelImage} className="w-[82px] h-[115px] sm:w-[94px] sm:h-[132px] rounded-lg" />
+              </div>
+
+              <div className="text-neutral-300 font-light text-sm">+</div>
+
+              {/* Clothing */}
+              <div className="flex flex-col items-center gap-2">
+                <ImageSlot image={clothingImage} className="w-[82px] h-[115px] sm:w-[94px] sm:h-[132px] rounded-lg" />
+              </div>
+
+              {/* Play Button */}
+              <div className="flex flex-col items-center justify-center">
+                <button
+                  onClick={handleButtonClick}
+                  disabled={step === 'generating'}
+                  className={`
+                    w-10 h-10 rounded-full transition-all flex items-center justify-center shadow-md border-2 border-white
+                    ${step === 'generating'
+                      ? 'bg-neutral-300 cursor-not-allowed'
+                      : 'bg-blue-500 hover:bg-blue-600 active:scale-95 text-white'}
+                    ${step === 'idle' ? 'animate-pulse' : ''}
+                  `}
+                >
+                  {step === 'generating' ? <Loader2 size={16} className="animate-spin text-white" /> : <Play size={16} fill="white" className="ml-0.5" />}
+                </button>
+              </div>
+
+              {/* Result */}
+              <div className="flex flex-col items-center gap-2">
+                <ImageSlot image={resultImage} isLoading={step === 'generating'} className="w-[82px] h-[115px] sm:w-[94px] sm:h-[132px] rounded-lg shadow-sm ring-1 ring-neutral-900/5" />
+              </div>
+            </div>
+
+            <div className="h-6 mt-8 flex items-center justify-center">
+              {step === 'result' ? (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 text-[10px] font-medium text-emerald-700 bg-emerald-50 rounded-full border border-emerald-100/50">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                  生成成功
+                </span>
+              ) : (
+                <span className="text-[10px] text-neutral-400 font-sans-zh tracking-wide">{step === 'generating' ? 'AI深度生成中...' : '点击中间按钮演示'}</span>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   )

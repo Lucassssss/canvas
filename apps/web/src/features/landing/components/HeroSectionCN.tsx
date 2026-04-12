@@ -9,8 +9,8 @@ export function HeroSectionCN() {
 
       <div className="max-w-[1600px] mx-auto px-6 md:px-12 relative">
         <div className="grid grid-cols-12 gap-6 lg:gap-12 items-stretch">
-          <div className="col-span-12 lg:col-span-6 flex flex-col justify-between min-h-[800px]">
-            <div className="pt-24 md:pt-32">
+          <div className="col-span-12 lg:col-span-6 flex flex-col justify-between min-h-[auto] lg:min-h-[800px] pt-12 lg:pt-0">
+            <div className="pt-12 md:pt-32">
               <div className="text-xs font-sans-zh font-medium text-neutral-400 tracking-[0.3em] uppercase mb-8">
                 电商视觉 AI 革命
               </div>
@@ -40,7 +40,7 @@ export function HeroSectionCN() {
             </div>
           </div>
 
-          <div className="col-span-12 lg:col-span-6 min-h-[800px]">
+          <div className="col-span-12 lg:col-span-6 h-[500px] lg:min-h-[800px] relative mt-12 lg:mt-0">
             <HeroCanvas className="w-full h-full" />
           </div>
         </div>
