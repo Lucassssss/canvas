@@ -52,13 +52,6 @@ export const ModelSelect: React.FC<ModelSelectProps> = ({ value, onChange, class
     return models.find((m) => m.id === value || m.modelId === value)
   }, [models, value])
 
-  console.log('[DEBUG ModelSelect]', {
-    incomingValue: value,
-    selectedModelId: selectedModel?.id,
-    modelsLoaded: !loading,
-    found: !!selectedModel
-  })
-
   if (loading) {
     return (
       <Select disabled>
@@ -75,10 +68,10 @@ export const ModelSelect: React.FC<ModelSelectProps> = ({ value, onChange, class
         <SelectValue>
           {selectedModel ? (
             <span className="flex items-center gap-1.5">
-              <img 
-                src={getModelIcon(selectedModel.provider)} 
-                alt={selectedModel.provider} 
-                className="w-4 h-4" 
+              <img
+                src={getModelIcon(selectedModel.provider)}
+                alt={selectedModel.provider}
+                className="w-4 h-4"
               />
               <span>{selectedModel.name}</span>
             </span>

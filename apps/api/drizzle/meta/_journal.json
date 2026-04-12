@@ -15,6 +15,13 @@
       "when": 1775764572904,
       "tag": "0001_misty_kinsey_walden",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1775977892264,
+      "tag": "0002_glorious_brood",
+      "breakpoints": true
     }
   ]
 }
