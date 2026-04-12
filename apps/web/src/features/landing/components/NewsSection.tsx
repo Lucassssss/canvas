@@ -3,14 +3,14 @@ import { ArrowRight, Calendar, Sparkles } from 'lucide-react'
 
 const NEWS_ITEMS = [
   {
-    id: 1,
+    id: 'how-to-balance-ai-ecommerce-effect-with-cost',
     title: 'Joii v1.1.0 重磅发布：全新智能换装模型与高清放大功能上线',
     excerpt: '在最新版本的 Joii 中，我们引入了基于最前沿大模型技术的智能换装功能，不仅贴合度提升了300%，还支持最高 4K 的无损放大...',
     date: '2026-04-05',
     category: '产品更新',
   },
   {
-    id: 2,
+    id: 'ecommerce-guide',
     title: '电商大促备战指南：如何用 Joii 一天生成 1000 张爆款主图',
     excerpt: '618即将来临，电商视觉设计团队面临巨大压力。本文将详细拆解如何利用 Joii 的无限画布组合批量生成能力...',
     date: '2026-03-20',
