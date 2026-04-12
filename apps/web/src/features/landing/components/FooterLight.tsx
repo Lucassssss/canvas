@@ -45,7 +45,11 @@ export function FooterLight() {
         </div>
         
         <div className="pt-8 border-t border-neutral-200 flex flex-col md:flex-row items-center justify-between gap-4 text-xs font-mono text-neutral-400 uppercase tracking-widest">
-          <p>© 2026 Joii AI Inc.</p>
+          <div className="flex flex-col md:flex-row items-center gap-2 md:gap-4">
+            <span>© 2026 Joii AI Inc.</span>
+            <span className="hidden md:inline">|</span>
+            <a href="https://beian.miit.gov.cn/#/Integrated/index" target="_blank" rel="noopener noreferrer" className="font-sans normal-case tracking-normal hover:text-neutral-950 transition-colors">陇ICP备19004300号</a>
+          </div>
           <div className="flex items-center gap-2">
             <span>System Status:</span>
             <span className="flex items-center gap-2 text-emerald-600">
