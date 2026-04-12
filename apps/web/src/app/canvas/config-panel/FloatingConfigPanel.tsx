@@ -187,19 +187,6 @@ export const FloatingConfigPanel: React.FC<FloatingConfigPanelProps> = ({ contai
   const isGenerating = !!selectedShape.isGenerating
   const error = selectedShape.generationError || null
 
-  if (selectedShape.type === 'image') {
-    console.log('[DEBUG FloatingConfigPanel]', { 
-      currentModel, 
-      defaultModel, 
-      modelsLength: models.length, 
-      activeModel,
-      shapeId: selectedShape.id,
-      imageConfigModel: selectedShape.imageConfig?.model
-    })
-    // @ts-ignore - for debugging purposes directly from DevTools
-    window.__DEBUG_MODEL__ = { currentModel, defaultModel, models, activeModel }
-  }
-
   const imageConfig: ImageGenerationConfig = {
     model: activeModel,
     resolution: (selectedShape.imageConfig?.resolution as Resolution) || defaultResolution,
