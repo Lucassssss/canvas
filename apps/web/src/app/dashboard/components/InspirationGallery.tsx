@@ -30,6 +30,8 @@ const imageUrls = [
   'https://d-assets-cn.joii.cc/ai-generated/353492d9-ef86-46a8-8e59-a9a9aac90c0c.png?fmt=webp&w=800',
   'https://d-assets-cn.joii.cc/ai-generated/0212900c-e7d5-4d30-a774-eefaf93d6ae0.png?fmt=webp&w=1200',
   'https://d-assets-cn.joii.cc/ai-generated/5f3928d3-b977-41d2-9227-518c19779386.png?fmt=webp&w=1200',
+  'https://d-assets-cn.joii.cc/ai-generated/31172e47-0d0f-4f95-9f3a-9e937d8e0923.png?fmt=webp&w=1200',
+  'https://d-assets-cn.joii.cc/ai-generated/52bdc0f0-2448-437d-b03b-75222ce0169a.png?fmt=webp&w=800',
 ]
 
 const heights = ['h-48', 'h-56', 'h-64', 'h-72', 'h-80', 'h-44', 'h-52', 'h-68', 'h-60', 'h-96']
