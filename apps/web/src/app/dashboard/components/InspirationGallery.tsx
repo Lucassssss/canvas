@@ -28,18 +28,20 @@ const imageUrls = [
   'https://d-assets-cn.joii.cc/ai-generated/e5fccb7b-6406-4f44-8868-2a941138ed09.png?fmt=webp&w=800',
   'https://d-assets-cn.joii.cc/ai-generated/30d91813-85b1-432d-b2d8-a816b8d85864.png?fmt=webp&w=800',
   'https://d-assets-cn.joii.cc/ai-generated/353492d9-ef86-46a8-8e59-a9a9aac90c0c.png?fmt=webp&w=800',
+  'https://d-assets-cn.joii.cc/ai-generated/0212900c-e7d5-4d30-a774-eefaf93d6ae0.png?fmt=webp&w=1200',
+  'https://d-assets-cn.joii.cc/ai-generated/5f3928d3-b977-41d2-9227-518c19779386.png?fmt=webp&w=1200',
 ]
 
 const heights = ['h-48', 'h-56', 'h-64', 'h-72', 'h-80', 'h-44', 'h-52', 'h-68', 'h-60', 'h-96']
 
 const titles = [
-  '极简风格 logo 设计', '科技感插画', '品牌形象视觉', '抽象艺术海报',
-  '产品包装设计', 'UI 界面设计', '创意字体排版', '3D 渲染场景',
+  '欧美跨境外模 针织衫测款', '淘宝平铺白底转街拍', '小红书氛围感 辣妹风换模', '亚马逊主图 细节无损超分',
+  'Shein爆款风格 连衣长裙', '高级纯净棚拍 外套展示', '韩系东大门 穿搭种草', '多模特色彩批量换装',
 ]
 
 const authors = [
-  '设计师 A', '创作者 B', '艺术家 C', '画师 D', '品牌 E',
-  '产品 F', '字体 G', '3D H',
+  '跨境大卖电商团队', '淘系女装TOP店', '种草视觉工作室', 'Amazon视觉优化师', '独立站出海买手',
+  '杭州光影实创', '首尔风尚', '广州极速测款团队',
 ]
 
 const generateItems = (count: number, startIndex: number = 0): InspirationItem[] => {
@@ -124,8 +126,8 @@ export function InspirationGallery() {
         <div className="col-span-12">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h2 className="font-sans-zh text-sm font-medium text-neutral-700">灵感发现</h2>
-              <p className="font-sans-zh text-xs text-neutral-400 mt-1">探索更多优秀设计作品</p>
+              <h2 className="font-sans-zh text-sm font-medium text-neutral-700">电商换装案例库</h2>
+              <p className="font-sans-zh text-xs text-neutral-400 mt-1">探索 500+ 出海与内销头部的爆款换装模版，一键即刻测款</p>
             </div>
           </div>
         </div>
@@ -144,17 +146,25 @@ export function InspirationGallery() {
                     alt={item.title}
                     className="w-full h-auto block transition-opacity duration-200 group-hover:opacity-90"
                   />
-                  
+
                   <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
-                  
-                  <div className="absolute bottom-0 left-0 right-0 p-3 translate-y-full group-hover:translate-y-0 transition-transform duration-200">
-                    <h3 className="font-sans-zh text-xs text-white truncate mb-1">
-                      {item.title}
-                    </h3>
-                    <p className="font-sans-zh text-[10px] text-neutral-300 truncate mb-1.5">
-                      by {item.author}
-                    </p>
-                    <div className="flex items-center gap-3 text-[10px] text-white/70">
+
+                  <div className="absolute bottom-0 left-0 right-0 p-3 pt-6 bg-gradient-to-t from-black/80 via-black/40 to-transparent translate-y-full group-hover:translate-y-0 transition-transform duration-200">
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1 min-w-0 pr-2">
+                        <h3 className="font-sans-zh text-xs font-medium text-white line-clamp-1 mb-1">
+                          {item.title}
+                        </h3>
+                        <p className="font-sans-zh text-[10px] text-neutral-300 truncate mb-2">
+                          by {item.author}
+                        </p>
+                      </div>
+                      <button className="shrink-0 px-2 py-1 bg-white/20 hover:bg-white text-white hover:text-neutral-900 rounded text-[10px] font-medium backdrop-blur-sm transition-colors mt-0.5">
+                        一键同款
+                      </button>
+                    </div>
+
+                    <div className="flex items-center gap-3 text-[10px] text-white/70 mt-1">
                       <button
                         onClick={(e) => handleLike(e, item.id)}
                         className="flex items-center gap-1 hover:text-red-400 transition-colors"

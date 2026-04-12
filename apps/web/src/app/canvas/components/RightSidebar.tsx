@@ -43,6 +43,8 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({ isOpen, onClose }) =
   const sidebarRef = useRef<HTMLDivElement>(null)
   const widthRef = useRef(sidebarWidth)
   widthRef.current = sidebarWidth
+  
+  const processedPromptRef = useRef<string | null>(null)
 
   const { shapes, selectedIds } = useCanvasStore()
   const {
@@ -102,6 +104,61 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({ isOpen, onClose }) =
     setInput('')
     await sendMessage(content, options)
   }
+
+  // Handle auto-send workflow from Dashboard
+  useEffect(() => {
+    const initialPrompt = searchParams.get('initialPrompt')
+    const model = searchParams.get('model') || undefined
+    const resolution = searchParams.get('resolution') || undefined
+    const aspectRatio = searchParams.get('aspectRatio') || undefined
+    const attachmentImage = searchParams.get('attachmentImage') || undefined
+
+    if (initialPrompt && currentProjectId && !isLoading && processedPromptRef.current !== initialPrompt) {
+      processedPromptRef.current = initialPrompt
+      
+      // Decode and send the prompt automatically
+      const promptText = decodeURIComponent(initialPrompt)
+      const decodedAttachment = attachmentImage ? decodeURIComponent(attachmentImage) : undefined
+      const images = decodedAttachment ? [decodedAttachment] : undefined
+
+      if (promptText.trim()) {
+        sendMessage(promptText, { model, resolution, aspectRatio, images })
+      }
+
+      // Automatically place the reference image on the Canvas!
+      if (decodedAttachment) {
+        const store = useCanvasStore.getState()
+        const isAlreadyAdded = store.shapes.some(s => s.imageUrl === decodedAttachment)
+        if (!isAlreadyAdded) {
+          const newShape = store.addShape({
+            type: 'image',
+            x: 60,
+            y: 60,
+            width: 512,
+            height: 512,
+            fill: 'transparent',
+            stroke: 'transparent',
+            strokeWidth: 0,
+            opacity: 1,
+            rotation: 0,
+            imageUrl: decodedAttachment,
+            imageName: '参考原图'
+          })
+          store.setSelectedIds([newShape.id])
+          store.setViewport({ x: 0, y: 0, zoom: 1 })
+        }
+      }
+      
+      // Clean up URL so it doesn't trigger again on refresh
+      const newUrl = new URL(window.location.href)
+      newUrl.searchParams.delete('initialPrompt')
+      newUrl.searchParams.delete('model')
+      newUrl.searchParams.delete('resolution')
+      newUrl.searchParams.delete('aspectRatio')
+      newUrl.searchParams.delete('attachmentImage')
+      window.history.replaceState({}, '', newUrl.toString())
+    }
+  }, [searchParams, currentProjectId, isLoading, sendMessage])
 
   const handleNewChat = () => {
     addThread()

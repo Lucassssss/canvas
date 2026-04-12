@@ -28,10 +28,10 @@ interface ChatStore {
   selectThread: (id: string) => Promise<void>
   addBlockToMessage: (messageId: string, block: MessageBlock) => void
   updateBlock: (messageId: string, blockId: string, updates: Partial<MessageBlock>) => void
-  sendMessage: (content: string, options?: { model?: string, resolution?: string, aspectRatio?: string }) => Promise<void>
+  sendMessage: (content: string, options?: { model?: string, resolution?: string, aspectRatio?: string, images?: string[] }) => Promise<void>
   setConversationId: (id: string | null) => void
   setCurrentProjectId: (id: string | null) => void
-  loadProjectConversations: (projectId: string) => Promise<void>
+  loadProjectConversations: (projectId: string, autoSelect?: boolean) => Promise<void>
   createProjectConversation: (projectId: string, title?: string) => Promise<void>
   stopMessage: () => void
 }
@@ -62,7 +62,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
     set({ currentProjectId: id })
   },
 
-  loadProjectConversations: async (projectId) => {
+  loadProjectConversations: async (projectId, autoSelect = true) => {
     
     // 清空当前消息和会话状态
     set({ 
@@ -86,7 +86,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
       set({ threads, currentProjectId: projectId })
       
       // 如果有会话，自动选择最后一个（最新的）
-      if (threads.length > 0) {
+      if (autoSelect && threads.length > 0) {
         const latestThread = threads[0] // 已经按 updated_at DESC 排序
         await get().selectThread(latestThread.id)
       }
@@ -98,8 +98,8 @@ export const useChatStore = create<ChatStore>((set, get) => ({
     try {
       const result = await projectApi.createConversation(projectId, title)
       
-      // 重新加载会话列表
-      await get().loadProjectConversations(projectId)
+      // 重新加载会话列表，但不自动选择，因为我们在下面手动选择新创建的
+      await get().loadProjectConversations(projectId, false)
       
       // 选择新创建的会话
       await get().selectThread(result.id)
@@ -345,13 +345,18 @@ export const useChatStore = create<ChatStore>((set, get) => ({
         } else if (event.type === 'tool_call') {
           const targetMsg = get().messages[get().messages.length - 1]
           if (targetMsg && targetMsg.role === 'assistant') {
+            const blockId = `block-${generateId()}`
             const newBlock: MessageBlock = {
-              id: `block-${generateId()}`,
+              id: blockId,
               type: 'tool-call',
               name: event.name,
               input: event.input,
               status: 'running',
             }
+            
+            // 提前拦截预处理：通知 Canvas 准备占位
+            canvasToolExecutor.prepareTool(event.name || '', blockId)
+
             updateMessage(targetMsg.id, {
               blocks: [...(targetMsg.blocks || []), newBlock],
             })
@@ -362,7 +367,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
             const lastBlock = targetMsg.blocks[targetMsg.blocks.length - 1]
             if (lastBlock && lastBlock.type === 'tool-call' && lastBlock.status === 'running') {
               // 拦截并独立处理画布相关的 Tool Calls
-              canvasToolExecutor.executeTool(lastBlock.name || '', event.output || '');
+              canvasToolExecutor.executeTool(lastBlock.name || '', event.output || '', lastBlock.id);
 
               updateMessage(targetMsg.id, {
                 blocks: targetMsg.blocks.map((b) =>
