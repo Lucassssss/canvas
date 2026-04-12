@@ -54,6 +54,7 @@ export const messages = pgTable('messages', {
   conversationId: text('conversation_id').notNull().references(() => conversations.id, { onDelete: 'cascade' }),
   role: messageRoleEnum('role').notNull(),
   content: text('content').notNull(),
+  images: json('images').$type<string[]>().default([]),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 }, (table) => ({
   conversationIdIdx: index('idx_messages_conversation_id').on(table.conversationId),

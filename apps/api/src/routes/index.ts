@@ -401,9 +401,21 @@ router.post("/api/chat", authMiddleware, async (req, res) => {
       .map((msg) => ({
         role: msg.role as "user" | "assistant",
         content: msg.content,
+        images: msg.images || [],
       }));
 
     const allMessages = [...historicalUIMessages, ...incomingUIMessages];
+
+    const llmMessages = allMessages.map((msg) => {
+      let content = msg.content;
+      if (msg.images && msg.images.length > 0) {
+        content += "\n\n[用户附加的参考图URL（请在需要重绘时提取并传给 canvasRedrawImage 的 sourceImageUrl 中）]：\n" + msg.images.join("\n");
+      }
+      return {
+        role: msg.role,
+        content,
+      };
+    });
 
     const lastUserMessage = messages.filter((m) => m.role === "user").pop()?.content || "";
 
@@ -411,7 +423,7 @@ router.post("/api/chat", authMiddleware, async (req, res) => {
       let lastAssistantContent = "";
       
       await runChat(
-        allMessages, 
+        llmMessages, 
         modelName, 
         res, 
         currentConversationId, 
@@ -431,7 +443,7 @@ router.post("/api/chat", authMiddleware, async (req, res) => {
       res.write("data: [DONE]\n\n");
 
       for (const msg of incomingUIMessages) {
-        await addMessage(currentConversationId, msg.role, msg.content);
+        await addMessage(currentConversationId, msg.role, msg.content, msg.images);
       }
 
       if (lastAssistantContent) {

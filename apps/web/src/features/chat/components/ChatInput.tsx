@@ -7,11 +7,13 @@ import { ModelSelect } from '@/app/canvas/config-panel/ModelSelect'
 import { AspectRatioSelect } from '@/app/canvas/config-panel/AspectRatioSelect'
 import { ResolutionSelect, type Resolution } from '@/app/canvas/config-panel/ResolutionSelect'
 import { useModelsStore } from '@/app/canvas/store/models'
+import { useCanvasStore } from '@/app/canvas/store'
+import { Image as ImageIcon } from 'lucide-react'
 
 interface ChatInputProps {
   value: string
   onChange: (value: string) => void
-  onSend: (options?: { model?: string, resolution?: string, aspectRatio?: string }) => void
+  onSend: (options?: { model?: string, resolution?: string, aspectRatio?: string, images?: string[] }) => void
   onStop?: () => void
   isLoading?: boolean
 }
@@ -22,9 +24,18 @@ let cachedAspectRatio = '1:1'
 
 export const ChatInput: React.FC<ChatInputProps> = ({ value, onChange, onSend, onStop, isLoading }) => {
   const { models } = useModelsStore()
+  const { shapes, selectedIds } = useCanvasStore()
+  
   const [selectedModel, setSelectedModel] = React.useState(cachedModel || (models.length > 0 ? models[0].id : ''))
   const [resolution, setResolution] = React.useState<Resolution>(cachedResolution)
   const [aspectRatio, setAspectRatio] = React.useState(cachedAspectRatio)
+
+  const selectedImages = React.useMemo(() => {
+    return shapes
+      .filter(s => selectedIds.includes(s.id))
+      .filter(s => s.imageUrl) // 只提取带图片的 shapes
+      .map(s => ({ id: s.id, url: s.imageUrl!, name: s.imageName || '参考图' }))
+  }, [shapes, selectedIds])
 
   useEffect(() => {
     if (!selectedModel && models.length > 0) {
@@ -52,20 +63,40 @@ export const ChatInput: React.FC<ChatInputProps> = ({ value, onChange, onSend, o
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
       if (!isLoading && value.trim()) {
-        onSend({ model: selectedModel, resolution, aspectRatio: aspectRatio })
+        onSend({ 
+          model: selectedModel, 
+          resolution, 
+          aspectRatio,
+          images: selectedImages.map(img => img.url)
+        })
       }
     }
   }
 
   const handleSend = () => {
-    onSend({ model: selectedModel, resolution, aspectRatio: aspectRatio })
+    onSend({ 
+      model: selectedModel, 
+      resolution, 
+      aspectRatio,
+      images: selectedImages.map(img => img.url)
+    })
   }
 
   return (
-    <InputGroup className="h-auto flex-col rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden transition-all focus-within:border-gray-300 focus-within:ring-2 focus-within:ring-black/5 !bg-white">
+    <InputGroup className="h-auto flex-col rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden transition-all focus-within:border-gray-300 focus-within:ring-2 focus-within:ring-black/5 !bg-white !opacity-100">
       <div className="w-full relative px-0 flex flex-col">
+        {selectedImages.length > 0 && (
+          <div className="flex flex-wrap gap-2 px-4 pt-3 pb-1">
+            {selectedImages.map((img) => (
+              <div key={img.id} className="group relative flex items-center gap-1.5 px-2 py-1 bg-blue-50 border border-blue-100 rounded-md shadow-sm max-w-[150px]">
+                <ImageIcon className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+                <span className="text-xs text-blue-700 font-medium truncate">{img.name}</span>
+              </div>
+            ))}
+          </div>
+        )}
         <TextareaAutosize
-          className={`w-full resize-none bg-transparent py-3 px-4 text-sm outline-none placeholder:text-gray-400 ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+          className={`w-full resize-none bg-transparent ${selectedImages.length > 0 ? 'py-1 mb-2' : 'py-3'} px-4 text-sm outline-none placeholder:text-gray-400 ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
           placeholder="输入消息..."
           value={value}
           onChange={(e) => onChange(e.target.value)}

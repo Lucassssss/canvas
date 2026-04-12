@@ -101,7 +101,8 @@ export async function getMessages(conversationId: string): Promise<Message[]> {
 export async function addMessage(
   conversationId: string, 
   role: "user" | "assistant" | "system", 
-  content: string
+  content: string,
+  images: string[] = []
 ): Promise<Message> {
   const id = generateId()
 
@@ -110,6 +111,7 @@ export async function addMessage(
     conversationId,
     role,
     content,
+    images,
   }).returning()
 
   return row
@@ -135,9 +137,10 @@ export async function generateTitle(userMessage: string): Promise<string> {
   return text.trim().slice(0, 50)
 }
 
-export function convertToUIMessages(msgs: Message[]): { role: "user" | "assistant" | "system"; content: string }[] {
+export function convertToUIMessages(msgs: Message[]): { role: "user" | "assistant" | "system"; content: string; images?: string[] }[] {
   return msgs.map((msg) => ({
     role: msg.role,
     content: msg.content,
+    images: msg.images ? (Array.isArray(msg.images) ? msg.images as string[] : []) : [],
   }))
 }

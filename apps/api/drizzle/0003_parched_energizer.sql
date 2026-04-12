@@ -1,0 +1,1 @@
+ALTER TABLE "messages" ADD COLUMN "images" json DEFAULT '[]'::json;
