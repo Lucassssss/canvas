@@ -59,12 +59,10 @@ export const useChatStore = create<ChatStore>((set, get) => ({
   },
 
   setCurrentProjectId: (id) => {
-    console.log('[Chat Store] Setting current project:', id)
     set({ currentProjectId: id })
   },
 
   loadProjectConversations: async (projectId) => {
-    console.log('[Chat Store] Loading conversations for project:', projectId)
     
     // 清空当前消息和会话状态
     set({ 
@@ -76,7 +74,6 @@ export const useChatStore = create<ChatStore>((set, get) => ({
     
     try {
       const conversations = await projectApi.getProjectConversations(projectId)
-      console.log(`[Chat Store] Loaded ${conversations.length} conversations`)
       
       // 将后端会话转换为前端 threads
       const threads: ChatThread[] = conversations.map((conv) => ({
@@ -91,19 +88,15 @@ export const useChatStore = create<ChatStore>((set, get) => ({
       // 如果有会话，自动选择最后一个（最新的）
       if (threads.length > 0) {
         const latestThread = threads[0] // 已经按 updated_at DESC 排序
-        console.log('[Chat Store] Auto-selecting latest conversation:', latestThread.id)
         await get().selectThread(latestThread.id)
       }
     } catch (error) {
-      console.error('[Chat Store] Failed to load conversations:', error)
     }
   },
 
   createProjectConversation: async (projectId, title) => {
-    console.log('[Chat Store] Creating conversation for project:', projectId)
     try {
       const result = await projectApi.createConversation(projectId, title)
-      console.log('[Chat Store] Conversation created:', result.id)
       
       // 重新加载会话列表
       await get().loadProjectConversations(projectId)
@@ -179,14 +172,11 @@ export const useChatStore = create<ChatStore>((set, get) => ({
   selectThread: async (id) => {
     const thread = get().threads.find((t) => t.id === id)
     if (thread) {
-      console.log('[Chat Store] Selecting thread:', id)
       
       // 如果消息为空，从后端加载
       if (thread.messages.length === 0 && !id.startsWith('thread-')) {
         try {
-          console.log('[Chat Store] Loading messages for conversation:', id)
           const messages = await projectApi.getConversationMessages(id)
-          console.log(`[Chat Store] Loaded ${messages.length} messages`)
           
           // 转换消息格式
           const formattedMessages: Message[] = messages.map((msg) => ({
@@ -314,7 +304,6 @@ export const useChatStore = create<ChatStore>((set, get) => ({
           if (projectId) {
             try {
               await projectApi.linkConversation(projectId, newConvId)
-              console.log('[Chat Store] Conversation linked to project')
             } catch (error) {
               console.error('[Chat Store] Failed to link conversation:', error)
             }
@@ -373,7 +362,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
             const lastBlock = targetMsg.blocks[targetMsg.blocks.length - 1]
             if (lastBlock && lastBlock.type === 'tool-call' && lastBlock.status === 'running') {
               // 拦截并独立处理画布相关的 Tool Calls
-              canvasToolExecutor.executeTool(lastBlock.name, event.output);
+              canvasToolExecutor.executeTool(lastBlock.name || '', event.output);
 
               updateMessage(targetMsg.id, {
                 blocks: targetMsg.blocks.map((b) =>

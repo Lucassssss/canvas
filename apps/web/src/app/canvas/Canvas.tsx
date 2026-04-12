@@ -1190,16 +1190,27 @@ export const Canvas: React.FC = () => {
         setViewport(pendingWheelRef.current)
         pendingWheelRef.current = null
       }
-      // Call setIsZooming(false) outside the render cycle directly using store if needed to avoid stale closures,
-      // but here we have setIsZooming in dependency array hopefully.
-      useCanvasStore.getState().setIsZooming(false)
+      if (containerRef.current) {
+        containerRef.current.classList.remove('is-zooming')
+      }
+      if (viewportRef.current) {
+        const store = useCanvasStore.getState()
+        if (!store.isPanning && !isSpaceDragging) {
+          viewportRef.current.style.pointerEvents = 'auto'
+          viewportRef.current.style.willChange = 'auto'
+        }
+      }
     }
 
     const wheelHandler = (e: WheelEvent) => {
       e.preventDefault()
-      const store = useCanvasStore.getState()
-      if (!store.isZooming) {
-        store.setIsZooming(true)
+      
+      if (containerRef.current) {
+        containerRef.current.classList.add('is-zooming')
+      }
+      if (viewportRef.current) {
+        viewportRef.current.style.pointerEvents = 'none'
+        viewportRef.current.style.willChange = 'transform'
       }
 
       if (e.metaKey || e.ctrlKey) {
@@ -1266,7 +1277,6 @@ export const Canvas: React.FC = () => {
       if (wheelRafRef.current !== null) {
         cancelAnimationFrame(wheelRafRef.current)
       }
-      useCanvasStore.getState().setIsZooming(false)
     }
   }, [viewport, setViewport])
 
@@ -1552,6 +1562,8 @@ export const Canvas: React.FC = () => {
         className="canvas-viewport"
         style={{
           transform: `matrix(${viewport.zoom}, 0, 0, ${viewport.zoom}, ${viewport.x}, ${viewport.y})`,
+          pointerEvents: isPanning || isZooming ? 'none' : 'auto',
+          willChange: isPanning || isZooming ? 'transform' : 'auto',
         }}
       >
         {shapes.map((shape) => (
@@ -1563,35 +1575,37 @@ export const Canvas: React.FC = () => {
         ))}
       </div>
 
-      {(!isDragging && !isPanning && !isZooming) && (
-        <SelectionBoxLayer
+      <div className="canvas-hide-on-zoom">
+        {(!isDragging && !isPanning) && (
+          <SelectionBoxLayer
+            shapes={shapes}
+            selectedIds={selectedIds}
+            viewport={viewport}
+            onSingleResizeStart={handleSingleResizeStart}
+            onSingleRotateStart={handleSingleRotateStart}
+            onMultiResizeStart={handleMultiResizeStart}
+            onMultiRotateStart={handleMultiRotateStart}
+          />
+        )}
+
+        {(!isDragging && !isPanning) && (
+          <ShapeInfoLayer
+            shapes={shapes}
+            selectedIds={selectedIds}
+            viewport={viewport}
+          />
+        )}
+
+        <LogoEditorLayer
           shapes={shapes}
           selectedIds={selectedIds}
           viewport={viewport}
-          onSingleResizeStart={handleSingleResizeStart}
-          onSingleRotateStart={handleSingleRotateStart}
-          onMultiResizeStart={handleMultiResizeStart}
-          onMultiRotateStart={handleMultiRotateStart}
         />
-      )}
 
-      {(!isDragging && !isPanning && !isZooming) && (
-        <ShapeInfoLayer
-          shapes={shapes}
-          selectedIds={selectedIds}
-          viewport={viewport}
-        />
-      )}
-
-      <LogoEditorLayer
-        shapes={shapes}
-        selectedIds={selectedIds}
-        viewport={viewport}
-      />
+        {(!isDragging && !isPanning) && <FloatingConfigPanel containerRef={containerRef} />}
+      </div>
 
       <LogoMaterialPanel />
-
-      {(!isDragging && !isPanning && !isZooming) && <FloatingConfigPanel containerRef={containerRef} />}
 
       <AlignmentGuides />
 

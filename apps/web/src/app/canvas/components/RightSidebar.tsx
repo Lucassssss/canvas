@@ -75,14 +75,12 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({ isOpen, onClose }) =
     if (projectId) {
       // 如果项目 ID 变化，重新加载会话
       if (projectId !== currentProjectId) {
-        console.log('[RightSidebar] Project changed, loading conversations for:', projectId)
         setCurrentProjectId(projectId)
         loadProjectConversations(projectId)
       }
     } else {
       // 如果没有项目 ID，清空项目相关状态
       if (currentProjectId) {
-        console.log('[RightSidebar] No project, clearing project state')
         setCurrentProjectId(null)
       }
     }

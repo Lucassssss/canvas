@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useRef, useCallback, useState, useMemo, memo } from 'react'
+import { useShallow } from 'zustand/react/shallow'
 import { useCanvasStore } from '../store'
 import { ShapeProps } from './types'
 import { ClothingComponent } from './ClothingComponent'
@@ -54,7 +55,24 @@ const ShapeComponent: React.FC<ShapeComponentProps> = ({ shape }) => {
     sendToBack,
     scheduleAutoSave,
     batchUpdateShapes,
-  } = useCanvasStore()
+  } = useCanvasStore(useShallow((state) => ({
+    updateShape: state.updateShape,
+    setSelectedIds: state.setSelectedIds,
+    selectedIds: state.selectedIds,
+    addToSelection: state.addToSelection,
+    saveHistory: state.saveHistory,
+    activeTool: state.activeTool,
+    setIsDragging: state.setIsDragging,
+    setDragData: state.setDragData,
+    deleteShape: state.deleteShape,
+    copySelectedShapes: state.copySelectedShapes,
+    pasteShapes: state.pasteShapes,
+    duplicateSelectedShapes: state.duplicateSelectedShapes,
+    bringToFront: state.bringToFront,
+    sendToBack: state.sendToBack,
+    scheduleAutoSave: state.scheduleAutoSave,
+    batchUpdateShapes: state.batchUpdateShapes,
+  })))
 
   const dragStartRef = useRef<{ x: number; y: number; shapePositions: Map<string, { x: number; y: number }> } | null>(null)
   const dragElementsRef = useRef<Map<string, HTMLElement>>(new Map())

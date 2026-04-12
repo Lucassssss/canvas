@@ -29,6 +29,7 @@ function getModelIcon(provider: string): string {
 interface ModelSelectProps {
   value: string
   onChange: (value: string) => void
+  disabled?: boolean
   className?: string
 }
 
@@ -43,7 +44,7 @@ function groupModelsByProvider(models: ModelConfig[]): Record<string, ModelConfi
   }, {} as Record<string, ModelConfig[]>)
 }
 
-export const ModelSelect: React.FC<ModelSelectProps> = ({ value, onChange, className }) => {
+export const ModelSelect: React.FC<ModelSelectProps> = ({ value, onChange, disabled, className }) => {
   const { models, loading } = useModels()
 
   const groupedModels = useMemo(() => groupModelsByProvider(models), [models])
@@ -63,7 +64,7 @@ export const ModelSelect: React.FC<ModelSelectProps> = ({ value, onChange, class
   }
 
   return (
-    <Select value={selectedModel?.id || value} onValueChange={onChange}>
+    <Select value={selectedModel?.id || value} onValueChange={onChange} disabled={disabled}>
       <SelectTrigger className={className}>
         <SelectValue>
           {selectedModel ? (

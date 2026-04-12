@@ -40,6 +40,10 @@
   transform-origin: 0 0;
 }
 
+.canvas-container.is-zooming .canvas-hide-on-zoom {
+  display: none !important;
+}
+
 .canvas-shape {
   position: absolute;
   user-select: none;
