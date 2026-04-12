@@ -1,6 +1,7 @@
 'use client'
 
-import React, { useRef, useEffect, useCallback, useState, useMemo } from 'react'
+import React, { useRef, useEffect, useCallback, useState, useMemo, memo } from 'react'
+import { useShallow } from 'zustand/react/shallow'
 import { useCanvasStore } from './store'
 import { Shape } from './shapes/Shape'
 import { ToolType, ShapeProps, SHAPE_MIN_SIZE, ShapeType } from './shapes/types'
@@ -83,7 +84,7 @@ interface SelectionRect {
   endY: number
 }
 
-const SelectionBoxLayer: React.FC<{
+const SelectionBoxLayer = memo<{
   shapes: ShapeProps[]
   selectedIds: string[]
   viewport: { x: number; y: number; zoom: number }
@@ -91,7 +92,7 @@ const SelectionBoxLayer: React.FC<{
   onSingleRotateStart: (e: React.MouseEvent, corner: string, shapeId: string) => void
   onMultiResizeStart: (e: React.MouseEvent, handle: string) => void
   onMultiRotateStart: (e: React.MouseEvent) => void
-}> = ({ shapes, selectedIds, viewport, onSingleResizeStart, onSingleRotateStart, onMultiResizeStart, onMultiRotateStart }) => {
+}>(({ shapes, selectedIds, viewport, onSingleResizeStart, onSingleRotateStart, onMultiResizeStart, onMultiRotateStart }) => {
   const selectedShapes = shapes.filter((s) => selectedIds.includes(s.id))
 
   if (selectedShapes.length === 0) return null
@@ -315,7 +316,7 @@ const SelectionBoxLayer: React.FC<{
       />
     </div>
   )
-}
+})
 
 const SHAPE_TYPE_NAMES: Record<ShapeType, string> = {
   rect: '矩形',
@@ -332,11 +333,11 @@ const SHAPE_TYPE_NAMES: Record<ShapeType, string> = {
   'detail-image': '详情图片',
 }
 
-const ShapeInfoLayer: React.FC<{
+const ShapeInfoLayer = memo<{
   shapes: ShapeProps[]
   selectedIds: string[]
   viewport: { x: number; y: number; zoom: number }
-}> = ({ shapes, selectedIds, viewport }) => {
+}>(({ shapes, selectedIds, viewport }) => {
   const selectedShape = shapes.find((s) => selectedIds.includes(s.id))
   
   if (!selectedShape || selectedIds.length !== 1) return null
@@ -387,9 +388,9 @@ const ShapeInfoLayer: React.FC<{
       )}
     </div>
   )
-}
+})
 
-const SelectionBox: React.FC<SelectionBoxProps> = ({ shape, viewport, onResizeStart, onRotateStart }) => {
+const SelectionBox = memo<SelectionBoxProps>(({ shape, viewport, onResizeStart, onRotateStart }) => {
   const bounds = getRotatedBoundingBox(shape.x, shape.y, shape.width, shape.height, shape.rotation)
   const screenX = bounds.minX * viewport.zoom + viewport.x
   const screenY = bounds.minY * viewport.zoom + viewport.y
@@ -594,7 +595,7 @@ const SelectionBox: React.FC<SelectionBoxProps> = ({ shape, viewport, onResizeSt
       )}
     </div>
   )
-}
+})
 
 export const Canvas: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -626,7 +627,30 @@ export const Canvas: React.FC = () => {
     screenToCanvas,
     scheduleAutoSave,
     batchUpdateShapes,
-  } = useCanvasStore()
+  } = useCanvasStore(useShallow((state) => ({
+    shapes: state.shapes,
+    selectedIds: state.selectedIds,
+    viewport: state.viewport,
+    activeTool: state.activeTool,
+    isDragging: state.isDragging,
+    isSpacePressed: state.isSpacePressed,
+    isPanning: state.isPanning,
+    isZooming: state.isZooming,
+    setViewport: state.setViewport,
+    setSelectedIds: state.setSelectedIds,
+    addToSelection: state.addToSelection,
+    clearSelection: state.clearSelection,
+    setIsDragging: state.setIsDragging,
+    setIsSpacePressed: state.setIsSpacePressed,
+    setIsPanning: state.setIsPanning,
+    setIsZooming: state.setIsZooming,
+    setActiveTool: state.setActiveTool,
+    updateShape: state.updateShape,
+    saveHistory: state.saveHistory,
+    screenToCanvas: state.screenToCanvas,
+    scheduleAutoSave: state.scheduleAutoSave,
+    batchUpdateShapes: state.batchUpdateShapes,
+  })))
 
   const effectiveTool = isSpacePressed ? 'hand' : activeTool
   const showCrosshair = false

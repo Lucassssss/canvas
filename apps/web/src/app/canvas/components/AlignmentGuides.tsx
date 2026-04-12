@@ -1,7 +1,6 @@
 'use client'
 
 import React, { useRef, useEffect } from 'react'
-import { useCanvasStore } from '../store'
 import type { AlignmentGuide } from '../shapes/types'
 
 const GUIDE_COLOR = '#fc2200ff'
@@ -17,11 +16,6 @@ export function updateGuidesData(guides: AlignmentGuide[], viewport: { x: number
 
 export const AlignmentGuides: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null)
-  const viewport = useCanvasStore((state) => state.viewport)
-
-  useEffect(() => {
-    viewportData = viewport
-  }, [viewport])
 
   useEffect(() => {
     const container = containerRef.current

@@ -28,14 +28,30 @@ function OptimizedImageComponent({
   onError,
   isGenerating,
 }: OptimizedImageProps) {
-  const zoom = useCanvasStore((state) => state.viewport.zoom)
-  const [debouncedZoom, setDebouncedZoom] = useState(zoom)
+  const zoomRef = useRef(useCanvasStore.getState().viewport.zoom)
+  const [debouncedZoom, setDebouncedZoom] = useState(zoomRef.current)
+  const rafRef = useRef<number | null>(null)
 
-  // Debounce zoom during active canvas pinch/wheel events
   useEffect(() => {
-    const timer = setTimeout(() => setDebouncedZoom(zoom), 200)
-    return () => clearTimeout(timer)
-  }, [zoom])
+    const unsubscribe = useCanvasStore.subscribe((state) => {
+      const newZoom = state.viewport.zoom
+      if (newZoom !== zoomRef.current) {
+        zoomRef.current = newZoom
+        if (rafRef.current === null) {
+          rafRef.current = requestAnimationFrame(() => {
+            rafRef.current = null
+            setDebouncedZoom(zoomRef.current)
+          })
+        }
+      }
+    })
+    return () => {
+      unsubscribe()
+      if (rafRef.current !== null) {
+        cancelAnimationFrame(rafRef.current)
+      }
+    }
+  }, [])
 
   const containerRef = useRef<HTMLDivElement>(null)
   const [isVisible, setIsVisible] = useState(true)
