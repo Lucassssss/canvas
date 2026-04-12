@@ -4,6 +4,7 @@ import type { ToolDefinition } from "../types/index.js";
 import { bash } from "./bash.js";
 import { artifactTools } from "./artifact.js";
 import { sendEmailTool, checkEmailConfigTool } from "./mail.js";
+import { getCanvasTools } from "./canvas.js";
 
 const calculatorTool = tool({
   description: "计算数学表达式的值",
@@ -39,7 +40,7 @@ const weatherTool = tool({
   },
 });
 
-export const tools: ToolSet = {
+export const getTools = (userId?: string): ToolSet => ({
   getCurrentTimeTool,
   weatherTool,
   calculatorTool,
@@ -49,9 +50,10 @@ export const tools: ToolSet = {
   // observeTool,
   bash: bash as any,
   ...artifactTools,
+  ...getCanvasTools(userId),
   // sendEmailTool,
   // checkEmailConfigTool,
-};
+});
 
 // export function getToolDefinitions(): ToolDefinition[] {
 //   return Object.entries(tools).map(([name, t]) => ({

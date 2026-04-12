@@ -31,7 +31,7 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({ isOpen, onClose }) =
   const searchParams = useSearchParams()
   const projectId = searchParams.get('projectId')
   const { openDetailImage } = useDetailImageStore()
-  
+
   const [showHistory, setShowHistory] = useState(false)
   const [activeTab, setActiveTab] = useState<TabType>('chat')
   const [sidebarWidth, setSidebarWidth] = useState(() => {
@@ -97,9 +97,9 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({ isOpen, onClose }) =
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  const handleSend = async () => {
+  const handleSend = async (options?: { model?: string, resolution?: string, aspectRatio?: string }) => {
     if (!input.trim() || isLoading) return
-    await sendMessage(input)
+    await sendMessage(input, options)
   }
 
   const handleNewChat = () => {
@@ -291,7 +291,7 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({ isOpen, onClose }) =
           </div>
 
           <div className="chat-input-container bg-white">
-            <div className="p-2">
+            <div className="p-4">
               <ChatInput
                 value={input}
                 onChange={setInput}

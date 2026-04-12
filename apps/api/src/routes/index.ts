@@ -353,10 +353,13 @@ router.post("/api/chat", authMiddleware, async (req, res) => {
     const defaultModel = process.env.DEFAULT_MODEL;
 
     const { 
-      conversationId, 
+      conversationId,
       messages, 
       mode = "agent", 
       model,
+      imageModel,
+      resolution,
+      aspectRatio,
     } = req.body;
 
     const modelName = model || defaultModel;
@@ -417,7 +420,12 @@ router.post("/api/chat", authMiddleware, async (req, res) => {
           if (isComplete) {
             lastAssistantContent = content;
           }
-        }
+        },
+        {},
+        imageModel,
+        resolution,
+        aspectRatio,
+        userId
       );
 
       res.write("data: [DONE]\n\n");

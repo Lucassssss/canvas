@@ -30,10 +30,13 @@ export async function* streamChat(
     conversationId?: string
     mode?: 'auto' | 'agent'
     model?: string
+    imageModel?: string
+    resolution?: string
+    aspectRatio?: string
     onEvent?: StreamHandler
   }
 ): AsyncGenerator<StreamEvent> {
-  const { conversationId, mode = 'agent', model, onEvent } = options || {}
+  const { conversationId, mode = 'agent', model, imageModel, resolution, aspectRatio, onEvent } = options || {}
 
   const { response } = await apiClient.stream('/api/chat', {
     method: 'POST',
@@ -42,6 +45,9 @@ export async function* streamChat(
       messages,
       mode,
       model,
+      imageModel,
+      resolution,
+      aspectRatio,
     }),
   })
 
