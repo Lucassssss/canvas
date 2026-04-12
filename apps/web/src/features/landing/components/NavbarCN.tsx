@@ -44,7 +44,7 @@ export function NavbarCN() {
                 登录 / 注册
               </Link>
               <Link href="/dashboard" className="inline-flex items-center gap-2 px-5 py-2.5 bg-neutral-950 text-white font-sans-zh text-sm hover:bg-neutral-800 transition-colors">
-                <span>开始免费使用</span>
+                <span>领 1000 积分</span>
                 <ArrowRight className="w-3 h-3" />
               </Link>
             </>

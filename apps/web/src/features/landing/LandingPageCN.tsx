@@ -21,7 +21,7 @@ const NavbarFallback: React.FC = () => (
           登录 / 注册
         </Link>
         <Link href="/dashboard" className="inline-flex items-center gap-2 px-5 py-2.5 bg-neutral-950 text-white font-sans-zh text-sm hover:bg-neutral-800 transition-colors">
-          <span>开始免费使用</span>
+          <span>领 1000 积分</span>
         </Link>
       </div>
     </div>
@@ -44,18 +44,18 @@ export function LandingPageCN() {
         <section className="py-24 md:py-32 bg-neutral-950 text-white relative overflow-hidden">
           <div className="max-w-[1600px] mx-auto px-6 md:px-12 text-center">
             <h2 className="font-serif-display text-4xl md:text-5xl lg:text-7xl tracking-tight mb-8">
-              开始<br />
-              <span className="font-sans-zh font-extralight text-neutral-500">创作</span><br />
-              今日
+              引爆<br />
+              <span className="font-sans-zh font-extralight text-neutral-500">利润</span><br />
+              增长
             </h2>
             <p className="font-sans-zh text-neutral-500 mb-12 max-w-md mx-auto">
-              体验 Joii 带来的电商视觉革命，让每一帧都成为可能
+              加入 500+ 出海与内销头部卖家的行列，彻底告别高昂场地模特费，将商品视觉转化为销冠引擎。
             </p>
             <Link 
               href="/dashboard" 
               className="group inline-flex items-center gap-3 px-10 py-5 bg-white text-neutral-950 font-sans-zh font-medium text-sm hover:bg-neutral-100 transition-colors"
             >
-              <span>启动 Joii</span>
+              <span>立即注册 · 领 1000 积分</span>
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </Link>
           </div>

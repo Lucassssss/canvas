@@ -2,26 +2,26 @@ import { ArrowRight } from 'lucide-react'
 
 const cases = [
   { 
-    title: '女装主图生成', 
-    type: '电商海报', 
+    title: 'TikTok / Shein 风格女装', 
+    type: '跨境出海', 
     number: '01',
     img: 'bg-gradient-to-br from-neutral-200 to-neutral-300'
   },
   { 
-    title: '模特图批量替换', 
-    type: '详情页', 
+    title: '淘宝爆款：平铺白底秒变街拍', 
+    type: '国内淘系', 
     number: '02',
     img: 'bg-gradient-to-br from-neutral-300 to-neutral-400'
   },
   { 
-    title: '背景光影重构', 
-    type: '商品展示', 
+    title: '小红书 / 得物：种草级质感氛围', 
+    type: '社交种草', 
     number: '03',
     img: 'bg-gradient-to-br from-neutral-200 to-neutral-300'
   },
   { 
-    title: '4K 超分放大', 
-    type: '细节图', 
+    title: 'Amazon / Shopify 高客单展示', 
+    type: '独立站 / 平台', 
     number: '04',
     img: 'bg-gradient-to-br from-neutral-300 to-neutral-400'
   },
@@ -38,13 +38,13 @@ export function ShowcaseSectionCN() {
                 商业案例
               </div>
               <h2 className="font-serif-display text-4xl md:text-5xl lg:text-6xl tracking-tight leading-tight">
-                赋能<br />
-                <span className="font-sans-zh font-extralight text-neutral-400">商业视觉</span>
+                实战<br />
+                <span className="font-sans-zh font-extralight text-neutral-400">商业案例</span>
               </h2>
             </div>
             <div className="col-span-12 md:col-span-6 md:text-right">
               <p className="font-sans-zh text-neutral-500 text-sm md:text-base leading-relaxed max-w-md ml-auto">
-                探索顶尖商家如何利用 Joii 突破内容产出瓶颈，实现点击转化与生产效率的双重飞跃。
+                探索头部商家如何彻底打破全域多平台（TikTok、Amazon、淘宝等）的内容产出瓶颈，实现利润双重飞跃。
               </p>
             </div>
           </div>
@@ -69,9 +69,9 @@ export function ShowcaseSectionCN() {
           ))}
         </div>
 
-        <div className="mt-16 md:mt-24 pt-12 border-t border-neutral-200 flex items-center justify-between">
+        <div className="mt-16 md:mt-24 pt-12 border-t border-neutral-200 flex items-center flex-wrap gap-4 justify-between">
           <p className="font-sans-zh text-sm text-neutral-500">
-            已为 <span className="font-medium text-neutral-950">500+</span> 电商商家提供服务
+            已助力 <span className="font-medium text-neutral-950">500+</span> 出海与内销头部卖家实现视觉降本
           </p>
           <button className="group inline-flex items-center gap-2 font-sans-zh text-sm font-medium text-neutral-950 hover:text-neutral-600 transition-colors">
             <span>查看更多案例</span>
