@@ -34,12 +34,12 @@ export function HeroSectionCN() {
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </Link>
                 <div className="flex flex-col gap-1">
-                  <span className="text-xs font-sans-zh text-neutral-400 tracking-wider">
+                  {/* <span className="text-xs font-sans-zh text-neutral-400 tracking-wider">
                     v1.1.0 现已发布
-                  </span>
-                  <span className="text-[10px] font-sans-zh text-neutral-400/80 tracking-wider">
-                    已支持微信 / 支付宝闭环
-                  </span>
+                  </span> */}
+                  {/* <span className="text-[10px] font-sans-zh text-neutral-400/80 tracking-wider">
+                    已支持微信 / 支付宝
+                  </span> */}
                 </div>
               </div>
             </div>
