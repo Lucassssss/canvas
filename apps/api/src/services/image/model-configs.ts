@@ -50,8 +50,6 @@ export interface ModelConfig {
     low?: number;
     high?: number;
   };
-  /** 积分价格 */
-  credits: number;
   /** 是否启用 */
   enabled: boolean;
   /** 是否为推荐模型 */
@@ -81,7 +79,6 @@ export const MODEL_CONFIGS: ModelConfig[] = [
       supportsOutputFormat: true,
     },
     pricing: { low: 0.1, high: 0.3 },
-    credits: 10,
     enabled: true,
     recommended: true,
     tags: ["换装", "高质量", "推荐"],
@@ -102,7 +99,6 @@ export const MODEL_CONFIGS: ModelConfig[] = [
       supportsOutputFormat: false,
     },
     pricing: { low: 0.1, high: 0.3 },
-    credits: 10,
     enabled: true,
     tags: ["换装", "高分辨率"],
   },
@@ -124,8 +120,7 @@ export const MODEL_CONFIGS: ModelConfig[] = [
       async: false,
       stream: false,
     },
-    pricing: { low: 0.27, high: 0.27 },
-    credits: 30,
+    pricing: { low: 0.46, high: 0.69 },
     enabled: true,
     tags: ["快速", "性价比"],
   },
@@ -146,7 +141,6 @@ export const MODEL_CONFIGS: ModelConfig[] = [
       stream: false,
     },
     pricing: { low: 0.27, high: 0.27 },
-    credits: 20,
     enabled: true,
     recommended: true,
     tags: ["快速", "性价比", "推荐"],
@@ -168,7 +162,6 @@ export const MODEL_CONFIGS: ModelConfig[] = [
       stream: false,
     },
     pricing: { low: 1, high: 1.7 },
-    credits: 50,
     enabled: true,
     recommended: true,
     tags: ["高质量", "推荐"],
@@ -190,7 +183,6 @@ export const MODEL_CONFIGS: ModelConfig[] = [
       stream: false,
     },
     pricing: { low: 0.69, high: 1.31 },
-    credits: 40,
     enabled: false,
     tags: ["多图", "高质量"],
   },
@@ -211,7 +203,6 @@ export const MODEL_CONFIGS: ModelConfig[] = [
       stream: false,
     },
     pricing: { low: 0.5, high: 2.0 },
-    credits: 50,
     enabled: false,
     tags: ["高分辨率", "极端宽高比"],
   },
@@ -232,7 +223,6 @@ export const MODEL_CONFIGS: ModelConfig[] = [
       stream: false,
     },
     pricing: { low: 0.2, high: 0.5 },
-    credits: 10,
     enabled: false,
     tags: ["换装", "稳定"],
   },
@@ -253,7 +243,6 @@ export const MODEL_CONFIGS: ModelConfig[] = [
       stream: false,
     },
     pricing: { low: 0.1, high: 0.3 },
-    credits: 10,
     enabled: false,
     tags: ["人物参考", "快速"],
   },
@@ -273,7 +262,6 @@ export const MODEL_CONFIGS: ModelConfig[] = [
       async: false,
       stream: false,
     },
-    credits: 10,
     enabled: false,
     tags: ["本地", "免费"],
   },

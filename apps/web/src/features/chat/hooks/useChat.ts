@@ -17,6 +17,7 @@ export function useChat() {
     setCurrentProjectId,
     loadProjectConversations,
     createProjectConversation,
+    stopMessage,
   } = useChatStore()
 
   const currentThread = threads.find((t) => t.id === currentThreadId)
@@ -38,5 +39,6 @@ export function useChat() {
     setCurrentProjectId,
     loadProjectConversations,
     createProjectConversation,
+    stopMessage,
   }
 }

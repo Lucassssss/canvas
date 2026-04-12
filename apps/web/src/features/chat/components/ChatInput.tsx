@@ -2,7 +2,7 @@ import React, { useEffect } from 'react'
 import TextareaAutosize from 'react-textarea-autosize'
 import { InputGroup, InputGroupAddon } from '@/components/ui/input-group'
 import { Button } from '@/components/ui/button'
-import { ArrowUp, Loader2 } from 'lucide-react'
+import { ArrowUp, Square } from 'lucide-react'
 import { ModelSelect } from '@/app/canvas/config-panel/ModelSelect'
 import { AspectRatioSelect } from '@/app/canvas/config-panel/AspectRatioSelect'
 import { ResolutionSelect, type Resolution } from '@/app/canvas/config-panel/ResolutionSelect'
@@ -12,6 +12,7 @@ interface ChatInputProps {
   value: string
   onChange: (value: string) => void
   onSend: (options?: { model?: string, resolution?: string, aspectRatio?: string }) => void
+  onStop?: () => void
   isLoading?: boolean
 }
 
@@ -19,7 +20,7 @@ let cachedModel = ''
 let cachedResolution = '1K'
 let cachedAspectRatio = '1:1'
 
-export const ChatInput: React.FC<ChatInputProps> = ({ value, onChange, onSend, isLoading }) => {
+export const ChatInput: React.FC<ChatInputProps> = ({ value, onChange, onSend, onStop, isLoading }) => {
   const { models } = useModelsStore()
   const [selectedModel, setSelectedModel] = React.useState(cachedModel || (models.length > 0 ? models[0].id : ''))
   const [resolution, setResolution] = React.useState<Resolution>(cachedResolution)
@@ -98,12 +99,18 @@ export const ChatInput: React.FC<ChatInputProps> = ({ value, onChange, onSend, i
 
           <Button
             size="sm"
-            onClick={handleSend}
-            disabled={isLoading || !value.trim()}
-            className={`shrink-0 ml-4 pb-0 h-8 w-8 px-0 rounded-full transition-all ${value.trim() && !isLoading ? 'bg-black text-white hover:bg-neutral-800' : 'bg-neutral-200 text-neutral-400'}`}
+            onClick={isLoading ? onStop : handleSend}
+            disabled={!isLoading && !value.trim()}
+            className={`shrink-0 ml-4 pb-0 h-8 w-8 px-0 rounded-full transition-all ${
+              isLoading 
+                ? 'bg-neutral-800 text-white hover:bg-black' 
+                : value.trim() 
+                  ? 'bg-black text-white hover:bg-neutral-800' 
+                  : 'bg-neutral-200 text-neutral-400'
+            }`}
           >
             {isLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <Square className="h-3 w-3 fill-current" />
             ) : (
               <ArrowUp className="h-4 w-4" />
             )}

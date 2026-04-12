@@ -7,12 +7,12 @@ import path from 'path'
 import fs from 'fs'
 
 const RECHARGE_PACKAGES = [
-  { id: 'pkg_50', credits: 50, price: 10, unitPrice: '0.1000', savings: 0, popular: 0, sortOrder: 1 },
-  { id: 'pkg_200', credits: 200, price: 18, unitPrice: '0.0900', savings: 10, popular: 0, sortOrder: 2 },
-  { id: 'pkg_500', credits: 500, price: 40, unitPrice: '0.0800', savings: 20, popular: 1, sortOrder: 3 },
-  { id: 'pkg_1000', credits: 1000, price: 70, unitPrice: '0.0700', savings: 30, popular: 0, sortOrder: 4 },
-  { id: 'pkg_2000', credits: 2000, price: 120, unitPrice: '0.0600', savings: 40, popular: 0, sortOrder: 5 },
-  { id: 'pkg_5000', credits: 5000, price: 250, unitPrice: '0.0500', savings: 50, popular: 0, sortOrder: 6 },
+  { id: 'pkg_1', credits: 5000, price: 50, unitPrice: '0.0100', savings: 0, popular: 0, sortOrder: 1 },
+  { id: 'pkg_2', credits: 11500, price: 100, unitPrice: '0.0086', savings: 15, popular: 0, sortOrder: 2 },
+  { id: 'pkg_3', credits: 24000, price: 200, unitPrice: '0.0083', savings: 20, popular: 1, sortOrder: 3 },
+  { id: 'pkg_4', credits: 65000, price: 500, unitPrice: '0.0076', savings: 30, popular: 0, sortOrder: 4 },
+  { id: 'pkg_5', credits: 140000, price: 1000, unitPrice: '0.0071', savings: 40, popular: 0, sortOrder: 5 },
+  { id: 'pkg_6', credits: 300000, price: 2000, unitPrice: '0.0066', savings: 50, popular: 0, sortOrder: 6 },
 ]
 
 const POLL_CONFIG = {

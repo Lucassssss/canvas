@@ -17,6 +17,7 @@ interface ChatStore {
   input: string
   conversationId: string | null
   currentProjectId: string | null
+  abortController: AbortController | null
 
   setInput: (input: string) => void
   setLoading: (loading: boolean) => void
@@ -32,6 +33,7 @@ interface ChatStore {
   setCurrentProjectId: (id: string | null) => void
   loadProjectConversations: (projectId: string) => Promise<void>
   createProjectConversation: (projectId: string, title?: string) => Promise<void>
+  stopMessage: () => void
 }
 
 export const useChatStore = create<ChatStore>((set, get) => ({
@@ -42,10 +44,19 @@ export const useChatStore = create<ChatStore>((set, get) => ({
   input: '',
   conversationId: null,
   currentProjectId: null,
+  abortController: null,
 
   setInput: (input) => set({ input }),
 
   setLoading: (loading) => set({ isLoading: loading }),
+
+  stopMessage: () => {
+    const { abortController } = get()
+    if (abortController) {
+      abortController.abort()
+      set({ abortController: null, isLoading: false })
+    }
+  },
 
   setCurrentProjectId: (id) => {
     console.log('[Chat Store] Setting current project:', id)
@@ -278,6 +289,10 @@ export const useChatStore = create<ChatStore>((set, get) => ({
       .filter((m) => m.role === 'user' || m.role === 'assistant')
       .map((m) => ({ role: m.role, content: m.content }))
 
+    // Init AbortController
+    const controller = new AbortController()
+    set({ abortController: controller })
+
     try {
       for await (const event of streamChat(uiMessages, {
         conversationId: get().conversationId || undefined,
@@ -286,6 +301,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
         imageModel: options?.model, // Treat the passed generic model as the image generation model
         resolution: options?.resolution,
         aspectRatio: options?.aspectRatio,
+        signal: controller.signal,
       })) {
         if (event.type === 'conversation_created') {
           const newConvId = event.id as string

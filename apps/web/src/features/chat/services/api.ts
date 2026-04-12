@@ -17,6 +17,7 @@ export async function* streamChat(
     resolution?: string
     aspectRatio?: string
     onEvent?: StreamHandler
+    signal?: AbortSignal
   }
 ): AsyncGenerator<ApiStreamEvent> {
   yield* apiStreamChat(messages, options)

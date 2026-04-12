@@ -1333,14 +1333,26 @@ export const Canvas: React.FC = () => {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
+      const target = e.target as HTMLElement
+      if (
+        target instanceof HTMLInputElement || 
+        target instanceof HTMLTextAreaElement || 
+        target.isContentEditable
+      ) {
+        return
+      }
+
+      // 如果有文本被选中在页面上（例如侧边栏的聊天气泡中的文本），允许浏览器原生的复制行为
+      const hasTextSelection = window.getSelection()?.toString().length ? true : false
 
       if (e.key === 'Delete' || e.key === 'Backspace') {
+        if (hasTextSelection) return
         useCanvasStore.getState().deleteSelectedShapes()
         return
       }
 
       if ((e.metaKey || e.ctrlKey) && e.key === 'c') {
+        if (hasTextSelection) return
         e.preventDefault()
         useCanvasStore.getState().copySelectedShapes()
         return
