@@ -32,7 +32,7 @@ combinationRegistry.register({
   ],
   aiConfig: {
     model: 'tryon-v1',
-    promptTemplate: '将{{clothing}}服装应用到{{model}}人物身上，保持人物面部特征和姿势自然',
+    promptTemplate: '',
     supportedResolutions: [
       { width: 512, height: 512, label: '512×512' },
       { width: 768, height: 1024, label: '768×1024' },
@@ -81,7 +81,7 @@ combinationRegistry.register({
   ],
   aiConfig: {
     model: 'tryon-fixed-face-v1',
-    promptTemplate: '将{{clothing}}服装应用到人物身上，使用{{face}}作为面部参考，保持面部特征不变',
+    promptTemplate: '',
     supportedResolutions: [
       { width: 512, height: 512, label: '512×512' },
       { width: 768, height: 1024, label: '768×1024' },
@@ -138,7 +138,7 @@ combinationRegistry.register({
   ],
   aiConfig: {
     model: 'tryon-fixed-face-bg-v1',
-    promptTemplate: '将{{clothing}}服装应用到人物身上，使用{{face}}作为面部参考，使用{{background}}作为背景，保持面部特征和背景不变',
+    promptTemplate: '',
     supportedResolutions: [
       { width: 512, height: 512, label: '512×512' },
       { width: 768, height: 1024, label: '768×1024' },
@@ -203,7 +203,7 @@ combinationRegistry.register({
   ],
   aiConfig: {
     model: 'tryon-fixed-face-bg-pose-v1',
-    promptTemplate: '将{{clothing}}服装应用到人物身上，使用{{face}}作为面部参考，使用{{background}}作为背景，参考{{pose}}的姿势',
+    promptTemplate: '',
     supportedResolutions: [
       { width: 512, height: 512, label: '512×512' },
       { width: 768, height: 1024, label: '768×1024' },
@@ -264,7 +264,7 @@ combinationRegistry.register({
   ],
   aiConfig: {
     model: 'pose-fission-v1',
-    promptTemplate: '基于{{source}}人物，生成5种不同姿势的变体',
+    promptTemplate: '',
     supportedResolutions: [
       { width: 512, height: 512, label: '512×512' },
       { width: 768, height: 768, label: '768×768' },

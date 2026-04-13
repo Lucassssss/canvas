@@ -5,25 +5,29 @@ const cases = [
     title: 'TikTok / Shein 风格女装', 
     type: '跨境出海', 
     number: '01',
-    img: 'bg-gradient-to-br from-neutral-200 to-neutral-300'
+    img: 'bg-gradient-to-br from-neutral-200 to-neutral-300',
+    url: 'https://d-assets-cn.joii.cc/canvas-uploads/01051de7-a0f8-490a-9422-2f7f1e936af9.png?fmt=webp&w=1200',
   },
   { 
     title: '淘宝爆款：平铺白底秒变街拍', 
     type: '国内淘系', 
     number: '02',
-    img: 'bg-gradient-to-br from-neutral-300 to-neutral-400'
+    img: 'bg-gradient-to-br from-neutral-300 to-neutral-400',
+    url: 'https://d-assets-cn.joii.cc/ai-generated/40ccc917-129e-4f27-bb80-d1903b7496f0.png?fmt=webp&w=1200',
   },
   { 
     title: '小红书 / 得物：种草级质感氛围', 
     type: '社交种草', 
     number: '03',
-    img: 'bg-gradient-to-br from-neutral-200 to-neutral-300'
+    img: 'bg-gradient-to-br from-neutral-200 to-neutral-300',
+    url: 'https://d-assets-cn.joii.cc/ai-generated/02942663-124a-44a9-ab10-60da0fe661d4.png?fmt=webp&w=1200',
   },
   { 
     title: 'Amazon / Shopify 高客单展示', 
     type: '独立站 / 平台', 
     number: '04',
-    img: 'bg-gradient-to-br from-neutral-300 to-neutral-400'
+    img: 'bg-gradient-to-br from-neutral-300 to-neutral-400',
+    url: 'https://d-assets-cn.joii.cc/ai-generated/5e3e910c-9543-4a2d-9232-40424c4b8bed.png?fmt=webp&w=1200',
   },
 ]
 
@@ -54,11 +58,16 @@ export function ShowcaseSectionCN() {
           {cases.map((item) => (
             <div key={item.number} className="group cursor-pointer">
               <div className="relative overflow-hidden mb-4 md:mb-6">
-                <div className={`w-full aspect-[3/4] ${item.img} relative`}>
-                  <div className="absolute top-4 left-4 w-8 h-8 border border-neutral-400/30 flex items-center justify-center font-mono text-[10px] text-neutral-400">
+                <div className="w-full aspect-[3/4] relative bg-neutral-100">
+                  <img
+                    src={item.url}
+                    alt={item.title}
+                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                  />
+                  <div className="absolute top-4 left-4 w-8 h-8 border border-white/50 bg-black/20 backdrop-blur-sm flex items-center justify-center font-mono text-[10px] text-white">
                     {item.number}
                   </div>
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                 </div>
               </div>
               <h3 className="font-serif-zh text-base md:text-lg font-medium mb-1 group-hover:text-neutral-600 transition-colors">
