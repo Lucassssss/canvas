@@ -204,6 +204,7 @@ export const useCanvasStore = create<CanvasStore>()(
           ),
           isDirty: true
         }))
+        get().scheduleAutoSave()
       },
 
       batchUpdateShapes: (updates) => {
@@ -216,6 +217,7 @@ export const useCanvasStore = create<CanvasStore>()(
           }),
           isDirty: true
         }))
+        get().scheduleAutoSave()
       },
 
       deleteShape: (id) => {

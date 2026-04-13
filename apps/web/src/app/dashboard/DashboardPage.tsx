@@ -37,7 +37,7 @@ export function DashboardPage() {
 
         <div className="max-w-[1600px] mx-auto px-6 md:px-12 pb-12">
           <div className="space-y-12">
-            <EcommerceMaster />
+            {/* <EcommerceMaster /> */}
             <RecentProjects />
             <InspirationGallery />
           </div>

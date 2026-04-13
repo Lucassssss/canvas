@@ -1366,7 +1366,7 @@ export const Canvas: React.FC = () => {
   }, [setSelectedIds])
 
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
+    const handleKeyDown = async (e: KeyboardEvent) => {
       const target = e.target as HTMLElement
       if (
         target instanceof HTMLInputElement || 
@@ -1394,6 +1394,73 @@ export const Canvas: React.FC = () => {
 
       if ((e.metaKey || e.ctrlKey) && e.key === 'v') {
         e.preventDefault()
+
+        // 优先尝试从系统剪贴板读取图片
+        if (navigator.clipboard && navigator.clipboard.read) {
+          try {
+            const clipboardItems = await navigator.clipboard.read()
+            let imageBlob: Blob | null = null
+
+            for (const item of clipboardItems) {
+              const imageType = item.types.find((t) => t.startsWith('image/'))
+              if (imageType) {
+                imageBlob = await item.getType(imageType)
+                break
+              }
+            }
+
+            if (imageBlob) {
+              // 有剪贴板图片，上传并插入画布
+              const file = new File([imageBlob], `paste-${Date.now()}.png`, { type: imageBlob.type })
+              const result = await aiCombinationService.uploadImage(file, 'canvas-uploads')
+              if (result.success && result.url) {
+                const store = useCanvasStore.getState()
+                const vp = store.viewport
+                const centerX = -vp.x / vp.zoom + window.innerWidth / 2 / vp.zoom
+                const centerY = -vp.y / vp.zoom + window.innerHeight / 2 / vp.zoom
+
+                const img = new Image()
+                img.src = result.url
+                await new Promise<void>((resolve) => {
+                  img.onload = () => resolve()
+                  img.onerror = () => resolve()
+                })
+
+                const MAX_WIDTH = 512
+                let w = img.naturalWidth || MAX_WIDTH
+                let h = img.naturalHeight || MAX_WIDTH
+                if (w > MAX_WIDTH) {
+                  const scale = MAX_WIDTH / w
+                  w = MAX_WIDTH
+                  h = h * scale
+                }
+
+                const newShape = store.addShape({
+                  type: 'image',
+                  x: centerX - w / 2,
+                  y: centerY - h / 2,
+                  width: w,
+                  height: h,
+                  rotation: 0,
+                  fill: 'transparent',
+                  stroke: 'transparent',
+                  strokeWidth: 0,
+                  opacity: 1,
+                  imageUrl: result.url,
+                  imageName: '粘贴的图片',
+                  imageWidth: img.naturalWidth,
+                  imageHeight: img.naturalHeight,
+                })
+                setSelectedIds([newShape.id])
+              }
+              return
+            }
+          } catch {
+            // 剪贴板权限被拒绝或不支持，降级到内部粘贴
+          }
+        }
+
+        // 降级：粘贴画布内部复制的 Shape
         const newIds = useCanvasStore.getState().pasteShapes()
         if (newIds.length > 0) {
           setSelectedIds(newIds)

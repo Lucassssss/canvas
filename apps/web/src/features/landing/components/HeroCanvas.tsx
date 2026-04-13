@@ -22,12 +22,12 @@ interface HeroCanvasProps {
 }
 
 const SLOT_WIDTH = 140
-const SLOT_HEIGHT = 200
+const SLOT_HEIGHT = 186.8
 
 const MOCK_IMAGES = {
-  model: 'https://d-assets-cn.joii.cc/canvas-uploads/59c6c97e-d9ad-4aaf-b14b-f65398133e23.png',
-  clothing: 'https://d-assets-cn.joii.cc/canvas-uploads/e2ba9f5c-7e4d-40e8-b84f-8a9fb4d97aa0.webp',
-  result: 'https://d-assets-cn.joii.cc/ai-generated/5e3e910c-9543-4a2d-9232-40424c4b8bed.png',
+  model: 'https://d-assets-cn.joii.cc/canvas-uploads/37855ba0-f7ba-4f2b-b994-4d01266cabba.png?fmt=webp&w=800',
+  clothing: 'https://d-assets-cn.joii.cc/ai-generated/10edc332-7fc3-45b7-944b-1a1b0ab3b586.png?fmt=webp&w=800',
+  result: 'https://d-assets-cn.joii.cc/ai-generated/fb195e07-d3d7-4829-ac57-f491bb6d5170.png?fmt=webp&w=800',
 }
 
 const tools = [
