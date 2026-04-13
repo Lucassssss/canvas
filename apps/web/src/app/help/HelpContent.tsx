@@ -22,7 +22,7 @@ const FAQ_ITEMS = [
   },
   {
     question: '如何联系客服获取帮助？',
-    answer: '您可以通过发送邮件至 support@joii.ai 获取人工客服支持，也可以在产品内提交工单。我们的技术支持团队工作时间为工作日 9:00-18:00，承诺 24 小时内回复。',
+    answer: '您可以通过发送邮件至 hi@joii.cc 获取人工客服支持，也可以在产品内提交工单。我们的技术支持团队工作时间为工作日 9:00-18:00，承诺 24 小时内回复。',
   },
 ]
 
@@ -90,8 +90,8 @@ export function HelpContent() {
                 <p className="font-sans-zh text-sm text-neutral-400 leading-relaxed mb-6">
                   如果您无法在帮助中心找到答案，请随时联系我们的技术支持团队。
                 </p>
-                <a 
-                  href="mailto:support@joii.ai" 
+                <a
+                  href="mailto:hi@joii.cc"
                   className="inline-flex items-center gap-3 px-6 py-3 bg-white text-neutral-950 font-sans-zh font-medium text-sm hover:bg-neutral-100 transition-colors"
                 >
                   <Mail className="w-4 h-4" />
