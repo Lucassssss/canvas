@@ -255,8 +255,14 @@ export const FloatingConfigPanel: React.FC<FloatingConfigPanelProps> = ({ contai
       // Optimize images to prevent "InvalidParameter.OversizeImage" (Max 10MB) for AI services
       const optimizedImages = images.map(img => getOptimizedImageUrl(img, 1024))
 
+      const combinationTypeId = shapeType === 'ai-combination' 
+        ? (selectedShape.combinationTypeId || 'simple-tryon')
+        : shapeType === 'custom-combination'
+          ? 'custom'
+          : shapeType
+
       const result = await imageGenerationService.generate({
-        combinationTypeId: shapeType,
+        combinationTypeId,
         images: optimizedImages,
         prompt: imageConfig.prompt,
         settings: {

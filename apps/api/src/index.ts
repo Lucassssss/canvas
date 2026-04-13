@@ -63,6 +63,13 @@ async function startServer(retry = false) {
     try {
       const server = app.listen(PORT, () => {
         console.log(`API server running on http://localhost:${PORT}`);
+        
+        // Use timeouts slightly larger than standard reverse proxy timeouts (60s)
+        // to prevent race conditions that lead to ERR_HTTP2_PROTOCOL_ERROR or 502s
+        server.timeout = 300000; // 5 minutes
+        server.keepAliveTimeout = 65000; // 65 seconds
+        server.headersTimeout = 66000; // 66 seconds
+        
         resolve(server);
       });
 
