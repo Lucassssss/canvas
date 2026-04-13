@@ -1,4 +1,5 @@
 import { Metadata } from 'next'
+import { AuthGuard } from '@/features/auth/AuthGuard'
 
 export const metadata: Metadata = {
   title: '个人中心',
@@ -14,5 +15,5 @@ export default function ProfileLayout({
 }: {
   children: React.ReactNode
 }) {
-  return children
+  return <AuthGuard>{children}</AuthGuard>
 }

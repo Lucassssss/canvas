@@ -20,6 +20,7 @@ export function NavbarCN() {
         <div className="flex items-center gap-12">
           <Link href="/" className="flex items-center">
             <img src="/joii_logo_fa.svg" alt="Joii" className="h-6 w-6" width="24" height="24" />
+            <span className=" ml-2 text-xl">Joii</span>
           </Link>
           <nav className="hidden md:flex items-center gap-8 font-sans-zh text-sm text-neutral-500">
             <Link href="#features" className="hover:text-neutral-950 transition-colors">核心能力</Link>
@@ -42,7 +43,7 @@ export function NavbarCN() {
             </>
           ) : (
             <>
-              <Link 
+              <Link
                 href="/login"
                 className="font-sans-zh text-sm text-neutral-500 hover:text-neutral-950 transition-colors hidden md:block"
               >
