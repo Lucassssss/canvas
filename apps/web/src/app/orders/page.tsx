@@ -15,17 +15,17 @@ const statusConfig = {
 }
 
 export default function OrdersPage() {
-  const { user, isAuthenticated, isLoading: authLoading } = useAuth()
+  const { user } = useAuth()
   const [orders, setOrders] = useState<Order[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
 
   useEffect(() => {
-    if (isAuthenticated && user) {
+    if (user) {
       loadOrders()
     }
-  }, [isAuthenticated, user, page])
+  }, [user, page])
 
   const loadOrders = async () => {
     setIsLoading(true)
@@ -42,33 +42,12 @@ export default function OrdersPage() {
     }
   }
 
-  if (authLoading) {
-    return (
-      <div className="min-h-screen bg-neutral-50 flex items-center justify-center">
-        <Loader2 className="w-6 h-6 animate-spin text-neutral-400" />
-      </div>
-    )
-  }
-
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen bg-neutral-50 flex items-center justify-center">
-        <div className="text-center">
-          <p className="font-sans-zh text-neutral-500 mb-4">请先登录</p>
-          <Link href="/login" className="font-sans-zh text-sm text-neutral-950 hover:underline">
-            前往登录
-          </Link>
-        </div>
-      </div>
-    )
-  }
-
   return (
     <div className="min-h-screen bg-neutral-50">
       <div className="max-w-4xl mx-auto px-4 py-8">
         <div className="mb-6">
-          <Link 
-            href="/profile" 
+          <Link
+            href="/profile"
             className="inline-flex items-center gap-1 font-sans-zh text-sm text-neutral-500 hover:text-neutral-700 transition-colors"
           >
             <ChevronLeft className="w-4 h-4" />

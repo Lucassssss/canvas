@@ -1,11 +1,11 @@
 'use client'
 
-import React, { useEffect, useState, useCallback, useRef } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import { LeftSidebar } from '@/components/LeftSidebar'
 import { PageHeader } from '@/components/PageHeader'
 import { useAuth } from '@/features/auth/useAuth'
 import { useCredits } from '@/features/credits/useCredits'
-import { useRouter } from 'next/navigation'
+
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -37,62 +37,45 @@ const ACTION_LABELS: Record<string, string> = {
 }
 
 export default function ProfilePage() {
-  const { user, isAuthenticated, isLoading: authLoading, fetchUser } = useAuth()
+  const { user, fetchUser } = useAuth()
   const { openInsufficientModal } = useCredits()
-  const router = useRouter()
   const [isEditing, setIsEditing] = useState(false)
   const [nickname, setNickname] = useState('')
   const [isSaving, setIsSaving] = useState(false)
   const [transactions, setTransactions] = useState<Transaction[]>([])
-  const [isLoadingData, setIsLoadingData] = useState(false)
-  const hasFetchedData = useRef(false)
-  const hasFetchedUser = useRef(false)
+  const [isLoadingData, setIsLoadingData] = useState(true)
+  const hasFetched = useRef(false)
 
-  useEffect(() => {
-    if (!authLoading && !isAuthenticated) {
-      router.push('/login')
-    }
-  }, [isAuthenticated, authLoading, router])
-
-  useEffect(() => {
-    if (isAuthenticated && !hasFetchedUser.current) {
-      hasFetchedUser.current = true
-      fetchUser()
-    }
-  }, [isAuthenticated, fetchUser])
-
+  // 同步昵称输入框
   useEffect(() => {
     if (user) {
       setNickname(user.nickname || '')
     }
   }, [user])
 
-  const fetchData = useCallback(async () => {
-    if (hasFetchedData.current) return
-    hasFetchedData.current = true
-    
-    setIsLoadingData(true)
-    try {
-      const res = await fetch(`${API_BASE}/api/users/transactions`, {
-        credentials: 'include',
-      })
-
-      if (res.ok) {
-        const data = await res.json()
-        setTransactions(data.transactions || [])
-      }
-    } catch (error) {
-      console.error('Failed to fetch profile data:', error)
-    } finally {
-      setIsLoadingData(false)
-    }
-  }, [])
-
+  // 只在组件挂载时拉取一次交易记录
   useEffect(() => {
-    if (isAuthenticated) {
-      fetchData()
+    if (hasFetched.current) return
+    hasFetched.current = true
+
+    const load = async () => {
+      try {
+        const res = await fetch(`${API_BASE}/api/users/transactions`, {
+          credentials: 'include',
+        })
+        if (res.ok) {
+          const data = await res.json()
+          setTransactions(data.transactions || [])
+        }
+      } catch (error) {
+        console.error('Failed to fetch transactions:', error)
+      } finally {
+        setIsLoadingData(false)
+      }
     }
-  }, [isAuthenticated, fetchData])
+
+    load()
+  }, [])
 
   const handleSaveNickname = async () => {
     if (!nickname.trim()) return
@@ -117,7 +100,7 @@ export default function ProfilePage() {
     }
   }
 
-  if (!isAuthenticated || !user) return null
+  if (!user) return null
 
   const initials = user.nickname ? user.nickname.slice(0, 2).toUpperCase() : user.phone.slice(-4)
 
