@@ -1,8 +1,18 @@
+'use client'
+
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { ArrowRight } from 'lucide-react'
 import { HeroCanvas } from './HeroCanvas'
+import { useAuth } from '@/features/auth/useAuth'
 
 export function HeroSectionCN() {
+  const { isAuthenticated } = useAuth()
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
   return (
     <section className="relative overflow-hidden text-neutral-950 mt-20">
       <div className="absolute top-0 right-0 w-1/2 bottom-0 bg-neutral-100/50" />
@@ -26,13 +36,23 @@ export function HeroSectionCN() {
               </p>
 
               <div className="flex items-center gap-4 mt-8">
-                <Link
-                  href="/dashboard"
-                  className="group inline-flex items-center gap-3 px-8 py-4 bg-neutral-950 text-white font-sans-zh font-medium text-sm tracking-wide hover:bg-neutral-800 transition-colors"
-                >
-                  <span>免费注册 · 领 1000 积分</span>
-                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                </Link>
+                {mounted && isAuthenticated ? (
+                  <Link
+                    href="/dashboard"
+                    className="group inline-flex items-center gap-3 px-8 py-4 bg-neutral-950 text-white font-sans-zh font-medium text-sm tracking-wide hover:bg-neutral-800 transition-colors"
+                  >
+                    <span>进入工作台</span>
+                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  </Link>
+                ) : (
+                  <Link
+                    href="/dashboard"
+                    className="group inline-flex items-center gap-3 px-8 py-4 bg-neutral-950 text-white font-sans-zh font-medium text-sm tracking-wide hover:bg-neutral-800 transition-colors"
+                  >
+                    <span>免费注册 · 领 1000 积分</span>
+                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  </Link>
+                )}
                 <div className="flex flex-col gap-1">
                   {/* <span className="text-xs font-sans-zh text-neutral-400 tracking-wider">
                     v1.1.0 现已发布
