@@ -59,7 +59,9 @@ const CanvasPageContent: React.FC = () => {
   useEffect(() => {
     setMounted(true)
     const stored = localStorage.getItem(CHAT_OPEN_STORAGE_KEY)
-    if (stored !== null) {
+    if (searchParams.get('initialPrompt')) {
+      setIsChatOpen(true)
+    } else if (stored !== null) {
       setIsChatOpen(stored === 'true')
     }
 
