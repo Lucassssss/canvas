@@ -18,7 +18,8 @@
     "desktop:dist": "cd apps/electron && bun run dist",
     "deploy": "bash server_config/scripts/deploy.sh full",
     "deploy:frontend": "bash server_config/scripts/deploy.sh frontend",
-    "deploy:backend": "bash server_config/scripts/deploy.sh backend"
+    "deploy:backend": "bash server_config/scripts/deploy.sh backend",
+    "seo:push": "bash server_config/scripts/baidu-push.sh"
   },
   "devDependencies": {
     "@langchain/langgraph-cli": "^1.1.15",

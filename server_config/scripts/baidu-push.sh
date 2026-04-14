@@ -5,23 +5,19 @@
 
 SITE="https://joii.cc"
 TOKEN="zNG9GI5n0UaxaMHL"
-URLS_FILE="$(dirname "$0")/baidu-push-urls.txt"
+URLS=$(curl -s "$SITE/sitemap.xml" | grep -o "<loc>.*</loc>" | sed 's/<loc>//g' | sed 's/<\/loc>//g')
 
-echo "=== 百度链接主动推送 ==="
-echo "网站: $SITE"
-echo ""
-
-if [ ! -f "$URLS_FILE" ]; then
-    echo "错误: 找不到文件 $URLS_FILE"
+if [ -z "$URLS" ]; then
+    echo "❌ 获取 sitemap 失败或该文件中没有 URL"
     exit 1
 fi
 
-echo "推送的URL列表:"
-cat "$URLS_FILE"
+echo "获取到以下 URL："
+echo "$URLS"
 echo ""
 
-echo "正在推送..."
-RESPONSE=$(curl -H 'Content-Type:text/plain' --data-binary @"$URLS_FILE" "http://data.zz.baidu.com/urls?site=$SITE&token=$TOKEN")
+echo "正在推送到百度..."
+RESPONSE=$(curl -s -H 'Content-Type:text/plain' --data-binary "$URLS" "http://data.zz.baidu.com/urls?site=$SITE&token=$TOKEN")
 
 echo "百度返回结果:"
 echo "$RESPONSE"
