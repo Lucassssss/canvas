@@ -21,9 +21,9 @@ const BENEFITS = [
 
 export function CreditsRechargeModal() {
   const { user, fetchUser } = useAuth()
-  const { 
-    isInsufficientModalOpen, 
-    closeInsufficientModal, 
+  const {
+    isInsufficientModalOpen,
+    closeInsufficientModal,
     packages,
     currentOrder,
     isPaying,
@@ -35,7 +35,7 @@ export function CreditsRechargeModal() {
     isManualQuerying,
     pollCount,
   } = useCredits()
-  
+
   const [selectedOption, setSelectedOption] = useState<number>(500)
   const [isLoadingPackages, setIsLoadingPackages] = useState(false)
   const [queryMessage, setQueryMessage] = useState<string | null>(null)
@@ -86,7 +86,7 @@ export function CreditsRechargeModal() {
   }
 
   return (
-    <Dialog open={isInsufficientModalOpen} onOpenChange={() => {}}>
+    <Dialog open={isInsufficientModalOpen} onOpenChange={() => { }}>
       <DialogOverlay className="bg-black/40 backdrop-blur-sm z-[9998]" />
       <DialogContent
         showCloseButton={false}
@@ -301,7 +301,7 @@ export function CreditsRechargeModal() {
                     请使用微信扫码完成支付
                   </p>
                 </div>
-                
+
                 <button
                   onClick={async () => {
                     setQueryMessage(null)
@@ -326,16 +326,16 @@ export function CreditsRechargeModal() {
                     </>
                   )}
                 </button>
-                
+
                 {queryMessage && (
                   <p className="text-center font-sans-zh text-[10px] text-amber-600">
                     {queryMessage}
                   </p>
                 )}
-                
-                <p className="text-center font-sans-zh text-[10px] text-neutral-400">
+
+                {/* <p className="text-center font-sans-zh text-[10px] text-neutral-400">
                   已查询 {pollCount} 次
-                </p>
+                </p> */}
               </div>
             ) : (
               <button
