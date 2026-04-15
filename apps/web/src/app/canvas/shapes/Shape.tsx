@@ -401,6 +401,12 @@ const ShapeComponent: React.FC<ShapeComponentProps> = ({ shape, isSelected, isGr
             className="w-full h-full bg-transparent border-none outline-none resize-none hide-scrollbar whitespace-pre-wrap break-words"
             style={textStyle}
             onBlur={(e) => {
+              // Do not exit editing if focus moved to a resize/rotate handle
+              const related = e.relatedTarget as HTMLElement | null
+              if (related && (related.closest('.resize-handle') || related.closest('.edge-hitarea') || related.closest('.pointer-events-auto'))) {
+                e.currentTarget.focus()
+                return
+              }
               setIsEditing(false)
               updateShape(shape.id, { text: e.currentTarget.innerText })
               saveHistory()
@@ -408,11 +414,9 @@ const ShapeComponent: React.FC<ShapeComponentProps> = ({ shape, isSelected, isGr
             onInput={(e) => {
               updateShape(shape.id, { text: e.currentTarget.innerText })
             }}
-            onPaste={(e) => {
+            onKeyDown={(e) => {
+              // Prevent canvas global shortcuts from firing while editing text
               e.stopPropagation()
-              e.preventDefault()
-              const pastedText = e.clipboardData.getData('text/plain')
-              document.execCommand('insertText', false, pastedText)
             }}
             ref={(el) => {
               if (el && document.activeElement !== el) {
@@ -456,6 +460,12 @@ const ShapeComponent: React.FC<ShapeComponentProps> = ({ shape, isSelected, isGr
             className="w-full h-full p-2 bg-transparent border-none outline-none resize-none hide-scrollbar whitespace-pre-wrap break-words"
             style={textStyle}
             onBlur={(e) => {
+              // Do not exit editing if focus moved to a resize/rotate handle
+              const related = e.relatedTarget as HTMLElement | null
+              if (related && (related.closest('.resize-handle') || related.closest('.edge-hitarea') || related.closest('.pointer-events-auto'))) {
+                e.currentTarget.focus()
+                return
+              }
               setIsEditing(false)
               updateShape(shape.id, { text: e.currentTarget.innerText })
               saveHistory()
@@ -463,11 +473,9 @@ const ShapeComponent: React.FC<ShapeComponentProps> = ({ shape, isSelected, isGr
             onInput={(e) => {
               updateShape(shape.id, { text: e.currentTarget.innerText })
             }}
-            onPaste={(e) => {
+            onKeyDown={(e) => {
+              // Prevent canvas global shortcuts from firing while editing text
               e.stopPropagation()
-              e.preventDefault()
-              const pastedText = e.clipboardData.getData('text/plain')
-              document.execCommand('insertText', false, pastedText)
             }}
             ref={(el) => {
               if (el && document.activeElement !== el) {

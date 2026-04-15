@@ -604,6 +604,7 @@ export const Canvas: React.FC = () => {
   const [previousTool, setPreviousTool] = useState<ToolType>('select')
   const [isSpaceDragging, setIsSpaceDragging] = useState(false)
   const [selectionRect, setSelectionRect] = useState<SelectionRect | null>(null)
+  const isTextResizingRef = useRef(false)
 
   const {
     shapes,
@@ -1078,6 +1079,7 @@ export const Canvas: React.FC = () => {
 
     if (resizeStartRef.current) {
       resizeStartRef.current = null
+      isTextResizingRef.current = false
       saveHistory()
       scheduleAutoSave()
     }
@@ -1107,6 +1109,8 @@ export const Canvas: React.FC = () => {
       shapeId,
       shapeType: shape.type,
     }
+    // text/note resize keeps selection box visible
+    isTextResizingRef.current = shape.type === 'text' || shape.type === 'note'
     setIsDragging(true)
   }, [shapes, setIsDragging])
 
@@ -1668,7 +1672,7 @@ export const Canvas: React.FC = () => {
       </div>
 
       <div className="canvas-hide-on-zoom">
-        {(!isDragging && !isPanning) && (
+        {(!isDragging || isTextResizingRef.current) && !isPanning && (
           <SelectionBoxLayer
             shapes={shapes}
             selectedIds={selectedIds}
