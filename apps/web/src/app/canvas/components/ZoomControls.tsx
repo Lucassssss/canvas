@@ -63,11 +63,11 @@ export const ZoomControls: React.FC = () => {
   }, [zoomIn, zoomOut, handleFitToScreen])
 
   return (
-    <div className="zoom-controls">
+    <div className="canvas-zoom-controls">
       <Tooltip>
         <TooltipTrigger asChild>
           <button
-            className="zoom-btn"
+            className="canvas-zoom-btn"
             onClick={zoomOut}
             disabled={viewport.zoom <= 0.1}
           >
@@ -80,13 +80,13 @@ export const ZoomControls: React.FC = () => {
       </Tooltip>
 
       <div
-        className="zoom-value relative"
+        className="canvas-zoom-value relative"
         onClick={() => setShowDropdown(!showDropdown)}
       >
         {Math.round(viewport.zoom * 100)}%
 
         {showDropdown && (
-          <div className="zoom-dropdown">
+          <div className="canvas-zoom-dropdown">
             <button onClick={handleFitToScreen}>
               适合屏幕
             </button>
@@ -106,7 +106,7 @@ export const ZoomControls: React.FC = () => {
       <Tooltip>
         <TooltipTrigger asChild>
           <button
-            className="zoom-btn"
+            className="canvas-zoom-btn"
             onClick={zoomIn}
             disabled={viewport.zoom >= 5}
           >
@@ -121,7 +121,7 @@ export const ZoomControls: React.FC = () => {
       <Tooltip>
         <TooltipTrigger asChild>
           <button
-            className="zoom-btn"
+            className="canvas-zoom-btn"
             onClick={handleFitToScreen}
           >
             <Maximize size={16} />

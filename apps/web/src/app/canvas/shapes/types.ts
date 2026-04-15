@@ -13,6 +13,7 @@ export type ShapeType =
   | 'image-slot' 
   | 'custom-combination'
   | 'detail-image'
+  | 'group'
 
 export const SHAPE_MIN_SIZE: Record<ShapeType, { minWidth: number; minHeight: number }> = {
   rect: { minWidth: 20, minHeight: 20 },
@@ -27,6 +28,7 @@ export const SHAPE_MIN_SIZE: Record<ShapeType, { minWidth: number; minHeight: nu
   'image-slot': { minWidth: 100, minHeight: 100 },
   'custom-combination': { minWidth: 200, minHeight: 300 },
   'detail-image': { minWidth: 300, minHeight: 200 },
+  group: { minWidth: 20, minHeight: 20 }
 }
 
 export type ClothingView = 'front' | 'back' | 'side'
@@ -75,6 +77,14 @@ export interface ShapeProps {
   strokeWidth: number
   opacity: number
   text?: string
+  textColor?: string
+  fontSize?: number
+  fontFamily?: string
+  fontWeight?: 'normal' | 'bold'
+  fontStyle?: 'normal' | 'italic'
+  textDecoration?: 'none' | 'underline' | 'line-through'
+  textAlign?: 'left' | 'center' | 'right'
+  lineHeight?: number
   imageUrl?: string
   imageName?: string
   imageWidth?: number
@@ -101,6 +111,7 @@ export interface ShapeProps {
   imageConfig?: ImageConfig
   isGenerating?: boolean
   generationError?: string
+  children?: ShapeProps[]
 }
 
 export interface ViewportState {

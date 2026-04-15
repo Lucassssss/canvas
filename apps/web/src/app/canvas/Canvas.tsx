@@ -331,6 +331,7 @@ const SHAPE_TYPE_NAMES: Record<ShapeType, string> = {
   'image-slot': '图片槽',
   'custom-combination': '自定义组合',
   'detail-image': '详情图片',
+  group: '编组',
 }
 
 const ShapeInfoLayer = memo<{
@@ -448,7 +449,7 @@ const SelectionBox = memo<SelectionBoxProps>(({ shape, viewport, onResizeStart, 
               left: -handleSize / 2,
               cursor: 'nw-resize',
             }}
-            onMouseDown={(e) => onResizeStart(e, 'nw', shape.id)}
+            onMouseDown={(e) => { e.preventDefault(); onResizeStart(e, 'nw', shape.id); }}
           />
           <div
             className="resize-handle pointer-events-auto absolute"
@@ -461,7 +462,7 @@ const SelectionBox = memo<SelectionBoxProps>(({ shape, viewport, onResizeStart, 
               right: -handleSize / 2,
               cursor: 'ne-resize',
             }}
-            onMouseDown={(e) => onResizeStart(e, 'ne', shape.id)}
+            onMouseDown={(e) => { e.preventDefault(); onResizeStart(e, 'ne', shape.id); }}
           />
           <div
             className="resize-handle pointer-events-auto absolute"
@@ -474,7 +475,7 @@ const SelectionBox = memo<SelectionBoxProps>(({ shape, viewport, onResizeStart, 
               left: -handleSize / 2,
               cursor: 'sw-resize',
             }}
-            onMouseDown={(e) => onResizeStart(e, 'sw', shape.id)}
+            onMouseDown={(e) => { e.preventDefault(); onResizeStart(e, 'sw', shape.id); }}
           />
           <div
             className="resize-handle pointer-events-auto absolute"
@@ -499,7 +500,7 @@ const SelectionBox = memo<SelectionBoxProps>(({ shape, viewport, onResizeStart, 
               height: handleSize,
               cursor: 'n-resize',
             }}
-            onMouseDown={(e) => onResizeStart(e, 'n', shape.id)}
+            onMouseDown={(e) => { e.preventDefault(); onResizeStart(e, 'n', shape.id); }}
           />
           <div
             className="edge-hitarea pointer-events-auto absolute"
@@ -510,7 +511,7 @@ const SelectionBox = memo<SelectionBoxProps>(({ shape, viewport, onResizeStart, 
               height: handleSize,
               cursor: 's-resize',
             }}
-            onMouseDown={(e) => onResizeStart(e, 's', shape.id)}
+            onMouseDown={(e) => { e.preventDefault(); onResizeStart(e, 's', shape.id); }}
           />
           <div
             className="edge-hitarea pointer-events-auto absolute"
@@ -521,7 +522,7 @@ const SelectionBox = memo<SelectionBoxProps>(({ shape, viewport, onResizeStart, 
               width: handleSize,
               cursor: 'w-resize',
             }}
-            onMouseDown={(e) => onResizeStart(e, 'w', shape.id)}
+            onMouseDown={(e) => { e.preventDefault(); onResizeStart(e, 'w', shape.id); }}
           />
           <div
             className="edge-hitarea pointer-events-auto absolute"
@@ -532,7 +533,7 @@ const SelectionBox = memo<SelectionBoxProps>(({ shape, viewport, onResizeStart, 
               width: handleSize,
               cursor: 'e-resize',
             }}
-            onMouseDown={(e) => onResizeStart(e, 'e', shape.id)}
+            onMouseDown={(e) => { e.preventDefault(); onResizeStart(e, 'e', shape.id); }}
           />
         </>
       )}
@@ -550,7 +551,7 @@ const SelectionBox = memo<SelectionBoxProps>(({ shape, viewport, onResizeStart, 
               left: -rotateHandleOffset,
               cursor: `url('/rotate_1.svg') ${rotateHandleSize / 2} ${rotateHandleSize / 2}, crosshair`,
             }}
-            onMouseDown={(e) => onRotateStart(e, 'nw', shape.id)}
+            onMouseDown={(e) => { e.preventDefault(); onRotateStart(e, 'nw', shape.id); }}
           />
           <div
             className="pointer-events-auto absolute"
@@ -563,7 +564,7 @@ const SelectionBox = memo<SelectionBoxProps>(({ shape, viewport, onResizeStart, 
               right: -rotateHandleOffset,
               cursor: `url('/rotate_2.svg') ${rotateHandleSize / 2} ${rotateHandleSize / 2}, crosshair`,
             }}
-            onMouseDown={(e) => onRotateStart(e, 'ne', shape.id)}
+            onMouseDown={(e) => { e.preventDefault(); onRotateStart(e, 'ne', shape.id); }}
           />
           <div
             className="pointer-events-auto absolute"
@@ -576,7 +577,7 @@ const SelectionBox = memo<SelectionBoxProps>(({ shape, viewport, onResizeStart, 
               left: -rotateHandleOffset,
               cursor: `url('/rotate_4.svg') ${rotateHandleSize / 2} ${rotateHandleSize / 2}, crosshair`,
             }}
-            onMouseDown={(e) => onRotateStart(e, 'sw', shape.id)}
+            onMouseDown={(e) => { e.preventDefault(); onRotateStart(e, 'sw', shape.id); }}
           />
           <div
             className="pointer-events-auto absolute"
@@ -589,7 +590,7 @@ const SelectionBox = memo<SelectionBoxProps>(({ shape, viewport, onResizeStart, 
               right: -rotateHandleOffset,
               cursor: `url('/rotate_3.svg') ${rotateHandleSize / 2} ${rotateHandleSize / 2}, crosshair`,
             }}
-            onMouseDown={(e) => onRotateStart(e, 'se', shape.id)}
+            onMouseDown={(e) => { e.preventDefault(); onRotateStart(e, 'se', shape.id); }}
           />
         </>
       )}
