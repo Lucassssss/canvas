@@ -134,7 +134,13 @@ function createShape(type: ToolType): void {
         stroke: 'transparent',
         strokeWidth: 0,
         opacity: 1,
-        text: '',
+        text: '双击编辑文本',
+        textColor: '#18181b',
+        fontSize: 16,
+        fontFamily: 'Inter',
+        fontWeight: 'normal',
+        fontStyle: 'normal',
+        textAlign: 'left',
       })
       break
 
@@ -150,7 +156,13 @@ function createShape(type: ToolType): void {
         stroke: 'transparent',
         strokeWidth: 0,
         opacity: 1,
-        text: '',
+        text: '便签内容...',
+        textColor: '#18181b',
+        fontSize: 16,
+        fontFamily: 'system-ui',
+        fontWeight: 'normal',
+        fontStyle: 'normal',
+        textAlign: 'left',
       })
       break
 

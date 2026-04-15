@@ -10,6 +10,8 @@ import type { CanvasData } from '@/types/project'
 import { clearImageCache } from './shapes/OptimizedImage'
 import { clearImageOptimizationCache } from './utils/imageOptimization'
 import { extractThumbnailFromShapes } from './utils/thumbnailGenerator'
+import { TransformMatrix } from '@/lib/canvas/transform'
+import { getShapesBoundingBox } from '@/lib/canvas/geometry'
 import { useProjectStore } from '@/store/project-store'
 
 function clearAllImageCaches() {
@@ -123,6 +125,9 @@ interface CanvasStore {
 
   screenToCanvas: (screenX: number, screenY: number) => { x: number; y: number }
   canvasToScreen: (canvasX: number, canvasY: number) => { x: number; y: number }
+
+  groupShapes: () => void
+  ungroupShapes: () => void
 
   setProjectId: (id: string | null) => void
   setProjectName: (name: string) => void
@@ -571,6 +576,128 @@ export const useCanvasStore = create<CanvasStore>()(
           x: canvasX * viewport.zoom + viewport.x,
           y: canvasY * viewport.zoom + viewport.y,
         }
+      },
+
+      groupShapes: () => {
+        const { shapes, selectedIds } = get()
+        if (selectedIds.length < 2) return
+
+        const selectedShapes = shapes.filter((s) => selectedIds.includes(s.id))
+        const remainingShapes = shapes.filter((s) => !selectedIds.includes(s.id))
+
+        const bounds = getShapesBoundingBox(selectedShapes)
+
+        const groupId = nanoid()
+        const groupShape: ShapeProps = {
+          id: groupId,
+          type: 'group',
+          x: bounds.minX,
+          y: bounds.minY,
+          width: bounds.maxX - bounds.minX,
+          height: bounds.maxY - bounds.minY,
+          rotation: 0,
+          scaleX: 1,
+          scaleY: 1,
+          fill: 'transparent',
+          stroke: 'transparent',
+          strokeWidth: 0,
+          opacity: 1,
+          children: selectedShapes.map(child => ({
+            ...child,
+            x: child.x - bounds.minX,
+            y: child.y - bounds.minY,
+          }))
+        }
+
+        set({
+          shapes: [...remainingShapes, groupShape],
+          selectedIds: [groupId],
+          isDirty: true
+        })
+        get().saveHistory('batch', 'Group shapes')
+        get().scheduleAutoSave()
+      },
+
+      ungroupShapes: () => {
+        const { shapes, selectedIds } = get()
+        if (selectedIds.length !== 1) return
+
+        const targetId = selectedIds[0]
+        const groupShape = shapes.find(s => s.id === targetId)
+
+        if (!groupShape || groupShape.type !== 'group' || !groupShape.children) return
+
+        const remainingShapes = shapes.filter(s => s.id !== targetId)
+        
+        // Construct the group's transform matrix
+        const groupCx = groupShape.x + groupShape.width / 2
+        const groupCy = groupShape.y + groupShape.height / 2
+        const groupMatrix = TransformMatrix.compose(
+          groupCx,
+          groupCy,
+          groupShape.width,
+          groupShape.height,
+          groupShape.rotation || 0,
+          groupShape.scaleX ?? 1,
+          groupShape.scaleY ?? 1
+        )
+
+        const newSelectedIds: string[] = []
+        const ungroupedShapes = groupShape.children.map(child => {
+          const newId = nanoid()
+          newSelectedIds.push(newId)
+
+          // Child local center relative to group's top-left
+          const childCxRel = child.x + child.width / 2
+          const childCyRel = child.y + child.height / 2
+
+          // Convert to absolute mapping local center through group matrix
+          // Wait: The child is rendered inside the group container. 
+          // The container's origin is visually at top-left.
+          // Is `groupMatrix` applied to the top-left or to points?
+          // Since it's applied using CSS transform origin at center, but we want to map the point directly.
+          // Wait! The CSS transform `matrix` we use is designed to map a local coordinate system with origin at (0,0) (the top-left of the div).
+          // `TransformMatrix.compose` actually produces a matrix that maps `(0,0)` to the group's un-rotated top-left!
+          // Let's verify: `applyToPoint` on `(0,0)` gives `(e, f)`. `e = groupCx - width/2 = group.x`. Yes!
+          // So applying groupMatrix to `(childCxRel, childCyRel)` gives the absolute center of the child on the canvas!
+          
+          const absCenter = TransformMatrix.applyToPoint(groupMatrix, { x: childCxRel, y: childCyRel })
+
+          // However, child might have its own scale and rotation.
+          // Absolute rotation = child.rotation + group.rotation
+          // Absolute scale = child.scale * group.scale
+          
+          const absRotation = (child.rotation || 0) + (groupShape.rotation || 0)
+          
+          // Width/height doesn't scale natively unless we bake scale into width/height.
+          // But our scaleX/scaleY properties handle resizing.
+          const absScaleX = (child.scaleX ?? 1) * (groupShape.scaleX ?? 1)
+          const absScaleY = (child.scaleY ?? 1) * (groupShape.scaleY ?? 1)
+
+          // Now we have the absolute center, absolute rotation, absolute scale.
+          // What is the absolute `x` and `y` (the top-left before rotation)?
+          // absolute `x` = absCenter.x - width / 2
+          const absX = absCenter.x - child.width / 2
+          const absY = absCenter.y - child.height / 2
+
+          return {
+            ...child,
+            id: newId,
+            x: absX,
+            y: absY,
+            rotation: absRotation,
+            scaleX: absScaleX,
+            scaleY: absScaleY,
+          }
+        })
+
+        set({
+          shapes: [...remainingShapes, ...ungroupedShapes],
+          selectedIds: newSelectedIds,
+          isDirty: true
+        })
+        get().saveHistory('batch', 'Ungroup shapes')
+        get().scheduleAutoSave()
       },
 
       setProjectId: (id) => set({ projectId: id }),

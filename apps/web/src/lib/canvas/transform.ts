@@ -102,4 +102,12 @@ export class TransformMatrix {
       scaleY,
     }
   }
+
+  static applyToPoint(matrix: Float32Array, point: { x: number; y: number }): { x: number; y: number } {
+    return {
+      x: matrix[0] * point.x + matrix[2] * point.y + matrix[4],
+      y: matrix[1] * point.x + matrix[3] * point.y + matrix[5],
+    }
+  }
 }
+

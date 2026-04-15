@@ -14,6 +14,7 @@ import './style.css'
 const RightSidebar = dynamic(() => import('./components/RightSidebar').then(mod => ({ default: mod.RightSidebar })), { ssr: false })
 const Toolbar = dynamic(() => import('./components/Toolbar').then(mod => ({ default: mod.Toolbar })), { ssr: false })
 const Canvas = dynamic(() => import('./Canvas').then(mod => ({ default: mod.Canvas })), { ssr: false })
+const TopToolbar = dynamic(() => import('./components/top-toolbar/TopToolbar').then(mod => ({ default: mod.TopToolbar })), { ssr: false })
 
 const CHAT_OPEN_STORAGE_KEY = 'right-sidebar-open'
 
@@ -218,6 +219,7 @@ const CanvasPageContent: React.FC = () => {
         <LeftSidebar />
         <div className="flex-1 relative">
           <Canvas />
+          <TopToolbar />
           <Toolbar />
           <ZoomControls />
         </div>

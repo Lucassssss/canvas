@@ -9,6 +9,7 @@ import { AICombinationComponent } from './AICombinationComponent'
 import { CustomCombination } from './CustomCombination'
 import { DetailImageShape } from '../detail-image/DetailImageShape'
 import { OptimizedImage } from './OptimizedImage'
+import { ArrowShape } from './ArrowShape'
 import { aiCombinationService } from '@/ai-combination/service'
 import { Loader2, Copy, Clipboard, Trash2, BringToFront, SendToBack, CopyPlus, Download } from 'lucide-react'
 import { TransformMatrix } from '@/lib/canvas/transform'
@@ -29,9 +30,10 @@ import {
 interface ShapeComponentProps {
   shape: ShapeProps
   isSelected: boolean
+  isGroupChild?: boolean
 }
 
-const ShapeComponent: React.FC<ShapeComponentProps> = ({ shape }) => {
+const ShapeComponent: React.FC<ShapeComponentProps> = ({ shape, isSelected, isGroupChild }) => {
   const elementRef = useRef<HTMLDivElement>(null)
   const [isEditing, setIsEditing] = useState(false)
   const [imageLoaded, setImageLoaded] = useState(false)
@@ -86,6 +88,8 @@ const ShapeComponent: React.FC<ShapeComponentProps> = ({ shape }) => {
   const isImageDragRef = useRef(false)
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    if (isGroupChild) return
+
     if (e.button !== 0) return
     e.stopPropagation()
 
@@ -368,7 +372,7 @@ const ShapeComponent: React.FC<ShapeComponentProps> = ({ shape }) => {
       window.addEventListener('mousemove', handleMouseMove)
       window.addEventListener('mouseup', handleMouseUp)
     }
-  }, [shape.id, shape.type, activeTool, selectedIds])
+  }, [shape.id, shape.type, activeTool, selectedIds, isGroupChild])
 
   const handleDoubleClick = useCallback((e: React.MouseEvent) => {
     e.stopPropagation()
@@ -379,37 +383,115 @@ const ShapeComponent: React.FC<ShapeComponentProps> = ({ shape }) => {
 
   const renderContent = () => {
     switch (shape.type) {
-      case 'text':
+      case 'text': {
+        const textStyle: React.CSSProperties = {
+          color: shape.textColor || '#18181b',
+          fontSize: `${shape.fontSize || 16}px`,
+          fontFamily: shape.fontFamily || 'Inter',
+          fontWeight: shape.fontWeight || 'normal',
+          fontStyle: shape.fontStyle || 'normal',
+          textAlign: shape.textAlign || 'left',
+          textDecoration: shape.textDecoration || 'none',
+          lineHeight: shape.lineHeight || 1.5,
+        }
         return isEditing ? (
-          <textarea
-            autoFocus
-            className="w-full h-full bg-transparent border-none outline-none resize-none"
-            value={shape.text || ''}
-            onChange={(e) => updateShape(shape.id, { text: e.target.value })}
-            onBlur={() => {
+          <div
+            contentEditable
+            suppressContentEditableWarning
+            className="w-full h-full bg-transparent border-none outline-none resize-none hide-scrollbar whitespace-pre-wrap break-words"
+            style={textStyle}
+            onBlur={(e) => {
               setIsEditing(false)
+              updateShape(shape.id, { text: e.currentTarget.innerText })
               saveHistory()
+            }}
+            onInput={(e) => {
+              updateShape(shape.id, { text: e.currentTarget.innerText })
+            }}
+            onPaste={(e) => {
+              e.stopPropagation()
+              e.preventDefault()
+              const pastedText = e.clipboardData.getData('text/plain')
+              document.execCommand('insertText', false, pastedText)
+            }}
+            ref={(el) => {
+              if (el && document.activeElement !== el) {
+                el.innerText = shape.text || ''
+                el.focus()
+                try {
+                  const sel = window.getSelection()
+                  if (sel) {
+                    const range = document.createRange()
+                    range.selectNodeContents(el)
+                    range.collapse(false)
+                    sel.removeAllRanges()
+                    sel.addRange(range)
+                  }
+                } catch (e) {}
+              }
             }}
           />
         ) : (
-          <span className="whitespace-pre-wrap">{shape.text}</span>
+          <div className="whitespace-pre-wrap w-full h-full break-words outline-none" style={textStyle}>
+            {shape.text}
+          </div>
         )
+      }
 
-      case 'note':
+      case 'note': {
+        const textStyle: React.CSSProperties = {
+          color: shape.textColor || '#18181b',
+          fontSize: `${shape.fontSize || 16}px`,
+          fontFamily: shape.fontFamily || 'system-ui',
+          fontWeight: shape.fontWeight || 'normal',
+          fontStyle: shape.fontStyle || 'normal',
+          textAlign: shape.textAlign || 'left',
+          textDecoration: shape.textDecoration || 'none',
+          lineHeight: shape.lineHeight || 1.5,
+        }
         return isEditing ? (
-          <textarea
-            autoFocus
-            className="w-full h-full bg-transparent border-none outline-none resize-none text-sm"
-            value={shape.text || ''}
-            onChange={(e) => updateShape(shape.id, { text: e.target.value })}
-            onBlur={() => {
+          <div
+            contentEditable
+            suppressContentEditableWarning
+            className="w-full h-full p-2 bg-transparent border-none outline-none resize-none hide-scrollbar whitespace-pre-wrap break-words"
+            style={textStyle}
+            onBlur={(e) => {
               setIsEditing(false)
+              updateShape(shape.id, { text: e.currentTarget.innerText })
               saveHistory()
+            }}
+            onInput={(e) => {
+              updateShape(shape.id, { text: e.currentTarget.innerText })
+            }}
+            onPaste={(e) => {
+              e.stopPropagation()
+              e.preventDefault()
+              const pastedText = e.clipboardData.getData('text/plain')
+              document.execCommand('insertText', false, pastedText)
+            }}
+            ref={(el) => {
+              if (el && document.activeElement !== el) {
+                el.innerText = shape.text || ''
+                el.focus()
+                try {
+                  const sel = window.getSelection()
+                  if (sel) {
+                    const range = document.createRange()
+                    range.selectNodeContents(el)
+                    range.collapse(false)
+                    sel.removeAllRanges()
+                    sel.addRange(range)
+                  }
+                } catch (e) {}
+              }
             }}
           />
         ) : (
-          <span className="text-sm whitespace-pre-wrap">{shape.text || '双击编辑'}</span>
+          <div className="whitespace-pre-wrap w-full h-full p-2 break-words outline-none" style={textStyle}>
+            {shape.text}
+          </div>
         )
+      }
 
       case 'image':
         return shape.imageUrl || shape.isGenerating ? (
@@ -516,31 +598,7 @@ const ShapeComponent: React.FC<ShapeComponentProps> = ({ shape }) => {
         )
 
       case 'arrow':
-        return (
-          <svg className="absolute inset-0 w-full h-full overflow-visible">
-            <line
-              x1="0"
-              y1={shape.height / 2}
-              x2={shape.width}
-              y2={shape.height / 2}
-              stroke={shape.stroke}
-              strokeWidth={shape.strokeWidth}
-              markerEnd="url(#arrowhead)"
-            />
-            <defs>
-              <marker
-                id="arrowhead"
-                markerWidth="10"
-                markerHeight="7"
-                refX="9"
-                refY="3.5"
-                orient="auto"
-              >
-                <polygon points="0 0, 10 3.5, 0 7" fill={shape.stroke} />
-              </marker>
-            </defs>
-          </svg>
-        )
+        return <ArrowShape shape={shape} isSelected={selectedIds.includes(shape.id)} />
 
       case 'clothing':
         return <ClothingComponent shape={shape} />
@@ -551,6 +609,21 @@ const ShapeComponent: React.FC<ShapeComponentProps> = ({ shape }) => {
       case 'custom-combination':
         return <CustomCombination shape={shape} />
 
+      case 'group':
+        if (!shape.children) return null
+        return (
+          <div className="absolute inset-0 w-full h-full">
+            {shape.children.map((child) => (
+              <Shape
+                key={child.id}
+                shape={child}
+                isSelected={selectedIds.includes(child.id)}
+                isGroupChild={true}
+              />
+            ))}
+          </div>
+        )
+
       case 'detail-image':
         return <DetailImageShape shape={shape as ShapeProps & { type: 'detail-image' }} />
 
@@ -559,7 +632,7 @@ const ShapeComponent: React.FC<ShapeComponentProps> = ({ shape }) => {
     }
   }
 
-  const isCustomComponent = shape.type === 'draw' || shape.type === 'arrow' || shape.type === 'clothing' || shape.type === 'ai-combination' || shape.type === 'custom-combination' || shape.type === 'detail-image'
+  const isCustomComponent = shape.type === 'draw' || shape.type === 'arrow' || shape.type === 'clothing' || shape.type === 'ai-combination' || shape.type === 'custom-combination' || shape.type === 'detail-image' || shape.type === 'group'
   const isAutoSizeComponent = shape.type === 'custom-combination' || shape.type === 'detail-image'
 
   const transformStyle = useMemo(() => {
@@ -614,20 +687,28 @@ const ShapeComponent: React.FC<ShapeComponentProps> = ({ shape }) => {
     }
   }, [shape])
 
+  const content = (
+    <div
+      ref={elementRef}
+      className={`canvas-shape ${shape.type === 'ai-combination' || shape.type === 'detail-image' ? 'pointer-events-auto' : ''} ${shape.type === 'image' && shape.imageUrl ? 'has-image' : ''}`}
+      data-type={shape.type}
+      data-shape-id={shape.id}
+      style={style}
+      onMouseDown={handleMouseDown}
+      onDoubleClick={handleDoubleClick}
+    >
+      {renderContent()}
+    </div>
+  )
+
+  if (isGroupChild) {
+    return content
+  }
+
   return (
     <ContextMenu>
       <ContextMenuTrigger asChild>
-        <div
-          ref={elementRef}
-          className={`canvas-shape ${shape.type === 'ai-combination' || shape.type === 'detail-image' ? 'pointer-events-auto' : ''} ${shape.type === 'image' && shape.imageUrl ? 'has-image' : ''}`}
-          data-type={shape.type}
-          data-shape-id={shape.id}
-          style={style}
-          onMouseDown={handleMouseDown}
-          onDoubleClick={handleDoubleClick}
-        >
-          {renderContent()}
-        </div>
+        {content}
       </ContextMenuTrigger>
       <ContextMenuContent>
         <ContextMenuItem onClick={() => copySelectedShapes()}>
@@ -675,44 +756,11 @@ const ShapeComponent: React.FC<ShapeComponentProps> = ({ shape }) => {
 }
 
 const arePropsEqual = (prevProps: ShapeComponentProps, nextProps: ShapeComponentProps) => {
-  const prevShape = prevProps.shape
-  const nextShape = nextProps.shape
-
-  const baseEqual = (
-    prevShape.id === nextShape.id &&
-    prevShape.x === nextShape.x &&
-    prevShape.y === nextShape.y &&
-    prevShape.width === nextShape.width &&
-    prevShape.height === nextShape.height &&
-    prevShape.rotation === nextShape.rotation &&
-    prevShape.opacity === nextShape.opacity &&
-    prevShape.fill === nextShape.fill &&
-    prevShape.stroke === nextShape.stroke &&
-    prevShape.text === nextShape.text &&
-    prevShape.imageUrl === nextShape.imageUrl &&
-    prevShape.imageName === nextShape.imageName &&
-    prevShape.imageWidth === nextShape.imageWidth &&
-    prevShape.imageHeight === nextShape.imageHeight &&
-    prevProps.isSelected === nextProps.isSelected
+  return (
+    prevProps.shape === nextProps.shape &&
+    prevProps.isSelected === nextProps.isSelected &&
+    prevProps.isGroupChild === nextProps.isGroupChild
   )
-
-  if (!baseEqual) return false
-
-  const customSlotsEqual = (
-    JSON.stringify(prevShape.customInputSlots) === JSON.stringify(nextShape.customInputSlots) &&
-    JSON.stringify(prevShape.customOutputSlots) === JSON.stringify(nextShape.customOutputSlots) &&
-    prevShape.customStatus === nextShape.customStatus &&
-    prevShape.customError === nextShape.customError
-  )
-
-  const combinationEqual = (
-    prevShape.combinationStatus === nextShape.combinationStatus &&
-    prevShape.combinationError === nextShape.combinationError &&
-    JSON.stringify(prevShape.combinationResults) === JSON.stringify(nextShape.combinationResults) &&
-    JSON.stringify(prevShape.slotContents) === JSON.stringify(nextShape.slotContents)
-  )
-
-  return customSlotsEqual && combinationEqual
 }
 
 export const Shape = memo(ShapeComponent, arePropsEqual)
