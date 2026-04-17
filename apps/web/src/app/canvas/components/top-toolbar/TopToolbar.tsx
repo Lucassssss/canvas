@@ -12,7 +12,7 @@ import { ArrowBar } from './ArrowBar'
 import { GroupBar } from './GroupBar'
 
 export const TopToolbar: React.FC = () => {
-  const { shapes, selectedIds, viewport, isDragging, isResizing, isRotating } = useCanvasStore()
+  const { shapes, selectedIds, viewport, isDragging, isResizing, isRotating, isPanning } = useCanvasStore()
   const [position, setPosition] = useState<{ left: number; top: number } | null>(null)
 
   const selectedShapes = useMemo(() => {
@@ -47,13 +47,31 @@ export const TopToolbar: React.FC = () => {
     return () => window.removeEventListener('resize', handleResize)
   }, [calculatePosition])
 
-  const isEditingText = selectedShapes.length === 1 && (selectedShapes[0].type === 'text' || selectedShapes[0].type === 'note')
-  
-  if (selectedShapes.length === 0 || !position || isRotating || (isDragging && !isEditingText) || (isResizing && !isEditingText)) {
+  const [isKeyboardMoving, setIsKeyboardMoving] = useState(false)
+
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+        const target = e.target as HTMLElement
+        if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target.isContentEditable) return
+        setIsKeyboardMoving(true)
+        clearTimeout(timeoutId)
+        timeoutId = setTimeout(() => setIsKeyboardMoving(false), 300)
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+      clearTimeout(timeoutId)
+    }
+  }, [])
+
+  if (selectedShapes.length === 0 || !position || isRotating || isDragging || isResizing || isPanning || isKeyboardMoving) {
     return null
   }
 
-  const containerClasses = "fixed z-50 flex items-center bg-white/100 rounded-lg shadow-sm border border-gray-200/60 px-2.5 py-1.5 scale-90 origin-bottom"
+  const containerClasses = "fixed z-50 flex items-center w-max whitespace-nowrap bg-white/100 rounded-lg shadow-sm border border-gray-200/60 px-2.5 py-1.5 scale-90 origin-bottom"
 
   // 多选模式
   if (selectedShapes.length > 1) {
@@ -76,7 +94,11 @@ export const TopToolbar: React.FC = () => {
     BarComponent = <RectBar shape={shape} />
   } else if (shape.type === 'text' || shape.type === 'note') {
     BarComponent = <TextBar shape={shape} />
-  } else if (shape.type === 'image' || shape.type === 'detail-image') {
+  } else if (shape.type === 'image') {
+    if (shape.imageUrl || shape.isGenerating) {
+      BarComponent = <ImageBar shape={shape} />
+    }
+  } else if (shape.type === 'detail-image') {
     BarComponent = <ImageBar shape={shape} />
   } else if (shape.type === 'arrow') {
     BarComponent = <ArrowBar shape={shape} />
