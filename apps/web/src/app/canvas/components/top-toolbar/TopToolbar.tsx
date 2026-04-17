@@ -12,7 +12,7 @@ import { ArrowBar } from './ArrowBar'
 import { GroupBar } from './GroupBar'
 
 export const TopToolbar: React.FC = () => {
-  const { shapes, selectedIds, viewport, isDragging, isResizing, isRotating } = useCanvasStore()
+  const { shapes, selectedIds, viewport, isDragging, isResizing, isRotating, isPanning } = useCanvasStore()
   const [position, setPosition] = useState<{ left: number; top: number } | null>(null)
 
   const selectedShapes = useMemo(() => {
@@ -67,11 +67,11 @@ export const TopToolbar: React.FC = () => {
     }
   }, [])
 
-  if (selectedShapes.length === 0 || !position || isRotating || isDragging || isResizing || isKeyboardMoving) {
+  if (selectedShapes.length === 0 || !position || isRotating || isDragging || isResizing || isPanning || isKeyboardMoving) {
     return null
   }
 
-  const containerClasses = "fixed z-50 flex items-center bg-white/100 rounded-lg shadow-sm border border-gray-200/60 px-2.5 py-1.5 scale-90 origin-bottom"
+  const containerClasses = "fixed z-50 flex items-center w-max whitespace-nowrap bg-white/100 rounded-lg shadow-sm border border-gray-200/60 px-2.5 py-1.5 scale-90 origin-bottom"
 
   // 多选模式
   if (selectedShapes.length > 1) {
