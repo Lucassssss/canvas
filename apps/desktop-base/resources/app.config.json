@@ -1,0 +1,34 @@
+{
+  "appName": "MyApp",
+  "appId": "com.myapp.desktop",
+  "window": {
+    "width": 1280,
+    "height": 800,
+    "minWidth": 800,
+    "minHeight": 600,
+    "titleBarStyle": "default"
+  },
+  "dev": {
+    "enabled": true,
+    "webUrl": "http://localhost:3000",
+    "skipServers": false
+  },
+  "servers": [
+    {
+      "id": "api",
+      "resource": "api",
+      "port": 26318,
+      "healthPath": "/health",
+      "startupTimeoutMs": 15000,
+      "autoStart": true,
+      "env": {
+        "NODE_ENV": "production"
+      }
+    }
+  ],
+  "update": {
+    "enabled": false,
+    "manifestUrl": "https://cdn.example.com/manifest.json",
+    "checkIntervalMs": 3600000
+  }
+}

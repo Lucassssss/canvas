@@ -1,0 +1,64 @@
+{
+  "name": "desktop-base",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Generic Electron desktop shell with hot-updatable web + server resources",
+  "main": "dist/main/index.js",
+  "scripts": {
+    "dev": "bun run build && electron .",
+    "build": "tsc -p tsconfig.main.json && tsc -p tsconfig.preload.json",
+    "dist": "bun run build && electron-builder",
+    "dist:mac": "bun run build && electron-builder --mac",
+    "dist:win": "bun run build && electron-builder --win",
+    "dist:linux": "bun run build && electron-builder --linux"
+  },
+  "dependencies": {
+    "adm-zip": "^0.5.16",
+    "electron-log": "^5.2.4"
+  },
+  "devDependencies": {
+    "@types/adm-zip": "^0.5.7",
+    "@types/node": "^20",
+    "electron": "^33.4.0",
+    "electron-builder": "^25.1.8",
+    "typescript": "^5.7.3"
+  },
+  "build": {
+    "appId": "com.placeholder.app",
+    "productName": "PlaceholderApp",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "resources/app.config.json",
+        "to": "app.config.json"
+      }
+    ],
+    "mac": {
+      "category": "public.app-category.productivity",
+      "target": "dmg",
+      "gatekeeperAssess": false,
+      "hardenedRuntime": false,
+      "identity": null
+    },
+    "win": {
+      "target": [
+        { "target": "nsis", "arch": ["x64"] }
+      ]
+    },
+    "linux": {
+      "target": [
+        { "target": "AppImage", "arch": ["x64"] }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
+  }
+}
