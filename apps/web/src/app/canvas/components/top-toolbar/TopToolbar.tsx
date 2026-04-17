@@ -47,9 +47,27 @@ export const TopToolbar: React.FC = () => {
     return () => window.removeEventListener('resize', handleResize)
   }, [calculatePosition])
 
-  const isEditingText = selectedShapes.length === 1 && (selectedShapes[0].type === 'text' || selectedShapes[0].type === 'note')
-  
-  if (selectedShapes.length === 0 || !position || isRotating || (isDragging && !isEditingText) || (isResizing && !isEditingText)) {
+  const [isKeyboardMoving, setIsKeyboardMoving] = useState(false)
+
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+        const target = e.target as HTMLElement
+        if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target.isContentEditable) return
+        setIsKeyboardMoving(true)
+        clearTimeout(timeoutId)
+        timeoutId = setTimeout(() => setIsKeyboardMoving(false), 300)
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+      clearTimeout(timeoutId)
+    }
+  }, [])
+
+  if (selectedShapes.length === 0 || !position || isRotating || isDragging || isResizing || isKeyboardMoving) {
     return null
   }
 

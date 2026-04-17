@@ -1469,6 +1469,25 @@ export const Canvas: React.FC = () => {
       // 如果有文本被选中在页面上（例如侧边栏的聊天气泡中的文本），允许浏览器原生的复制行为
       const hasTextSelection = window.getSelection()?.toString().length ? true : false
 
+      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+        if (hasTextSelection) return
+        const state = useCanvasStore.getState()
+        if (state.selectedIds.length > 0) {
+          e.preventDefault()
+          const step = e.shiftKey ? 10 : 1
+          const dx = e.key === 'ArrowLeft' ? -step : e.key === 'ArrowRight' ? step : 0
+          const dy = e.key === 'ArrowUp' ? -step : e.key === 'ArrowDown' ? step : 0
+          
+          state.selectedIds.forEach((id) => {
+            const shape = state.shapes.find(s => s.id === id)
+            if (shape) {
+              state.updateShape(id, { x: shape.x + dx, y: shape.y + dy })
+            }
+          })
+        }
+        return
+      }
+
       if (e.key === 'Delete' || e.key === 'Backspace') {
         if (hasTextSelection) return
         useCanvasStore.getState().deleteSelectedShapes()

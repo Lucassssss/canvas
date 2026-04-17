@@ -26,7 +26,6 @@ import {
   ContextMenuShortcut,
   ContextMenuTrigger,
 } from '@/components/ui/context-menu'
-import { useTextMeasure } from '../hooks/useTextMeasure'
 
 interface ShapeComponentProps {
   shape: ShapeProps
@@ -88,36 +87,33 @@ const ShapeComponent: React.FC<ShapeComponentProps> = ({ shape, isSelected, isGr
   const currentGuidesRef = useRef<AlignmentGuide[]>([])
   const isImageDragRef = useRef(false)
 
-  const measureText = useTextMeasure()
   const lastMeasuredRef = useRef({ width: shape.width, height: shape.height })
 
   useEffect(() => {
     if (shape.type === 'text' || shape.type === 'note') {
-      const dimensions = measureText({
-        text: shape.text || '',
-        fontSize: shape.fontSize || 16,
-        fontFamily: shape.fontFamily || (shape.type === 'note' ? 'system-ui' : 'Inter'),
-        fontWeight: shape.fontWeight || 'normal',
-        fontStyle: shape.fontStyle || 'normal',
-        lineHeight: shape.lineHeight || 1.5,
-        isNote: shape.type === 'note'
+      const el = elementRef.current
+      if (!el) return
+      
+      const resizeObserver = new ResizeObserver(() => {
+        const newWidth = el.offsetWidth
+        const newHeight = el.offsetHeight
+        
+        if (
+          Math.abs(newWidth - lastMeasuredRef.current.width) > 0.5 || 
+          Math.abs(newHeight - lastMeasuredRef.current.height) > 0.5
+        ) {
+          lastMeasuredRef.current = { width: newWidth, height: newHeight }
+          useCanvasStore.getState().updateShape(shape.id, { 
+            width: newWidth, 
+            height: newHeight 
+          })
+        }
       })
-
-      if (
-        Math.abs(dimensions.width - lastMeasuredRef.current.width) > 1 || 
-        Math.abs(dimensions.height - lastMeasuredRef.current.height) > 1
-      ) {
-         lastMeasuredRef.current = dimensions
-         useCanvasStore.getState().updateShape(shape.id, { 
-           width: dimensions.width, 
-           height: dimensions.height 
-         })
-      }
+      
+      resizeObserver.observe(el)
+      return () => resizeObserver.disconnect()
     }
-  }, [
-    shape.id, shape.type, shape.text, shape.fontSize, shape.fontFamily, 
-    shape.fontWeight, shape.fontStyle, shape.lineHeight, measureText
-  ])
+  }, [shape.id, shape.type])
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     if (isGroupChild) return
@@ -424,7 +420,7 @@ const ShapeComponent: React.FC<ShapeComponentProps> = ({ shape, isSelected, isGr
           fontStyle: shape.fontStyle || 'normal',
           textAlign: shape.textAlign || 'left',
           textDecoration: shape.textDecoration || 'none',
-          lineHeight: shape.lineHeight || 1.5,
+          lineHeight: shape.lineHeight || 1.2,
           minWidth: 'min-content'
         }
         return isEditing ? (
@@ -484,7 +480,7 @@ const ShapeComponent: React.FC<ShapeComponentProps> = ({ shape, isSelected, isGr
           fontStyle: shape.fontStyle || 'normal',
           textAlign: shape.textAlign || 'left',
           textDecoration: shape.textDecoration || 'none',
-          lineHeight: shape.lineHeight || 1.5,
+          lineHeight: shape.lineHeight || 1.2,
           minWidth: 'min-content'
         }
         return isEditing ? (
@@ -675,7 +671,7 @@ const ShapeComponent: React.FC<ShapeComponentProps> = ({ shape, isSelected, isGr
   }
 
   const isCustomComponent = shape.type === 'draw' || shape.type === 'arrow' || shape.type === 'clothing' || shape.type === 'ai-combination' || shape.type === 'custom-combination' || shape.type === 'detail-image' || shape.type === 'group'
-  const isAutoSizeComponent = shape.type === 'custom-combination' || shape.type === 'detail-image'
+  const isAutoSizeComponent = shape.type === 'custom-combination' || shape.type === 'detail-image' || shape.type === 'text' || shape.type === 'note'
 
   const transformStyle = useMemo(() => {
     const cx = shape.x + shape.width / 2
