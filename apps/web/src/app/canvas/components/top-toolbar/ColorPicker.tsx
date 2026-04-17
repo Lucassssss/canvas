@@ -47,7 +47,7 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({ color, onChange, label
           {label && <span>{label}</span>}
         </button>
       </PopoverTrigger>
-      <PopoverContent className="w-64 p-3 backdrop-blur-md bg-white/90" align="start">
+      <PopoverContent side="top" sideOffset={12} className="w-64 p-3 backdrop-blur-md bg-white/90" align="start">
         <div className="grid grid-cols-6 gap-1.5 mb-3">
           {PRESET_COLORS.map((presetColor) => (
             <button

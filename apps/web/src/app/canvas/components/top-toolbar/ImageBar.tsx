@@ -60,7 +60,7 @@ export const ImageBar: React.FC<{ shape: ShapeProps }> = ({ shape }) => {
               快速编辑
             </button>
           </PopoverTrigger>
-          <PopoverContent className="w-56 p-2 rounded-xl shadow-lg border border-gray-200" sideOffset={12}>
+          <PopoverContent side="top" sideOffset={12} className="w-56 p-2 rounded-xl shadow-lg border border-gray-200">
             <div className="space-y-1">
               <div className="px-2 py-1.5 text-xs font-semibold text-gray-500 mb-1 flex items-center gap-1.5">
                 <Sparkles size={12} className="text-purple-500" />

@@ -8,6 +8,13 @@ import {
 import { ShapeProps } from '../../shapes/types'
 import { useCanvasStore } from '../../store'
 import { ColorPicker } from './ColorPicker'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 
 export const TextBar: React.FC<{ shape: ShapeProps }> = ({ shape }) => {
   const { updateShape } = useCanvasStore()
@@ -45,40 +52,51 @@ export const TextBar: React.FC<{ shape: ShapeProps }> = ({ shape }) => {
       <div className="w-px h-4 bg-gray-200" />
 
       <div className="flex items-center gap-1">
-        <select
-          className="h-8 px-1 text-sm bg-transparent border-none rounded hover:bg-gray-100 cursor-pointer outline-none focus:ring-0 text-gray-700"
+        <Select
           value={shape.fontFamily || 'Inter'}
-          onChange={(e) => updateShape(shape.id, { fontFamily: e.target.value } as any)}
-          style={{ width: '90px' }}
+          onValueChange={(value) => updateShape(shape.id, { fontFamily: value } as any)}
         >
-          <option value="Inter">Inter</option>
-          <option value="system-ui">系统默认</option>
-          <option value="serif">衬线体</option>
-          <option value="monospace">等宽字体</option>
-          <option value="cursive">手写体</option>
-        </select>
+          <SelectTrigger className="h-8 px-2 text-sm bg-transparent border-none rounded hover:bg-gray-100 cursor-pointer outline-none focus:ring-0 focus:ring-offset-0 text-gray-700 w-[100px] shadow-none">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent side="top" sideOffset={12} position="popper">
+            <SelectItem value="Inter">Inter</SelectItem>
+            <SelectItem value="system-ui">系统默认</SelectItem>
+            <SelectItem value="serif">衬线体</SelectItem>
+            <SelectItem value="monospace">等宽字体</SelectItem>
+            <SelectItem value="cursive">手写体</SelectItem>
+          </SelectContent>
+        </Select>
 
-        <select
-          className="h-8 px-1 text-sm bg-transparent border-none rounded hover:bg-gray-100 cursor-pointer outline-none focus:ring-0 text-gray-700"
-          value={shape.fontSize || 16}
-          onChange={(e) => updateShape(shape.id, { fontSize: Number(e.target.value) } as any)}
+        <Select
+          value={String(shape.fontSize || 16)}
+          onValueChange={(value) => updateShape(shape.id, { fontSize: Number(value) } as any)}
         >
-          {[12, 14, 16, 18, 20, 24, 28, 32, 36, 48, 64, 72].map(size => (
-            <option key={size} value={size}>{size}px</option>
-          ))}
-        </select>
+          <SelectTrigger className="h-8 px-2 text-sm bg-transparent border-none rounded hover:bg-gray-100 cursor-pointer outline-none focus:ring-0 focus:ring-offset-0 text-gray-700 w-[75px] shadow-none">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent side="top" sideOffset={12} position="popper">
+            {[12, 14, 16, 18, 20, 24, 28, 32, 36, 48, 64, 72].map(size => (
+              <SelectItem key={String(size)} value={String(size)}>{size}px</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
         <div className="flex items-center ml-1" title="行高">
           <Baseline size={16} className="text-gray-500 mr-1" />
-          <select
-            className="h-8 px-1 text-sm bg-transparent border-none rounded hover:bg-gray-100 cursor-pointer outline-none focus:ring-0 text-gray-700"
-            value={shape.lineHeight || 1.5}
-            onChange={(e) => updateShape(shape.id, { lineHeight: Number(e.target.value) } as any)}
+          <Select
+            value={String(shape.lineHeight || 1.2)}
+            onValueChange={(value) => updateShape(shape.id, { lineHeight: Number(value) } as any)}
           >
-            {[1, 1.2, 1.5, 2, 2.5].map(lh => (
-              <option key={lh} value={lh}>{lh.toFixed(1)}</option>
-            ))}
-          </select>
+            <SelectTrigger className="h-8 px-2 text-sm bg-transparent border-none rounded hover:bg-gray-100 cursor-pointer outline-none focus:ring-0 focus:ring-offset-0 text-gray-700 w-[60px] shadow-none">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent side="top" sideOffset={12} position="popper">
+              {[1, 1.2, 1.5, 2, 2.5].map(lh => (
+                <SelectItem key={String(lh)} value={String(lh)}>{lh.toFixed(1)}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 

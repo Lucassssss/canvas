@@ -24,7 +24,7 @@ export const StrokeConfig: React.FC<StrokeConfigProps> = ({ strokeWidth, onChang
           <span>{strokeWidth}px</span>
         </button>
       </PopoverTrigger>
-      <PopoverContent className="w-48 p-2 backdrop-blur-md bg-white/90" align="start">
+      <PopoverContent side="top" sideOffset={12} className="w-48 p-2 backdrop-blur-md bg-white/90" align="start">
         <div className="flex flex-col gap-1">
           {STROKE_OPTIONS.map((w) => (
             <button
