@@ -90,7 +90,7 @@
 }
 
 .canvas-shape[data-type="text"] {
-  padding: 8px;
+  padding: 1px;
   min-width: 50px;
   white-space: pre-wrap;
 }
