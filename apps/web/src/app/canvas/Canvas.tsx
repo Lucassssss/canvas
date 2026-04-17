@@ -54,6 +54,16 @@ function getRotatedBoundingBox(
   }
 }
 
+function getVisualBounds(shape: ShapeProps) {
+  const scaleX = shape.scaleX ?? 1
+  const scaleY = shape.scaleY ?? 1
+  const width = shape.width * scaleX
+  const height = shape.height * scaleY
+  const x = shape.x + shape.width / 2 * (1 - scaleX)
+  const y = shape.y + shape.height / 2 * (1 - scaleY)
+  return { x, y, width, height, rotation: shape.rotation }
+}
+
 interface SelectionBoxProps {
   shape: ShapeProps
   viewport: { x: number; y: number; zoom: number }
@@ -110,7 +120,10 @@ const SelectionBoxLayer = memo<{
     )
   }
 
-  const allBounds = selectedShapes.map((s) => getRotatedBoundingBox(s.x, s.y, s.width, s.height, s.rotation))
+  const allBounds = selectedShapes.map((s) => {
+    const vb = getVisualBounds(s)
+    return getRotatedBoundingBox(vb.x, vb.y, vb.width, vb.height, vb.rotation)
+  })
   const minX = Math.min(...allBounds.map((b) => b.minX))
   const minY = Math.min(...allBounds.map((b) => b.minY))
   const maxX = Math.max(...allBounds.map((b) => b.maxX))
@@ -343,12 +356,13 @@ const ShapeInfoLayer = memo<{
   
   if (!selectedShape || selectedIds.length !== 1) return null
 
+  const vb = getVisualBounds(selectedShape)
   const bounds = getRotatedBoundingBox(
-    selectedShape.x, 
-    selectedShape.y, 
-    selectedShape.width, 
-    selectedShape.height, 
-    selectedShape.rotation
+    vb.x, 
+    vb.y, 
+    vb.width, 
+    vb.height, 
+    vb.rotation
   )
   const screenX = bounds.minX * viewport.zoom + viewport.x
   const screenY = bounds.minY * viewport.zoom + viewport.y
@@ -392,7 +406,8 @@ const ShapeInfoLayer = memo<{
 })
 
 const SelectionBox = memo<SelectionBoxProps>(({ shape, viewport, onResizeStart, onRotateStart }) => {
-  const bounds = getRotatedBoundingBox(shape.x, shape.y, shape.width, shape.height, shape.rotation)
+  const vb = getVisualBounds(shape)
+  const bounds = getRotatedBoundingBox(vb.x, vb.y, vb.width, vb.height, vb.rotation)
   const screenX = bounds.minX * viewport.zoom + viewport.x
   const screenY = bounds.minY * viewport.zoom + viewport.y
   const screenWidth = (bounds.maxX - bounds.minX) * viewport.zoom
@@ -912,6 +927,8 @@ export const Canvas: React.FC = () => {
       let newY = startPosY
 
       const isImage = shapeType === 'image'
+      const isTextNode = shapeType === 'text' || shapeType === 'note'
+      const startScaleX = (resizeStartRef.current as any).startScaleX ?? 1
       const aspectRatio = startWidth / startHeight
 
       if (isImage) {
@@ -956,6 +973,73 @@ export const Canvas: React.FC = () => {
         
         newWidth = Math.max(minWidth, startWidth * scale)
         newHeight = Math.max(minHeight, startHeight * scale)
+      } else if (isTextNode) {
+        let scaleFactor = 1
+        const visualStartWidth = startWidth * startScaleX
+        const visualStartHeight = startHeight * startScaleX
+
+        if (handle === 'se') {
+          const sX = (visualStartWidth + dx) / visualStartWidth
+          const sY = (visualStartHeight + dy) / visualStartHeight
+          scaleFactor = Math.max(sX, sY)
+        } else if (handle === 'nw') {
+          const sX = (visualStartWidth - dx) / visualStartWidth
+          const sY = (visualStartHeight - dy) / visualStartHeight
+          scaleFactor = Math.max(sX, sY)
+        } else if (handle === 'ne') {
+          const sX = (visualStartWidth + dx) / visualStartWidth
+          const sY = (visualStartHeight - dy) / visualStartHeight
+          scaleFactor = Math.max(sX, sY)
+        } else if (handle === 'sw') {
+          const sX = (visualStartWidth - dx) / visualStartWidth
+          const sY = (visualStartHeight + dy) / visualStartHeight
+          scaleFactor = Math.max(sX, sY)
+        } else if (handle === 'n' || handle === 's') {
+          const sY = handle === 'n' 
+            ? (visualStartHeight - dy) / visualStartHeight 
+            : (visualStartHeight + dy) / visualStartHeight
+          scaleFactor = sY
+        } else if (handle === 'w' || handle === 'e') {
+          const sX = handle === 'w' 
+            ? (visualStartWidth - dx) / visualStartWidth 
+            : (visualStartWidth + dx) / visualStartWidth
+          scaleFactor = sX
+        }
+
+        const finalScale = Math.max(0.1, startScaleX * scaleFactor)
+        
+        if (handle === 'se') {
+          newX = startPosX + (startWidth / 2) * (finalScale - startScaleX)
+          newY = startPosY + (startHeight / 2) * (finalScale - startScaleX)
+        } else if (handle === 'nw') {
+          newX = startPosX - (startWidth / 2) * (finalScale - startScaleX)
+          newY = startPosY - (startHeight / 2) * (finalScale - startScaleX)
+        } else if (handle === 'ne') {
+          newX = startPosX + (startWidth / 2) * (finalScale - startScaleX)
+          newY = startPosY - (startHeight / 2) * (finalScale - startScaleX)
+        } else if (handle === 'sw') {
+          newX = startPosX - (startWidth / 2) * (finalScale - startScaleX)
+          newY = startPosY + (startHeight / 2) * (finalScale - startScaleX)
+        } else if (handle === 'n') {
+          newX = startPosX 
+          newY = startPosY - (startHeight / 2) * (finalScale - startScaleX)
+        } else if (handle === 's') {
+          newX = startPosX 
+          newY = startPosY + (startHeight / 2) * (finalScale - startScaleX)
+        } else if (handle === 'w') {
+          newX = startPosX - (startWidth / 2) * (finalScale - startScaleX)
+          newY = startPosY 
+        } else if (handle === 'e') {
+          newX = startPosX + (startWidth / 2) * (finalScale - startScaleX)
+          newY = startPosY 
+        }
+        
+        pendingShapeUpdatesRef.current.set(shapeId, { scaleX: finalScale, scaleY: finalScale, x: newX, y: newY })
+
+        if (rafIdRef.current === null) {
+          rafIdRef.current = requestAnimationFrame(processShapeUpdates)
+        }
+        return
       } else {
         if (handle === 'se') {
           dx = Math.min(Math.max(-startWidth + minWidth, dx), 1000)
@@ -1105,10 +1189,11 @@ export const Canvas: React.FC = () => {
       startHeight: shape.height,
       startPosX: shape.x,
       startPosY: shape.y,
+      startScaleX: shape.scaleX ?? 1,
       handle,
       shapeId,
       shapeType: shape.type,
-    }
+    } as any
     // text/note resize keeps selection box visible
     isTextResizingRef.current = shape.type === 'text' || shape.type === 'note'
     setIsDragging(true)

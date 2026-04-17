@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useRef, useCallback, useState, useMemo, memo } from 'react'
+import React, { useRef, useCallback, useState, useMemo, memo, useEffect } from 'react'
 import { useShallow } from 'zustand/react/shallow'
 import { useCanvasStore } from '../store'
 import { ShapeProps } from './types'
@@ -26,6 +26,7 @@ import {
   ContextMenuShortcut,
   ContextMenuTrigger,
 } from '@/components/ui/context-menu'
+import { useTextMeasure } from '../hooks/useTextMeasure'
 
 interface ShapeComponentProps {
   shape: ShapeProps
@@ -86,6 +87,37 @@ const ShapeComponent: React.FC<ShapeComponentProps> = ({ shape, isSelected, isGr
   const snapOffsetRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 })
   const currentGuidesRef = useRef<AlignmentGuide[]>([])
   const isImageDragRef = useRef(false)
+
+  const measureText = useTextMeasure()
+  const lastMeasuredRef = useRef({ width: shape.width, height: shape.height })
+
+  useEffect(() => {
+    if (shape.type === 'text' || shape.type === 'note') {
+      const dimensions = measureText({
+        text: shape.text || '',
+        fontSize: shape.fontSize || 16,
+        fontFamily: shape.fontFamily || (shape.type === 'note' ? 'system-ui' : 'Inter'),
+        fontWeight: shape.fontWeight || 'normal',
+        fontStyle: shape.fontStyle || 'normal',
+        lineHeight: shape.lineHeight || 1.5,
+        isNote: shape.type === 'note'
+      })
+
+      if (
+        Math.abs(dimensions.width - lastMeasuredRef.current.width) > 1 || 
+        Math.abs(dimensions.height - lastMeasuredRef.current.height) > 1
+      ) {
+         lastMeasuredRef.current = dimensions
+         useCanvasStore.getState().updateShape(shape.id, { 
+           width: dimensions.width, 
+           height: dimensions.height 
+         })
+      }
+    }
+  }, [
+    shape.id, shape.type, shape.text, shape.fontSize, shape.fontFamily, 
+    shape.fontWeight, shape.fontStyle, shape.lineHeight, measureText
+  ])
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     if (isGroupChild) return
@@ -393,6 +425,7 @@ const ShapeComponent: React.FC<ShapeComponentProps> = ({ shape, isSelected, isGr
           textAlign: shape.textAlign || 'left',
           textDecoration: shape.textDecoration || 'none',
           lineHeight: shape.lineHeight || 1.5,
+          minWidth: 'min-content'
         }
         return isEditing ? (
           <div
@@ -437,7 +470,7 @@ const ShapeComponent: React.FC<ShapeComponentProps> = ({ shape, isSelected, isGr
           />
         ) : (
           <div className="whitespace-pre-wrap w-full h-full break-words outline-none" style={textStyle}>
-            {shape.text}
+            {shape.text || ' '}
           </div>
         )
       }
@@ -452,6 +485,7 @@ const ShapeComponent: React.FC<ShapeComponentProps> = ({ shape, isSelected, isGr
           textAlign: shape.textAlign || 'left',
           textDecoration: shape.textDecoration || 'none',
           lineHeight: shape.lineHeight || 1.5,
+          minWidth: 'min-content'
         }
         return isEditing ? (
           <div
@@ -496,7 +530,7 @@ const ShapeComponent: React.FC<ShapeComponentProps> = ({ shape, isSelected, isGr
           />
         ) : (
           <div className="whitespace-pre-wrap w-full h-full p-2 break-words outline-none" style={textStyle}>
-            {shape.text}
+            {shape.text || ' '}
           </div>
         )
       }
