@@ -112,6 +112,7 @@ export interface ShapeProps {
   isGenerating?: boolean
   generationError?: string
   children?: ShapeProps[]
+  showConfigPanel?: boolean
 }
 
 export interface ViewportState {
