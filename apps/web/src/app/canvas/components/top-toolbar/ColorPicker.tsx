@@ -261,7 +261,7 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({ color, onChange, label
         </button>
       </PopoverTrigger>
       
-      <PopoverContent side="top" sideOffset={12} position="popper" className="w-[260px] p-3 bg-white/95 backdrop-blur-xl border border-gray-200/60 shadow-xl rounded-2xl select-none" align="start">
+      <PopoverContent side="top" sideOffset={12} className="w-[260px] p-3 bg-white/95 backdrop-blur-xl border border-gray-200/60 shadow-xl rounded-2xl select-none" align="start">
         
         {/* 1. 调色板 Palette */}
         <InteractiveArea 

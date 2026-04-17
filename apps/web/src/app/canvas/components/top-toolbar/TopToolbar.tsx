@@ -94,7 +94,11 @@ export const TopToolbar: React.FC = () => {
     BarComponent = <RectBar shape={shape} />
   } else if (shape.type === 'text' || shape.type === 'note') {
     BarComponent = <TextBar shape={shape} />
-  } else if (shape.type === 'image' || shape.type === 'detail-image') {
+  } else if (shape.type === 'image') {
+    if (shape.imageUrl || shape.isGenerating) {
+      BarComponent = <ImageBar shape={shape} />
+    }
+  } else if (shape.type === 'detail-image') {
     BarComponent = <ImageBar shape={shape} />
   } else if (shape.type === 'arrow') {
     BarComponent = <ArrowBar shape={shape} />

@@ -101,6 +101,7 @@ export const FloatingConfigPanel: React.FC<FloatingConfigPanelProps> = ({ contai
     return s.type === shapeTypeFilter
   })
   const enabledFields = config?.enabledFields || DEFAULT_ENABLED_FIELDS
+  
 
   const currentModel = selectedShape?.imageConfig?.model
   const activeModel = currentModel || (models.length > 0 ? models[0].id : '')
@@ -182,6 +183,13 @@ export const FloatingConfigPanel: React.FC<FloatingConfigPanelProps> = ({ contai
 
   if (!selectedShape || !position) {
     return null
+  }
+
+  if (selectedShape.type === 'image') {
+    const isEmpty = !selectedShape.imageUrl && !selectedShape.isGenerating
+    if (!isEmpty && !selectedShape.showConfigPanel) {
+      return null
+    }
   }
 
   const isGenerating = !!selectedShape.isGenerating
