@@ -72,11 +72,10 @@ export const ImageBar: React.FC<{ shape: ShapeProps }> = ({ shape }) => {
           onClick={() => {
             updateShape(shape.id, { showConfigPanel: !shape.showConfigPanel })
           }}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ring-offset-background outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
-            shape.showConfigPanel 
-              ? 'bg-blue-100 text-blue-700' 
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ring-offset-background outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${shape.showConfigPanel
+              ? 'bg-blue-100 text-blue-700'
               : 'bg-blue-50 hover:bg-blue-100 text-blue-600'
-          }`}
+            }`}
           title="展开/收起图片资源与配置面板 (Tab)"
         >
           <Wand2 size={14} className={shape.showConfigPanel ? 'text-blue-600' : 'text-blue-500'} />
@@ -87,9 +86,9 @@ export const ImageBar: React.FC<{ shape: ShapeProps }> = ({ shape }) => {
       <div className="w-px h-4 bg-gray-200" />
 
       <div className="flex items-center gap-1 text-sm">
-        <button 
-          className="flex items-center gap-1 px-2 py-1.5 rounded hover:bg-gray-100 text-gray-600 transition-colors relative" 
-          title="智能抠图" 
+        <button
+          className="flex items-center gap-1 px-2 py-1.5 rounded hover:bg-gray-100 text-gray-600 transition-colors relative"
+          title="智能抠图"
           onClick={() => handleAction('智能抠图')}
           disabled={isProcessing}
         >
@@ -97,9 +96,9 @@ export const ImageBar: React.FC<{ shape: ShapeProps }> = ({ shape }) => {
           <span className="text-xs">抠图</span>
           {activeAction === '智能抠图' && <Loader2 size={10} className="animate-spin absolute right-1 bottom-1 text-blue-500" />}
         </button>
-        <button 
-          className="flex items-center gap-1 px-2 py-1.5 rounded hover:bg-gray-100 text-gray-600 transition-colors relative" 
-          title="高清放大" 
+        <button
+          className="flex items-center gap-1 px-2 py-1.5 rounded hover:bg-gray-100 text-gray-600 transition-colors relative"
+          title="高清放大"
           onClick={() => handleAction('高清放大 (Upscale)')}
           disabled={isProcessing}
         >
@@ -107,9 +106,9 @@ export const ImageBar: React.FC<{ shape: ShapeProps }> = ({ shape }) => {
           <span className="text-xs">高清</span>
           {activeAction === '高清放大 (Upscale)' && <Loader2 size={10} className="animate-spin absolute right-1 bottom-1 text-blue-500" />}
         </button>
-        <button 
-          className="flex items-center gap-1 px-2 py-1.5 rounded hover:bg-gray-100 text-gray-600 transition-colors relative" 
-          title="风格重绘" 
+        <button
+          className="flex items-center gap-1 px-2 py-1.5 rounded hover:bg-gray-100 text-gray-600 transition-colors relative"
+          title="风格重绘"
           onClick={() => handleAction('风格重绘')}
           disabled={isProcessing}
         >
