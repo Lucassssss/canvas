@@ -1,0 +1,12 @@
+src/
+out/
+.cipd/
+
+# Chromium source and build specific folders
+chromium14*/
+ungoogled-chromium_*/
+chromium_build/cv-windows64.exe
+
+# Ignore nested gclient caches and large src directory
+chromium14*/.gclient*
+chromium14*/src/
