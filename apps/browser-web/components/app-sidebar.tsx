@@ -87,16 +87,20 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
         {/* 新建浏览器 Button matching AdsPower */}
         <div className="flex gap-0 w-full mb-2 group-data-[collapsible=icon]:hidden">
-          <Button className="flex-1 rounded-r-none bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-600/20 text-sm h-10 font-normal">
-            新建浏览器
+          <Button asChild className="flex-1 rounded-r-none bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-600/20 text-sm h-10 font-normal">
+            <Link href="/create">新建浏览器</Link>
           </Button>
-          <Button className="rounded-l-none bg-blue-600 hover:bg-blue-700 text-white border-l border-blue-500/50 shadow-md shadow-blue-600/20 px-3 h-10">
-            <RiAddBoxLine className="h-5 w-5" />
+          <Button asChild className="rounded-l-none bg-blue-600 hover:bg-blue-700 text-white border-l border-blue-500/50 shadow-md shadow-blue-600/20 px-3 h-10">
+            <Link href="/create">
+              <RiAddBoxLine className="h-5 w-5" />
+            </Link>
           </Button>
         </div>
         {/* Icon mode New Browser Button */}
-        <Button className="hidden group-data-[collapsible=icon]:flex size-10 p-0 bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-600/20 mb-2 shrink-0 self-center">
-          <RiAddBoxLine className="h-5 w-5" />
+        <Button asChild className="hidden group-data-[collapsible=icon]:flex size-10 p-0 bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-600/20 mb-2 shrink-0 self-center">
+          <Link href="/create">
+            <RiAddBoxLine className="h-5 w-5" />
+          </Link>
         </Button>
       </SidebarHeader>
 

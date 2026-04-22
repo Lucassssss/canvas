@@ -95,7 +95,7 @@ export default function EnvironmentsPage() {
         </header>
 
         {/* Scrollable Main Content Area */}
-        <div className="flex flex-1 flex-col p-6 overflow-y-auto gap-5">
+        <div className="flex flex-1 flex-col p-6 overflow-y-auto gap-5 min-h-0">
 
           {/* Top Filter Bar (No container borders/shadows) */}
           <div className="flex items-center gap-3">
