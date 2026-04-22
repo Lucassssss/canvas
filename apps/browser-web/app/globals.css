@@ -7,6 +7,20 @@
 @theme inline {
   --font-heading: var(--font-sans);
   --font-serif: var(--font-sans);
+
+  /* Brand Blue Scale derived from Joii Berry Logo (#2B7FFF) */
+  --color-blue-50: #eaf2ff;
+  --color-blue-100: #dce8ff;
+  --color-blue-200: #bed2ff;
+  --color-blue-300: #97b5ff;
+  --color-blue-400: #6f8eff;
+  --color-blue-500: #4b69ff;
+  --color-blue-600: #2B7FFF;
+  --color-blue-700: #1e62dd;
+  --color-blue-800: #184fb2;
+  --color-blue-900: #16438c;
+  --color-blue-950: #0e2a5e;
+
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
