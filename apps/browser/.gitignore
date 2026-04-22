@@ -10,3 +10,4 @@ chromium_build/cv-windows64.exe
 # Ignore nested gclient caches and large src directory
 chromium14*/.gclient*
 chromium14*/src/
+run_profile_*
