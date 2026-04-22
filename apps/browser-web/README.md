@@ -1,15 +1,21 @@
-# browser-web
+# Next.js template
 
-To install dependencies:
+This is a Next.js template with shadcn/ui.
 
-```bash
-bun install
-```
+## Adding components
 
-To run:
+To add components to your app, run the following command:
 
 ```bash
-bun run 
+npx shadcn@latest add button
 ```
 
-This project was created using `bun init` in bun v1.3.10. [Bun](https://bun.com) is a fast all-in-one JavaScript runtime.
+This will place the ui components in the `components` directory.
+
+## Using components
+
+To use the components in your app, import them as follows:
+
+```tsx
+import { Button } from "@/components/ui/button";
+```
