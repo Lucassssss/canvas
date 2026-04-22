@@ -2,7 +2,11 @@
 
 import * as React from "react"
 import Link from "next/link"
+import Image from "next/image"
 import { usePathname } from "next/navigation"
+
+import logoRound from "@/images/joii_berry_logo_round.svg"
+import logoWithText from "@/images/joii_berry_logo_withtext.svg"
 
 import { NavUser } from "@/components/nav-user"
 import {
@@ -15,9 +19,6 @@ import {
   SidebarMenuButton,
   SidebarGroup,
   SidebarGroupLabel,
-  SidebarMenuSub,
-  SidebarMenuSubItem,
-  SidebarMenuSubButton,
 } from "@/components/ui/sidebar"
 import {
   Collapsible,
@@ -27,15 +28,14 @@ import {
 import { Button } from "@/components/ui/button"
 
 // Icons
-import { 
-  RiLayout4Line, 
-  RiFolder2Line, 
-  RiMapPinLine, 
-  RiPuzzleLine, 
-  RiDeleteBinLine, 
+import {
+  RiLayout4Line,
+  RiFolder2Line,
+  RiMapPinLine,
+  RiPuzzleLine,
+  RiDeleteBinLine,
   RiCloudLine,
   RiArrowDownSLine,
-  RiArrowRightSLine,
   RiRobot2Line,
   RiFileList3Line,
   RiPlug2Line,
@@ -46,25 +46,25 @@ import {
 } from "@remixicon/react"
 
 const flatNavItems = [
-  { title: "环境管理", url: "/environments", icon: RiLayout4Line },
-  { title: "分组管理", url: "/groups", icon: RiFolder2Line },
-  { title: "代理管理", url: "/proxies", icon: RiMapPinLine },
-  { title: "应用中心", url: "/apps", icon: RiPuzzleLine },
-  { title: "回收站", url: "/trash", icon: RiDeleteBinLine },
-  { title: "云号码", url: "/cloud-numbers", icon: RiCloudLine },
+  { title: "环境管理", shortTitle: "环境", url: "/environments", icon: RiLayout4Line },
+  { title: "分组管理", shortTitle: "分组", url: "/groups", icon: RiFolder2Line },
+  { title: "代理管理", shortTitle: "代理", url: "/proxies", icon: RiMapPinLine },
+  { title: "应用中心", shortTitle: "应用", url: "/apps", icon: RiPuzzleLine },
+  { title: "回收站", shortTitle: "回收", url: "/trash", icon: RiDeleteBinLine },
+  { title: "云号码", shortTitle: "号码", url: "/cloud-numbers", icon: RiCloudLine },
 ]
 
 const automationNavItems = [
-  { title: "窗口同步", url: "/automation/sync", icon: RiLayout4Line },
-  { title: "RPA Plus", url: "/automation/rpa", icon: RiRobot2Line },
-  { title: "API & MCP", url: "/automation/api", icon: RiPlug2Line },
+  { title: "窗口同步", shortTitle: "同步", url: "/automation/sync", icon: RiLayout4Line },
+  { title: "RPA Plus", shortTitle: "RPA", url: "/automation/rpa", icon: RiRobot2Line },
+  { title: "API & MCP", shortTitle: "API", url: "/automation/api", icon: RiPlug2Line },
 ]
 
 const teamNavItems = [
-  { title: "费用中心", url: "/team/billing", icon: RiWallet3Line },
-  { title: "成员管理", url: "/team/members", icon: RiShieldUserLine },
-  { title: "操作日志", url: "/team/logs", icon: RiFileList3Line },
-  { title: "全局设置", url: "/settings", icon: RiSettings4Line },
+  { title: "费用中心", shortTitle: "费用", url: "/team/billing", icon: RiWallet3Line },
+  { title: "成员管理", shortTitle: "成员", url: "/team/members", icon: RiShieldUserLine },
+  { title: "操作日志", shortTitle: "日志", url: "/team/logs", icon: RiFileList3Line },
+  { title: "全局设置", shortTitle: "设置", url: "/settings", icon: RiSettings4Line },
 ]
 
 const user = {
@@ -78,14 +78,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   return (
     <Sidebar collapsible="icon" variant="inset" {...props}>
-      <SidebarHeader className="p-4 pt-6 group-data-[collapsible=icon]:p-2 group-data-[collapsible=icon]:pt-4">
-        <div className="flex items-center gap-2 mb-6 px-2 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:justify-center">
-          <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-blue-600 text-white font-bold shrink-0">
-            JB
-          </div>
-          <span className="text-xl font-bold tracking-tight group-data-[collapsible=icon]:hidden">Joii Berry</span>
+      <SidebarHeader className="p-4 group-data-[collapsible=icon]:p-2 group-data-[collapsible=icon]:pt-4">
+        {/* Logo Container */}
+        <div className="flex items-center justify-center mb-4 h-8 overflow-hidden">
+          <Image src={logoRound} alt="Joii Berry" className="hidden group-data-[collapsible=icon]:block h-8 w-auto object-contain" />
+          <Image src={logoWithText} alt="Joii Berry" className="block group-data-[collapsible=icon]:hidden h-8 w-auto object-contain pl-2" />
         </div>
-        
+
         {/* 新建浏览器 Button matching AdsPower */}
         <div className="flex gap-0 w-full mb-2 group-data-[collapsible=icon]:hidden">
           <Button className="flex-1 rounded-r-none bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-600/20 text-sm h-10 font-normal">
@@ -96,25 +95,27 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </Button>
         </div>
         {/* Icon mode New Browser Button */}
-        <Button className="hidden group-data-[collapsible=icon]:flex size-10 p-0 bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-600/20 mx-auto mb-2 shrink-0">
+        <Button className="hidden group-data-[collapsible=icon]:flex size-10 p-0 bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-600/20 mb-2 shrink-0 self-center">
           <RiAddBoxLine className="h-5 w-5" />
         </Button>
       </SidebarHeader>
 
-      <SidebarContent className="px-2">
+      <SidebarContent className="px-2 group-data-[collapsible=icon]:px-1">
         {/* Flat Primary Nav */}
-        <SidebarGroup>
+        <SidebarGroup className="group-data-[collapsible=icon]:p-0">
           <SidebarMenu>
             {flatNavItems.map((item) => (
               <SidebarMenuItem key={item.title}>
-                <SidebarMenuButton 
-                  asChild 
+                <SidebarMenuButton
+                  asChild
                   isActive={pathname === item.url || (pathname === '/' && item.url === '/environments')}
-                  className="h-9 text-sm mb-1"
+                  className="h-9 text-sm group-data-[collapsible=icon]:!w-full group-data-[collapsible=icon]:!h-12 group-data-[collapsible=icon]:!p-1 group-data-[collapsible=icon]:mb-0 group-data-[collapsible=icon]:justify-center"
+                  tooltip={item.title}
                 >
-                  <Link href={item.url}>
-                    <item.icon className="!size-5" />
-                    <span className="ml-1">{item.title}</span>
+                  <Link href={item.url} className="flex group-data-[collapsible=icon]:flex-col group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:gap-1">
+                    <item.icon className="!size-5 shrink-0" />
+                    <span className="ml-1 group-data-[collapsible=icon]:hidden">{item.title}</span>
+                    <span className="hidden group-data-[collapsible=icon]:block text-[10px] leading-none text-neutral-500 font-normal">{item.shortTitle}</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -123,21 +124,21 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarGroup>
 
         {/* Automation Group */}
-        <SidebarGroup>
+        <SidebarGroup className="group-data-[collapsible=icon]:p-0">
           <Collapsible defaultOpen className="group/collapsible">
             <CollapsibleTrigger asChild>
-              <SidebarGroupLabel className="text-sm font-normal text-muted-foreground hover:bg-muted cursor-pointer flex items-center justify-between mb-1">
+              <SidebarGroupLabel className="text-sm font-normal text-muted-foreground hover:bg-muted cursor-pointer flex items-center justify-between mb-1 group-data-[collapsible=icon]:hidden">
                 自动化
                 <RiArrowDownSLine className="size-4 transition-transform group-data-[state=closed]/collapsible:-rotate-90" />
               </SidebarGroupLabel>
             </CollapsibleTrigger>
-            <CollapsibleContent>
+            <CollapsibleContent className="group-data-[collapsible=icon]:!hidden">
               <SidebarMenu>
                 {automationNavItems.map((item) => (
                   <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild isActive={pathname === item.url} className="h-9 text-sm mb-1">
+                    <SidebarMenuButton asChild isActive={pathname === item.url} className="h-9 text-sm" tooltip={item.title}>
                       <Link href={item.url}>
-                        <item.icon className="!size-5" />
+                        <item.icon className="!size-5 shrink-0" />
                         <span className="ml-1">{item.title}</span>
                       </Link>
                     </SidebarMenuButton>
@@ -145,25 +146,46 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 ))}
               </SidebarMenu>
             </CollapsibleContent>
+            {/* Fallback for icon mode (Automation items shown as flat in icon mode) */}
+            <div className="hidden group-data-[collapsible=icon]:block group-data-[collapsible=icon]:mt-2">
+              <SidebarMenu>
+                {automationNavItems.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={pathname === item.url}
+                      className="h-9 text-sm mb-1 group-data-[collapsible=icon]:!w-full group-data-[collapsible=icon]:!h-12 group-data-[collapsible=icon]:!p-1 group-data-[collapsible=icon]:mb-0 group-data-[collapsible=icon]:justify-center"
+                      tooltip={item.title}
+                    >
+                      <Link href={item.url} className="flex group-data-[collapsible=icon]:flex-col group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:gap-1">
+                        <item.icon className="!size-5 shrink-0" />
+                        <span className="ml-1 group-data-[collapsible=icon]:hidden">{item.title}</span>
+                        <span className="hidden group-data-[collapsible=icon]:block text-[10px] leading-none text-neutral-500 font-normal">{item.shortTitle}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </div>
           </Collapsible>
         </SidebarGroup>
 
         {/* Team Group */}
-        <SidebarGroup>
+        <SidebarGroup className="group-data-[collapsible=icon]:p-0">
           <Collapsible defaultOpen className="group/collapsible">
             <CollapsibleTrigger asChild>
-              <SidebarGroupLabel className="text-sm font-normal text-muted-foreground hover:bg-muted cursor-pointer flex items-center justify-between mb-1">
+              <SidebarGroupLabel className="text-sm font-normal text-muted-foreground hover:bg-muted cursor-pointer flex items-center justify-between mb-1 group-data-[collapsible=icon]:hidden">
                 团队
                 <RiArrowDownSLine className="size-4 transition-transform group-data-[state=closed]/collapsible:-rotate-90" />
               </SidebarGroupLabel>
             </CollapsibleTrigger>
-            <CollapsibleContent>
+            <CollapsibleContent className="group-data-[collapsible=icon]:!hidden">
               <SidebarMenu>
                 {teamNavItems.map((item) => (
                   <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild isActive={pathname === item.url} className="h-9 text-sm mb-1">
+                    <SidebarMenuButton asChild isActive={pathname === item.url} className="h-9 text-sm" tooltip={item.title}>
                       <Link href={item.url}>
-                        <item.icon className="!size-5" />
+                        <item.icon className="!size-5 shrink-0" />
                         <span className="ml-1">{item.title}</span>
                       </Link>
                     </SidebarMenuButton>
@@ -171,6 +193,27 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 ))}
               </SidebarMenu>
             </CollapsibleContent>
+            {/* Fallback for icon mode (Team items shown as flat in icon mode) */}
+            <div className="hidden group-data-[collapsible=icon]:block group-data-[collapsible=icon]:mt-2">
+              <SidebarMenu>
+                {teamNavItems.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={pathname === item.url}
+                      className="h-9 text-sm mb-1 group-data-[collapsible=icon]:!w-full group-data-[collapsible=icon]:!h-12 group-data-[collapsible=icon]:!p-1 group-data-[collapsible=icon]:mb-0 group-data-[collapsible=icon]:justify-center"
+                      tooltip={item.title}
+                    >
+                      <Link href={item.url} className="flex group-data-[collapsible=icon]:flex-col group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:gap-1">
+                        <item.icon className="!size-5 shrink-0" />
+                        <span className="ml-1 group-data-[collapsible=icon]:hidden">{item.title}</span>
+                        <span className="hidden group-data-[collapsible=icon]:block text-[10px] leading-none text-neutral-500 font-normal">{item.shortTitle}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </div>
           </Collapsible>
         </SidebarGroup>
 
