@@ -82,7 +82,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         {/* Logo Container */}
         <div className="flex items-center justify-center mb-4 h-8 overflow-hidden">
           <Image src={logoRound} alt="Joii Berry" className="hidden group-data-[collapsible=icon]:block h-8 w-auto object-contain" />
-          <Image src={logoWithText} alt="Joii Berry" className="block group-data-[collapsible=icon]:hidden h-8 w-auto object-contain pl-2" />
+          <Image src={logoWithText} alt="Joii Berry" className="block group-data-[collapsible=icon]:hidden h-8 w-auto object-contain" />
         </div>
 
         {/* 新建浏览器 Button matching AdsPower */}
