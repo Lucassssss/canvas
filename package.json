@@ -32,7 +32,10 @@
   "dependencies": {
     "@langchain/langgraph": "^1.2.1",
     "@radix-ui/react-scroll-area": "^1.2.10",
+    "cors": "^2.8.6",
     "deepagents": "^1.8.1",
+    "express": "^5.2.1",
+    "kill-port-fast": "^0.2.3",
     "lucide-react": "^0.577.0",
     "nanoid": "^5.1.7",
     "react": "^19.2.4",
