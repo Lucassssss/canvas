@@ -2,6 +2,8 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import { rootRouter } from "./routes/index.js";
+import { environmentRouter } from "./routes/environments.js";
+import { deviceRouter } from "./routes/devices.js";
 
 dotenv.config();
 
@@ -13,6 +15,8 @@ app.use(express.json());
 
 // 注册路由
 app.use("/api", rootRouter);
+app.use("/api/environments", environmentRouter);
+app.use("/api/devices", deviceRouter);
 
 // 全局错误处理
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {

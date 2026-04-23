@@ -18,7 +18,10 @@
     "dotenv": "^17.4.2",
     "drizzle-orm": "^0.31.2",
     "express": "^5.2.1",
-    "postgres": "^3.4.4"
+    "https-proxy-agent": "^9.0.0",
+    "node-fetch": "^3.3.2",
+    "postgres": "^3.4.4",
+    "socks-proxy-agent": "^10.0.0"
   },
   "devDependencies": {
     "@types/bun": "latest",

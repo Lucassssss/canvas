@@ -4,12 +4,13 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "start": "kill-port-fast 4001 && bun run index.ts"
+    "start": "bun run index.ts"
   },
   "devDependencies": {
     "@types/bun": "latest",
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
+    "@types/kill-port": "^2.0.3",
     "drizzle-kit": "^0.31.10"
   },
   "peerDependencies": {
@@ -19,7 +20,8 @@
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "drizzle-orm": "^0.45.2",
-    "express": "^5.2.1",
+    "express": "^4.21.2",
+    "kill-port": "^2.0.1",
     "kill-port-fast": "^0.2.3",
     "postgres": "^3.4.9"
   }

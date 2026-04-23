@@ -32,7 +32,7 @@ import { Button } from "@/components/ui/button"
 import {
   RiLayout4Line,
   RiFolder2Line,
-  RiMapPinLine,
+  RiComputerLine,
   RiPuzzleLine,
   RiDeleteBinLine,
   RiCloudLine,
@@ -49,7 +49,7 @@ import {
 const flatNavItems = [
   { title: "环境管理", shortTitle: "环境", url: "/environments", icon: RiLayout4Line },
   { title: "分组管理", shortTitle: "分组", url: "/groups", icon: RiFolder2Line },
-  { title: "代理管理", shortTitle: "代理", url: "/proxies", icon: RiMapPinLine },
+  { title: "设备管理", shortTitle: "设备", url: "/devices", icon: RiComputerLine },
   { title: "应用中心", shortTitle: "应用", url: "/apps", icon: RiPuzzleLine },
   { title: "回收站", shortTitle: "回收", url: "/trash", icon: RiDeleteBinLine },
   { title: "云号码", shortTitle: "号码", url: "/cloud-numbers", icon: RiCloudLine },
