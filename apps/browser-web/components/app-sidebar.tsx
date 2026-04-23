@@ -43,7 +43,8 @@ import {
   RiWallet3Line,
   RiShieldUserLine,
   RiSettings4Line,
-  RiAddBoxLine
+  RiAddBoxLine,
+  RiShieldKeyholeLine
 } from "@remixicon/react"
 
 const flatNavItems = [
@@ -52,19 +53,18 @@ const flatNavItems = [
   { title: "设备管理", shortTitle: "设备", url: "/devices", icon: RiComputerLine },
   { title: "应用中心", shortTitle: "应用", url: "/apps", icon: RiPuzzleLine },
   { title: "回收站", shortTitle: "回收", url: "/trash", icon: RiDeleteBinLine },
-  { title: "云号码", shortTitle: "号码", url: "/cloud-numbers", icon: RiCloudLine },
 ]
 
 const automationNavItems = [
   { title: "窗口同步", shortTitle: "同步", url: "/automation/sync", icon: RiLayout4Line },
   { title: "RPA Plus", shortTitle: "RPA", url: "/automation/rpa", icon: RiRobot2Line },
-  { title: "API & MCP", shortTitle: "API", url: "/automation/api", icon: RiPlug2Line },
 ]
 
 const teamNavItems = [
   { title: "费用中心", shortTitle: "费用", url: "/team/billing", icon: RiWallet3Line },
   { title: "成员管理", shortTitle: "成员", url: "/team/members", icon: RiShieldUserLine },
   { title: "操作日志", shortTitle: "日志", url: "/team/logs", icon: RiFileList3Line },
+  { title: "访问控制", shortTitle: "访问", url: "/team/access-control", icon: RiShieldKeyholeLine },
   { title: "全局设置", shortTitle: "设置", url: "/settings", icon: RiSettings4Line },
 ]
 
