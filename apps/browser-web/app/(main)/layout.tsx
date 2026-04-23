@@ -12,7 +12,7 @@ export default function MainLayout({
     <TooltipProvider>
       <SidebarProvider>
         <AppSidebar />
-        <SidebarInset className="overflow-hidden flex flex-col bg-white">
+        <SidebarInset className="overflow-hidden flex flex-col bg-background">
           {children}
         </SidebarInset>
       </SidebarProvider>

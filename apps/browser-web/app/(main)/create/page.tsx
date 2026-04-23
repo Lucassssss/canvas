@@ -244,20 +244,20 @@ export default function CreateProfilePage() {
   return (
     <>
         {/* Top Header */}
-        <header className="flex h-14 shrink-0 items-center justify-between gap-2 border-b border-neutral-200 bg-white px-4">
+        <header className="flex h-14 shrink-0 items-center justify-between gap-2 border-b border-border bg-background px-4">
           <div className="flex items-center gap-2">
-            <SidebarTrigger className="-ml-1 text-neutral-500" />
+            <SidebarTrigger className="-ml-1 text-muted-foreground" />
             <Separator orientation="vertical" className="mr-2 h-4" />
             <Breadcrumb>
               <BreadcrumbList>
                 <BreadcrumbItem className="hidden md:block">
-                  <BreadcrumbLink asChild className="text-neutral-500 hover:text-neutral-900">
+                  <BreadcrumbLink asChild className="text-muted-foreground hover:text-foreground">
                     <Link href="/environments">环境管理</Link>
                   </BreadcrumbLink>
                 </BreadcrumbItem>
-                <BreadcrumbSeparator className="hidden md:block text-neutral-400" />
+                <BreadcrumbSeparator className="hidden md:block text-muted-foreground" />
                 <BreadcrumbItem>
-                  <BreadcrumbPage className="text-neutral-900">{isMounted && editId ? '编辑环境' : '新建环境'}</BreadcrumbPage>
+                  <BreadcrumbPage className="text-foreground">{isMounted && editId ? '编辑环境' : '新建环境'}</BreadcrumbPage>
                 </BreadcrumbItem>
               </BreadcrumbList>
             </Breadcrumb>
@@ -265,7 +265,7 @@ export default function CreateProfilePage() {
         </header>
 
         {/* Tab Navigation (Static, Fixed) */}
-        <div className="bg-white border-b border-neutral-200 px-8 py-3 flex gap-6 shrink-0 z-10 relative">
+        <div className="bg-background border-b border-border px-8 py-3 flex gap-6 shrink-0 z-10 relative">
           <button 
             type="button"
             onClick={() => {
@@ -273,7 +273,7 @@ export default function CreateProfilePage() {
               const container = document.getElementById("scroll-container")
               if (el && container) container.scrollTo({ top: el.offsetTop - container.offsetTop, behavior: 'smooth' })
             }}
-            className={`text-sm font-medium pb-3 -mb-3 border-b-2 transition-colors ${activeTab === 'basic' ? 'border-blue-600 text-blue-600' : 'border-transparent text-neutral-500 hover:text-neutral-900'}`}
+            className={`text-sm font-medium pb-3 -mb-3 border-b-2 transition-colors ${activeTab === 'basic' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
           >
             基础设置
           </button>
@@ -284,7 +284,7 @@ export default function CreateProfilePage() {
               const container = document.getElementById("scroll-container")
               if (el && container) container.scrollTo({ top: el.offsetTop - container.offsetTop, behavior: 'smooth' })
             }}
-            className={`text-sm font-medium pb-3 -mb-3 border-b-2 transition-colors ${activeTab === 'proxy' ? 'border-blue-600 text-blue-600' : 'border-transparent text-neutral-500 hover:text-neutral-900'}`}
+            className={`text-sm font-medium pb-3 -mb-3 border-b-2 transition-colors ${activeTab === 'proxy' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
           >
             设备设置
           </button>
@@ -295,14 +295,14 @@ export default function CreateProfilePage() {
               const container = document.getElementById("scroll-container")
               if (el && container) container.scrollTo({ top: el.offsetTop - container.offsetTop, behavior: 'smooth' })
             }}
-            className={`text-sm font-medium pb-3 -mb-3 border-b-2 transition-colors ${activeTab === 'fingerprint' ? 'border-blue-600 text-blue-600' : 'border-transparent text-neutral-500 hover:text-neutral-900'}`}
+            className={`text-sm font-medium pb-3 -mb-3 border-b-2 transition-colors ${activeTab === 'fingerprint' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
           >
             高级指纹
           </button>
         </div>
 
         {/* Scrollable Form Content */}
-        <main id="scroll-container" className="flex-1 overflow-y-auto min-h-0 bg-[#f6f9fc] flex flex-col relative">
+        <main id="scroll-container" className="flex-1 overflow-y-auto min-h-0 bg-background text-foreground flex flex-col relative">
           <div className="flex-1 p-8">
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="max-w-3xl mx-auto space-y-12 pb-16">
@@ -310,14 +310,14 @@ export default function CreateProfilePage() {
                 {/* Basic Settings Section */}
                 <div id="section-basic" className="space-y-6 scroll-mt-20">
                   <div>
-                    <h2 className="text-lg font-medium text-neutral-900 mb-4">基础信息</h2>
-                    <div className="grid grid-cols-2 gap-6 p-6 bg-white rounded-xl border border-neutral-200 shadow-sm">
+                    <h2 className="text-lg font-medium text-foreground mb-4">基础信息</h2>
+                    <div className="grid grid-cols-2 gap-6 p-6 bg-card rounded-xl border border-border shadow-sm">
                       <FormField
                         control={form.control}
                         name="name"
                         render={({ field }) => (
                           <FormItem className="space-y-2">
-                            <FormLabel className="text-neutral-700">环境名称 <span className="text-red-500">*</span></FormLabel>
+                            <FormLabel className="text-foreground">环境名称 <span className="text-red-500">*</span></FormLabel>
                             <FormControl>
                               <Input placeholder="请输入环境名称，如：FB-001" className="h-10" {...field} />
                             </FormControl>
@@ -330,7 +330,7 @@ export default function CreateProfilePage() {
                         name="group"
                         render={({ field }) => (
                           <FormItem className="space-y-2">
-                            <FormLabel className="text-neutral-700">所属分组</FormLabel>
+                            <FormLabel className="text-foreground">所属分组</FormLabel>
                             <Select onValueChange={field.onChange} defaultValue={field.value}>
                               <FormControl>
                                 <SelectTrigger className="h-10">
@@ -351,7 +351,7 @@ export default function CreateProfilePage() {
                         name="platform"
                         render={({ field }) => (
                           <FormItem className="space-y-2 col-span-2">
-                            <FormLabel className="text-neutral-700">目标平台</FormLabel>
+                            <FormLabel className="text-foreground">目标平台</FormLabel>
                             <Select onValueChange={field.onChange} defaultValue={field.value}>
                               <FormControl>
                                 <SelectTrigger className="h-10">
@@ -373,7 +373,7 @@ export default function CreateProfilePage() {
                         name="remark"
                         render={({ field }) => (
                           <FormItem className="space-y-2 col-span-2">
-                            <FormLabel className="text-neutral-700">备注</FormLabel>
+                            <FormLabel className="text-foreground">备注</FormLabel>
                             <FormControl>
                               <Textarea placeholder="输入关于此环境的附加说明..." className="resize-none h-20" {...field} />
                             </FormControl>
@@ -384,14 +384,14 @@ export default function CreateProfilePage() {
                   </div>
 
                   <div>
-                    <h2 className="text-lg font-medium text-neutral-900 mb-4">账号设置 (可选)</h2>
-                    <div className="grid grid-cols-2 gap-6 p-6 bg-white rounded-xl border border-neutral-200 shadow-sm">
+                    <h2 className="text-lg font-medium text-foreground mb-4">账号设置 (可选)</h2>
+                    <div className="grid grid-cols-2 gap-6 p-6 bg-card rounded-xl border border-border shadow-sm">
                       <FormField
                         control={form.control}
                         name="username"
                         render={({ field }) => (
                           <FormItem className="space-y-2">
-                            <FormLabel className="text-neutral-700">账号</FormLabel>
+                            <FormLabel className="text-foreground">账号</FormLabel>
                             <FormControl>
                               <Input placeholder="输入登录账号" className="h-10" {...field} />
                             </FormControl>
@@ -403,7 +403,7 @@ export default function CreateProfilePage() {
                         name="password"
                         render={({ field }) => (
                           <FormItem className="space-y-2">
-                            <FormLabel className="text-neutral-700">密码</FormLabel>
+                            <FormLabel className="text-foreground">密码</FormLabel>
                             <FormControl>
                               <Input type="password" placeholder="输入登录密码" className="h-10" {...field} />
                             </FormControl>
@@ -416,8 +416,8 @@ export default function CreateProfilePage() {
                         render={({ field }) => (
                           <FormItem className="space-y-2 col-span-2">
                             <div className="flex items-center justify-between">
-                              <FormLabel className="text-neutral-700">Cookie</FormLabel>
-                              <span className="text-xs text-blue-600 cursor-pointer hover:underline">格式化解析</span>
+                              <FormLabel className="text-foreground">Cookie</FormLabel>
+                              <span className="text-xs text-primary cursor-pointer hover:underline">格式化解析</span>
                             </div>
                             <FormControl>
                               <Textarea placeholder="粘贴 JSON 或 String 格式的 Cookie" className="resize-none h-32 font-mono text-xs" {...field} />
@@ -432,14 +432,14 @@ export default function CreateProfilePage() {
                 {/* Device Settings Section */}
                 <div id="section-proxy" className="space-y-6 scroll-mt-20">
                   <div>
-                    <h2 className="text-lg font-medium text-neutral-900 mb-4">关联设备</h2>
-                    <div className="space-y-6 p-6 bg-white rounded-xl border border-neutral-200 shadow-sm">
+                    <h2 className="text-lg font-medium text-foreground mb-4">关联设备</h2>
+                    <div className="space-y-6 p-6 bg-card rounded-xl border border-border shadow-sm">
                       <FormField
                         control={form.control}
                         name="deviceId"
                         render={({ field }) => (
                           <FormItem className="space-y-2">
-                            <FormLabel className="text-neutral-700">选择设备 <span className="text-red-500">*</span></FormLabel>
+                            <FormLabel className="text-foreground">选择设备 <span className="text-destructive">*</span></FormLabel>
                             <Select onValueChange={field.onChange} value={field.value || "none"}>
                               <FormControl>
                                 <SelectTrigger className="h-10">
@@ -468,16 +468,16 @@ export default function CreateProfilePage() {
                 {/* Fingerprint Settings Section */}
                 <div id="section-fingerprint" className="space-y-6 scroll-mt-20">
                   <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-lg font-medium text-neutral-900">高级指纹</h2>
-                    <Button type="button" onClick={handleGenerateRandomFingerprint} variant="outline" size="sm" className="h-8 text-blue-600 border-blue-200 hover:bg-blue-50 flex items-center gap-1">
+                    <h2 className="text-lg font-medium text-foreground">高级指纹</h2>
+                    <Button type="button" onClick={handleGenerateRandomFingerprint} variant="outline" size="sm" className="h-8 text-primary border-primary/30 hover:bg-primary/10 flex items-center gap-1">
                       <RiRefreshLine className="h-4 w-4" />
                       换一套指纹
                     </Button>
                   </div>
 
                   {/* OS & Browser */}
-                  <div className="p-6 bg-white rounded-xl border border-neutral-200 shadow-sm space-y-6">
-                    <h3 className="text-sm font-medium text-neutral-900 border-b border-neutral-100 pb-2">操作系统与浏览器</h3>
+                  <div className="p-6 bg-card rounded-xl border border-border shadow-sm space-y-6">
+                    <h3 className="text-sm font-medium text-card-foreground border-b border-border/50 pb-2">操作系统与浏览器</h3>
                     
                     <FormField
                       control={form.control}
@@ -488,14 +488,14 @@ export default function CreateProfilePage() {
                           <div className="flex items-center gap-3">
                             <div 
                               onClick={() => field.onChange("windows")}
-                              className={`flex items-center gap-2 px-4 py-2 border rounded-md text-sm cursor-pointer ${field.value === 'windows' ? 'border-blue-600 bg-blue-50 text-blue-600' : 'border-neutral-200 text-neutral-600 hover:bg-neutral-50'}`}
+                              className={`flex items-center gap-2 px-4 py-2 border rounded-md text-sm cursor-pointer ${field.value === 'windows' ? 'border-primary bg-primary/10 text-primary' : 'border-input text-muted-foreground hover:bg-accent hover:text-accent-foreground'}`}
                             >
                               <RiWindowsLine className="h-4 w-4" />
                               Windows
                             </div>
                             <div 
                               onClick={() => field.onChange("macos")}
-                              className={`flex items-center gap-2 px-4 py-2 border rounded-md text-sm cursor-pointer ${field.value === 'macos' ? 'border-blue-600 bg-blue-50 text-blue-600' : 'border-neutral-200 text-neutral-600 hover:bg-neutral-50'}`}
+                              className={`flex items-center gap-2 px-4 py-2 border rounded-md text-sm cursor-pointer ${field.value === 'macos' ? 'border-primary bg-primary/10 text-primary' : 'border-input text-muted-foreground hover:bg-accent hover:text-accent-foreground'}`}
                             >
                               <RiAppleLine className="h-4 w-4" />
                               macOS
@@ -511,7 +511,7 @@ export default function CreateProfilePage() {
                         name="browser"
                         render={({ field }) => (
                           <FormItem className="space-y-2">
-                            <FormLabel className="text-neutral-700">浏览器内核</FormLabel>
+                            <FormLabel className="text-foreground">浏览器内核</FormLabel>
                             <Select onValueChange={field.onChange} value={field.value}>
                               <FormControl>
                                 <SelectTrigger className="h-10">
@@ -531,7 +531,7 @@ export default function CreateProfilePage() {
                         name="browserVersion"
                         render={({ field }) => (
                           <FormItem className="space-y-2">
-                            <FormLabel className="text-neutral-700">内核版本</FormLabel>
+                            <FormLabel className="text-foreground">内核版本</FormLabel>
                             <Select onValueChange={field.onChange} value={field.value}>
                               <FormControl>
                                 <SelectTrigger className="h-10">
@@ -556,7 +556,7 @@ export default function CreateProfilePage() {
                           <FormLabel className="text-neutral-700">User-Agent</FormLabel>
                           <FormControl>
                             <Textarea 
-                              className="resize-none h-20 font-mono text-xs bg-neutral-50 text-neutral-600" 
+                              className="resize-none h-20 font-mono text-xs bg-muted text-foreground" 
                               {...field}
                             />
                           </FormControl>
@@ -566,8 +566,8 @@ export default function CreateProfilePage() {
                   </div>
 
                   {/* Location & Language */}
-                  <div className="p-6 bg-white rounded-xl border border-neutral-200 shadow-sm space-y-6">
-                    <h3 className="text-sm font-medium text-neutral-900 border-b border-neutral-100 pb-2">地理与语言</h3>
+                  <div className="p-6 bg-card rounded-xl border border-border shadow-sm space-y-6">
+                    <h3 className="text-sm font-medium text-card-foreground border-b border-border/50 pb-2">地理与语言</h3>
                     <div className="grid grid-cols-2 gap-y-6 gap-x-12">
                       <FormField
                         control={form.control}
@@ -575,7 +575,7 @@ export default function CreateProfilePage() {
                         render={({ field }) => (
                           <FormItem className="flex items-center justify-between">
                             <div className="space-y-0.5">
-                              <FormLabel className="text-neutral-700">时区 (Timezone)</FormLabel>
+                              <FormLabel className="text-foreground">时区 (Timezone)</FormLabel>
                               <FormDescription className="text-xs">基于代理 IP 自动匹配</FormDescription>
                             </div>
                             <FormControl>
@@ -590,7 +590,7 @@ export default function CreateProfilePage() {
                         render={({ field }) => (
                           <FormItem className="flex items-center justify-between">
                             <div className="space-y-0.5">
-                              <FormLabel className="text-neutral-700">WebRTC</FormLabel>
+                              <FormLabel className="text-foreground">WebRTC</FormLabel>
                               <FormDescription className="text-xs">替换真实内网 IP</FormDescription>
                             </div>
                             <FormControl>
@@ -633,8 +633,8 @@ export default function CreateProfilePage() {
                   </div>
 
                   {/* Hardware */}
-                  <div className="p-6 bg-white rounded-xl border border-neutral-200 shadow-sm space-y-6">
-                    <h3 className="text-sm font-medium text-neutral-900 border-b border-neutral-100 pb-2">硬件与设备</h3>
+                  <div className="p-6 bg-card rounded-xl border border-border shadow-sm space-y-6">
+                    <h3 className="text-sm font-medium text-card-foreground border-b border-border/50 pb-2">硬件与设备</h3>
                     <div className="grid grid-cols-2 gap-6">
                       <FormField
                         control={form.control}
@@ -682,7 +682,7 @@ export default function CreateProfilePage() {
                     </div>
                     
                     <div className="space-y-2">
-                      <Label className="text-neutral-700">显卡厂商 & 渲染器 (WebGL Vendor & Renderer)</Label>
+                      <Label className="text-foreground">显卡厂商 & 渲染器 (WebGL Vendor & Renderer)</Label>
                       <div className="grid grid-cols-2 gap-4">
                         <FormField
                           control={form.control}
@@ -690,7 +690,7 @@ export default function CreateProfilePage() {
                           render={({ field }) => (
                             <FormItem>
                               <FormControl>
-                                <Input className="h-10 bg-neutral-50 text-neutral-600 font-mono text-xs" {...field} />
+                                <Input className="h-10 bg-muted text-foreground font-mono text-xs" {...field} />
                               </FormControl>
                             </FormItem>
                           )}
@@ -701,7 +701,7 @@ export default function CreateProfilePage() {
                           render={({ field }) => (
                             <FormItem>
                               <FormControl>
-                                <Input className="h-10 bg-neutral-50 text-neutral-600 font-mono text-xs" {...field} />
+                                <Input className="h-10 bg-muted text-foreground font-mono text-xs" {...field} />
                               </FormControl>
                             </FormItem>
                           )}
@@ -709,14 +709,14 @@ export default function CreateProfilePage() {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-y-6 gap-x-12 pt-4 border-t border-neutral-100">
+                    <div className="grid grid-cols-2 gap-y-6 gap-x-12 pt-4 border-t border-border/50">
                        <FormField
                         control={form.control}
                         name="canvasNoise"
                         render={({ field }) => (
                           <FormItem className="flex items-center justify-between">
                             <div className="space-y-0.5">
-                              <FormLabel className="text-neutral-700">Canvas</FormLabel>
+                              <FormLabel className="text-foreground">Canvas</FormLabel>
                               <FormDescription className="text-xs">真实 / 噪音</FormDescription>
                             </div>
                             <Select onValueChange={field.onChange} value={field.value}>
@@ -739,7 +739,7 @@ export default function CreateProfilePage() {
                         render={({ field }) => (
                           <FormItem className="flex items-center justify-between">
                             <div className="space-y-0.5">
-                              <FormLabel className="text-neutral-700">AudioContext</FormLabel>
+                              <FormLabel className="text-foreground">AudioContext</FormLabel>
                               <FormDescription className="text-xs">真实 / 噪音</FormDescription>
                             </div>
                             <Select onValueChange={field.onChange} value={field.value}>
@@ -766,9 +766,9 @@ export default function CreateProfilePage() {
           </div>
 
           {/* Sticky Footer */}
-          <div className="sticky bottom-0 z-20 bg-white border-t border-neutral-200 px-8 py-4 flex items-center justify-end gap-3 shrink-0 shadow-[0_-4px_10px_-4px_rgba(0,0,0,0.05)]">
+          <div className="sticky bottom-0 z-20 bg-background border-t border-border px-8 py-4 flex items-center justify-end gap-3 shrink-0 shadow-[0_-4px_10px_-4px_rgba(0,0,0,0.05)]">
             <Button variant="outline" type="button" onClick={() => router.back()}>取消</Button>
-            <Button onClick={form.handleSubmit(onSubmit)} type="button" className="bg-blue-600 hover:bg-blue-700 text-white">确定创建</Button>
+            <Button onClick={form.handleSubmit(onSubmit)} type="button" className="bg-primary hover:bg-primary/90 text-primary-foreground">确定创建</Button>
           </div>
         </main>
     </>
