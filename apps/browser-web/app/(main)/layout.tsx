@@ -1,6 +1,7 @@
 import * as React from "react"
 import { AppSidebar } from "@/components/app-sidebar"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
+import { TooltipProvider } from "@/components/ui/tooltip"
 
 export default function MainLayout({
   children,
@@ -8,11 +9,13 @@ export default function MainLayout({
   children: React.ReactNode
 }) {
   return (
-    <SidebarProvider>
-      <AppSidebar />
-      <SidebarInset className="overflow-hidden flex flex-col bg-white">
-        {children}
-      </SidebarInset>
-    </SidebarProvider>
+    <TooltipProvider>
+      <SidebarProvider>
+        <AppSidebar />
+        <SidebarInset className="overflow-hidden flex flex-col bg-white">
+          {children}
+        </SidebarInset>
+      </SidebarProvider>
+    </TooltipProvider>
   )
 }
