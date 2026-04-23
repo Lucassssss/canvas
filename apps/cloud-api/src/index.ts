@@ -4,6 +4,9 @@ import dotenv from "dotenv";
 import { rootRouter } from "./routes/index.js";
 import { environmentRouter } from "./routes/environments.js";
 import { deviceRouter } from "./routes/devices.js";
+import { groupsRouter } from "./routes/groups.js";
+import { teamRouter } from "./routes/team.js";
+import { logsRouter } from "./routes/logs.js";
 
 dotenv.config();
 
@@ -17,6 +20,9 @@ app.use(express.json());
 app.use("/api", rootRouter);
 app.use("/api/environments", environmentRouter);
 app.use("/api/devices", deviceRouter);
+app.use("/api/groups", groupsRouter);
+app.use("/api/team", teamRouter);
+app.use("/api/logs", logsRouter);
 
 // 全局错误处理
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
