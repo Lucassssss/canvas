@@ -6,11 +6,11 @@
     "height": 800,
     "minWidth": 800,
     "minHeight": 600,
-    "titleBarStyle": "default"
+    "titleBarStyle": "hidden"
   },
   "dev": {
     "enabled": true,
-    "webUrl": "http://localhost:3000",
+    "webUrl": "http://localhost:4000/dashboard",
     "skipServers": false
   },
   "servers": [
