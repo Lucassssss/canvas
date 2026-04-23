@@ -128,3 +128,49 @@ JoiiBerry (userDataPath)/
 2. **过滤冗余缓存**：为避免占用极大带宽，上传云端时**强制排除**各种临时缓存文件，如 `Cache/`、`Code Cache/`、`GPUCache/`、`Service Worker/CacheStorage/`。
 3. **版本比对机制**：借助同目录下的 `sync_meta.json` 记录本地文件的最后更新时间。启动浏览器前，先校验本地版本和云端版本；如果云端版本更新，则触发下载拉取；关闭浏览器后，计算本地增量并触发后台异步上传。
 4. **加密与压缩**：在本地压缩并使用环境级别的 AES 秘钥加密后，再经由 `cloud-api` 传输至云存储（如 AWS S3 / MinIO），以保证用户浏览器隐私数据的绝对安全。
+
+---
+
+## 5. UI 架构与主题规范 (UI & Theming Architecture)
+
+基于对跨端（桌面 Electron / Web 端）的一致性要求以及深色模式（Dark Mode）的无缝支持，本项目的 UI 架构遵循以下统一规范：
+
+### 5.1 布局与主体容器结构 (Layout & Main Container Structure)
+为适应桌面端长表单、复杂设置页及数据列表的要求，业务主体 (`main` 部分) 必须采用统一的分层布局。以“新建/编辑”类表单页为例，整体页面结构应当如下划分：
+
+```text
+————————————————————————————————————————————
+|  Header (Sidebar Trigger + 面包屑导航)   |  <- 高度固定 (如 h-14)，不可滚动，支持拖拽窗口
+————————————————————————————————————————————
+|  二级菜单/Tab栏 (可选)                   |  <- 紧贴 Header 下方，相对定位或吸顶
+————————————————————————————————————————————
+|                                          |
+|  内容滚动区 (Scrollable Main)            |  <- 【核心区】占满剩余空间 (flex-1 overflow-y-auto)
+|                                          |
+|__________________________________________|
+|  Footer (按钮组 / 状态栏)                |  <- 底部吸附 (sticky bottom-0 z-20)，高度固定
+————————————————————————————————————————————
+```
+
+**关键 CSS 实现：**
+1. **全局容器锁定**：最外层使用 `flex flex-col h-screen`，绝对避免 `body` 或顶层窗口出现双重滚动条。
+2. **核心滚动区**：包裹表单和表格的主容器必须添加 `flex-1 overflow-y-auto min-h-0 relative`。其中 `min-h-0` 是修复 Flex 子元素溢出问题的关键。
+3. **吸底 Footer**：操作区需放置在滚动容器的最末端，并赋予 `sticky bottom-0 z-20 bg-background border-t shadow-[0_-4px_10px_-4px_rgba(0,0,0,0.05)]`，确保在页面滚动时操作按钮始终贴靠在窗口最底部，不会被遮挡。
+
+### 5.2 桌面端窗口拖拽 (Electron Drag Region)
+为了隐藏 Electron 默认标题栏并提供沉浸式体验，顶层交互栏必须支持原生窗口拖动：
+- **拖动区**：在顶部 Header 的空白区域，使用 CSS `[-webkit-app-region:drag]` 使该区域可触控拖动窗口。
+- **不可拖动区**：所有交互元素（按钮、输入框、面包屑、下拉菜单、Checkbox等），必须明确标记 `[-webkit-app-region:no-drag]`。否则在 Windows 或 macOS 下可能出现按钮无法点击或焦点丢失的问题。
+
+### 5.3 语义化主题与暗黑模式 (Semantic Theming & Dark Mode)
+为了避免颜色冲突，实现全自动的 Dark/Light 模式切换，应用采用了深度的语义化调色盘控制：
+1. **统一冷色调中性色**：废弃了原先偏暖或正灰的硬编码颜色。在 `globals.css` 中，所有背景和边框的 OKLCH 色相统一调整为 **`260` (冷蓝灰/Slate)**，这与项目的主题色 (Brand Blue, Hue `264`) 在视觉上完美融合，避免了暗色模式下界面显“脏”。
+2. **禁止硬编码颜色**：
+   - 严禁在页面组件中直接使用 `bg-white`、`text-neutral-500`、`border-neutral-200` 等硬编码类名。
+   - **背景替换为**：`bg-background` (主背景)、`bg-card` (卡片/表单区块)、`bg-muted` (斑马纹/次要背景)、`bg-accent` (悬停区域)。
+   - **文字替换为**：`text-foreground` (主文本)、`text-muted-foreground` (次要文本)、`text-primary` (高亮色)。
+   - **边框替换为**：`border-border` (常规分割线)、`border-input` (表单控件边框)。
+3. **品牌主色抽离**：所有的操作按钮和状态高亮均使用 `bg-primary` 和 `text-primary`，以保证未来一键切换主题色时，不需要全局搜索替换具体色号（如 `blue-600`）。
+
+### 5.4 组件水合稳定 (Hydration Stability)
+对于由 Radix UI 提供底层的浮动组件（如 Tooltip、Select、Dropdown），为了避免在 Next.js 的 SSR（服务端渲染）下由于生成的唯一 `id` 在前后端不匹配导致 Hydration Error，我们在 `app/(main)/layout.tsx` 的最外层全局包裹了 `<TooltipProvider>`。未来类似的有全局上下文要求的组件也应统一置于最外层 Layout 中。
