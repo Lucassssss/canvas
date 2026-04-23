@@ -1,4 +1,4 @@
-import { AppSidebar } from "@/components/app-sidebar"
+
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -9,8 +9,6 @@ import {
 } from "@/components/ui/breadcrumb"
 import { Separator } from "@/components/ui/separator"
 import {
-  SidebarInset,
-  SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
@@ -73,9 +71,7 @@ const UNIFIED_PROFILES = [
 
 export default function EnvironmentsPage() {
   return (
-    <SidebarProvider>
-      <AppSidebar />
-      <SidebarInset className="overflow-hidden flex flex-col bg-white">
+    <>
         <header className="flex h-16 shrink-0 items-center justify-between gap-2 border-b border-neutral-100 bg-white px-4">
           <div className="flex items-center gap-2">
             <SidebarTrigger className="-ml-1 text-neutral-500" />
@@ -269,7 +265,6 @@ export default function EnvironmentsPage() {
           </div>
 
         </div>
-      </SidebarInset>
-    </SidebarProvider>
+    </>
   )
 }
