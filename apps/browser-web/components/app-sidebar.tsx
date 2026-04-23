@@ -9,6 +9,7 @@ import logoRound from "@/images/joii_berry_logo_round.svg"
 import logoWithText from "@/images/joii_berry_logo_withtext.svg"
 
 import { NavUser } from "@/components/nav-user"
+import { ButtonGroup } from "@/components/ui/button-group"
 import {
   Sidebar,
   SidebarContent,
@@ -85,17 +86,17 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <Image src={logoWithText} alt="Joii Berry" className="block group-data-[collapsible=icon]:hidden h-8 w-auto object-contain" />
         </div>
 
-        {/* 新建浏览器 Button matching AdsPower */}
-        <div className="flex gap-0 w-full mb-2 group-data-[collapsible=icon]:hidden">
-          <Button asChild className="flex-1 rounded-r-none bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-600/20 text-sm h-10 font-normal">
-            <Link href="/create">新建浏览器</Link>
+        {/* 新建浏览器 Button */}
+        <ButtonGroup className="w-full group-data-[collapsible=icon]:hidden shadow-md shadow-blue-600/20 rounded-md">
+          <Button asChild className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-sm h-10 font-normal shadow-none border border-blue-700/50">
+            <Link href="/create">新建环境</Link>
           </Button>
-          <Button asChild className="rounded-l-none bg-blue-600 hover:bg-blue-700 text-white border-l border-blue-500/50 shadow-md shadow-blue-600/20 px-3 h-10">
+          <Button asChild className="bg-blue-600 hover:bg-blue-700 text-white px-2 h-10 shadow-none border border-blue-700/50">
             <Link href="/create">
               <RiAddBoxLine className="h-5 w-5" />
             </Link>
           </Button>
-        </div>
+        </ButtonGroup>
         {/* Icon mode New Browser Button */}
         <Button asChild className="hidden group-data-[collapsible=icon]:flex size-10 p-0 bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-600/20 mb-2 shrink-0 self-center">
           <Link href="/create">
