@@ -80,7 +80,16 @@ const formSchema = z.object({
 
 export default function CreateProfilePage() {
   const router = useRouter()
+  const [editId, setEditId] = React.useState<string | null>(null)
   const [activeTab, setActiveTab] = React.useState("basic")
+  const [isMounted, setIsMounted] = React.useState(false)
+
+  React.useEffect(() => {
+    setIsMounted(true)
+    const params = new URLSearchParams(window.location.search)
+    const id = params.get("id")
+    if (id) setEditId(id)
+  }, [])
 
   React.useEffect(() => {
     const scrollContainer = document.getElementById("scroll-container")
@@ -143,27 +152,47 @@ export default function CreateProfilePage() {
       canvasNoise: "noise",
       audioNoise: "noise",
     },
-  })
+  });
 
-  const onSubmit = (values: z.infer<typeof formSchema>) => {
-    // 组装最终的底层 CLI args 配置
-    const cliArgs = {
-      "--fingerprint-platform": values.os,
-      "--fingerprint-brand": values.browser,
-      "--fingerprint-brand-version": values.browserVersion,
-      "--user-agent": values.userAgent,
-      "--fingerprint-hardware-concurrency": values.hardwareConcurrency,
-      "--fingerprint-gpu-vendor": values.webglVendor,
-      "--fingerprint-gpu-renderer": values.webglRenderer,
-      "--proxy-server": values.proxyType !== "direct" ? `${values.proxyType}://${values.proxyHost}:${values.proxyPort}` : "",
-      // TODO: Map noise properties to core flags
+  React.useEffect(() => {
+    if (editId) {
+      fetch(`http://localhost:4005/api/environments/${editId}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.success && data.data) {
+            form.reset(data.data);
+          }
+        })
+        .catch(err => console.error("Failed to load environment:", err));
     }
-    
-    console.log("=== Saved Profile Data ===", values)
-    console.log("=== Core CLI Args ===", cliArgs)
-    
-    // Simulate save success
-    router.push("/environments")
+  }, [editId, form]);
+
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    try {
+      const url = editId 
+        ? `http://localhost:4005/api/environments/${editId}` 
+        : "http://localhost:4005/api/environments";
+      const method = editId ? "PUT" : "POST";
+
+      const response = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(values),
+      });
+      const data = await response.json();
+      
+      if (data.success) {
+        console.log("=== Saved Profile Data ===", data.data);
+        router.push("/environments");
+        router.refresh(); // Refresh the list
+      } else {
+        console.error("Failed to save:", data.error);
+        alert(`Failed to ${editId ? 'update' : 'create'} environment: ${data.error}`);
+      }
+    } catch (err) {
+      console.error("Network error:", err);
+      alert("Network error, could not save.");
+    }
   }
 
   const handleGenerateRandomFingerprint = () => {
@@ -196,7 +225,7 @@ export default function CreateProfilePage() {
                 </BreadcrumbItem>
                 <BreadcrumbSeparator className="hidden md:block text-neutral-400" />
                 <BreadcrumbItem>
-                  <BreadcrumbPage className="text-neutral-900">新建环境</BreadcrumbPage>
+                  <BreadcrumbPage className="text-neutral-900">{isMounted && editId ? '编辑环境' : '新建环境'}</BreadcrumbPage>
                 </BreadcrumbItem>
               </BreadcrumbList>
             </Breadcrumb>

@@ -23,6 +23,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { RiSideBarLine } from "@remixicon/react"
+import { useUIStore } from "@/store/use-ui-store"
 
 const SIDEBAR_COOKIE_NAME = "sidebar_state"
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7
@@ -68,10 +69,22 @@ function SidebarProvider({
   const isMobile = useIsMobile()
   const [openMobile, setOpenMobile] = React.useState(false)
 
+  const uiStoreOpen = useUIStore((state) => state.sidebarOpen)
+  const setUiStoreOpen = useUIStore((state) => state.setSidebarOpen)
+
+  // Use mounted state to prevent hydration mismatch
+  const [mounted, setMounted] = React.useState(false)
+  React.useEffect(() => {
+    setMounted(true)
+  }, [])
+
   // This is the internal state of the sidebar.
   // We use openProp and setOpenProp for control from outside the component.
   const [_open, _setOpen] = React.useState(defaultOpen)
-  const open = openProp ?? _open
+  
+  // If mounted, prioritize the Zustand persisted state
+  const open = openProp ?? (mounted ? uiStoreOpen : _open)
+  
   const setOpen = React.useCallback(
     (value: boolean | ((value: boolean) => boolean)) => {
       const openState = typeof value === "function" ? value(open) : value
@@ -79,12 +92,13 @@ function SidebarProvider({
         setOpenProp(openState)
       } else {
         _setOpen(openState)
+        setUiStoreOpen(openState)
       }
 
       // This sets the cookie to keep the sidebar state.
       document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`
     },
-    [setOpenProp, open]
+    [setOpenProp, open, setUiStoreOpen]
   )
 
   // Helper to toggle the sidebar.

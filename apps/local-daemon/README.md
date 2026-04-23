@@ -1,4 +1,4 @@
-# browser-api
+# local-daemon
 
 To install dependencies:
 
