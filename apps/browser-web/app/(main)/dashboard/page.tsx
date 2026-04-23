@@ -1,4 +1,4 @@
-import { AppSidebar } from "@/components/app-sidebar"
+
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -9,8 +9,6 @@ import {
 } from "@/components/ui/breadcrumb"
 import { Separator } from "@/components/ui/separator"
 import {
-  SidebarInset,
-  SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -18,9 +16,7 @@ import { RiComputerLine, RiGlobalLine, RiShieldKeyholeLine, RiTeamLine } from "@
 
 export default function Page() {
   return (
-    <SidebarProvider>
-      <AppSidebar />
-      <SidebarInset>
+    <>
         <header className="flex h-16 shrink-0 items-center gap-2 border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 ">
           <div className="flex items-center gap-2 px-4">
             <SidebarTrigger className="-ml-1" />
@@ -41,7 +37,7 @@ export default function Page() {
             </Breadcrumb>
           </div>
         </header>
-        <div className="flex flex-1 flex-col gap-6 p-6 pt-6 bg-muted/20">
+        <div className="flex flex-1 flex-col gap-6 p-6 pt-6 bg-muted/20 overflow-y-auto min-h-0">
 
           <div>
             <h1 className="text-2xl font-bold tracking-tight">欢迎回来，Admin</h1>
@@ -146,7 +142,6 @@ export default function Page() {
           </div>
 
         </div>
-      </SidebarInset>
-    </SidebarProvider>
+    </>
   )
 }

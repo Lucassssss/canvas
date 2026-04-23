@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
@@ -12,7 +13,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Switch } from "@/components/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { AppSidebar } from "@/components/app-sidebar"
+
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -23,8 +24,6 @@ import {
 } from "@/components/ui/breadcrumb"
 import { Separator } from "@/components/ui/separator"
 import {
-  SidebarInset,
-  SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar"
 import {
@@ -182,9 +181,7 @@ export default function CreateProfilePage() {
   const watchOs = form.watch("os")
 
   return (
-    <SidebarProvider>
-      <AppSidebar />
-      <SidebarInset>
+    <>
         {/* Top Header */}
         <header className="flex h-14 shrink-0 items-center justify-between gap-2 border-b border-neutral-200 bg-white px-4">
           <div className="flex items-center gap-2">
@@ -193,7 +190,9 @@ export default function CreateProfilePage() {
             <Breadcrumb>
               <BreadcrumbList>
                 <BreadcrumbItem className="hidden md:block">
-                  <BreadcrumbLink href="/environments" className="text-neutral-500 hover:text-neutral-900">环境管理</BreadcrumbLink>
+                  <BreadcrumbLink asChild className="text-neutral-500 hover:text-neutral-900">
+                    <Link href="/environments">环境管理</Link>
+                  </BreadcrumbLink>
                 </BreadcrumbItem>
                 <BreadcrumbSeparator className="hidden md:block text-neutral-400" />
                 <BreadcrumbItem>
@@ -774,7 +773,6 @@ export default function CreateProfilePage() {
               </form>
             </Form>
         </main>
-      </SidebarInset>
-    </SidebarProvider>
+    </>
   )
 }
