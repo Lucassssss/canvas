@@ -1,6 +1,6 @@
 import { db } from "../db/index.js";
-import { browserEnvironments, proxies, accounts } from "../db/schema.js";
-import { eq } from "drizzle-orm";
+import { browserEnvironments, devices, accounts } from "../db/schema.js";
+import { eq, desc, asc, sql } from "drizzle-orm";
 
 export class EnvironmentService {
   /**
@@ -9,27 +9,8 @@ export class EnvironmentService {
    */
   static async createEnvironment(data: any) {
     return await db.transaction(async (tx) => {
-      let proxyId = null;
+      let deviceId = data.deviceId || null;
       let accountId = null;
-
-      // 1. 如果有代理信息，创建独立代理记录
-      if (data.proxyType && data.proxyType !== "direct") {
-        const [proxy] = await tx.insert(proxies).values({
-          type: data.proxyType,
-          host: data.proxyHost,
-          port: data.proxyPort,
-          username: data.proxyUser,
-          password: data.proxyPass,
-          ip: "", // 暂不获取真实 IP
-          ipLoc: "", // 暂不获取归属地
-        }).returning({ id: proxies.id });
-        proxyId = proxy.id;
-      } else if (data.proxyType === "direct") {
-        const [proxy] = await tx.insert(proxies).values({
-          type: "direct",
-        }).returning({ id: proxies.id });
-        proxyId = proxy.id;
-      }
 
       // 2. 如果有账号信息，创建独立账号记录
       if (data.username || data.password || data.cookie) {
@@ -67,7 +48,7 @@ export class EnvironmentService {
         platform: data.platform || "none",
         remark: data.remark,
         tags: [], // 默认空标签
-        proxyId,
+        deviceId: deviceId,
         accountId,
         fingerprint,
       }).returning();
@@ -84,17 +65,17 @@ export class EnvironmentService {
     const results = await db
       .select({
         environment: browserEnvironments,
-        proxy: proxies,
+        device: devices,
         account: accounts,
       })
       .from(browserEnvironments)
-      .leftJoin(proxies, eq(browserEnvironments.proxyId, proxies.id))
+      .leftJoin(devices, eq(browserEnvironments.deviceId, devices.id))
       .leftJoin(accounts, eq(browserEnvironments.accountId, accounts.id));
 
     // 格式化为前端所需结构
     return results.map((row) => {
       const env = row.environment;
-      const proxy = row.proxy;
+      const device = row.device;
       // account = row.account
 
       // 映射到前端 UNIFIED_PROFILES 类似结构
@@ -103,8 +84,8 @@ export class EnvironmentService {
         group: env.group,
         name: env.name,
         os: (env.fingerprint as any)?.os || "windows",
-        ip: proxy?.ip || "-",
-        ipLoc: proxy?.ipLoc || "-",
+        ip: device?.ip || "-",
+        ipLoc: device?.ipLoc || "-",
         lastOpened: env.lastOpenedAt ? env.lastOpenedAt.toISOString().replace('T', ' ').substring(0, 19) : null,
         platform: env.platform,
         tags: env.tags || [],
@@ -121,17 +102,17 @@ export class EnvironmentService {
   static async getEnvironment(id: string) {
     const results = await db
       .select({
-        environment: browserEnvironments,
-        proxy: proxies,
-        account: accounts,
+        env: browserEnvironments,
+        device: devices,
+        account: accounts
       })
       .from(browserEnvironments)
-      .leftJoin(proxies, eq(browserEnvironments.proxyId, proxies.id))
+      .leftJoin(devices, eq(browserEnvironments.deviceId, devices.id))
       .leftJoin(accounts, eq(browserEnvironments.accountId, accounts.id))
       .where(eq(browserEnvironments.id, id));
 
     if (!results.length) return null;
-    const { environment: env, proxy, account } = results[0];
+    const { env, device, account } = results[0];
     const fp = (env.fingerprint as any) || {};
 
     return {
@@ -143,11 +124,12 @@ export class EnvironmentService {
       username: account?.username || "",
       password: account?.password || "",
       cookie: account?.cookie || "",
-      proxyType: proxy?.type || "direct",
-      proxyHost: proxy?.host || "",
-      proxyPort: proxy?.port || "",
-      proxyUser: proxy?.username || "",
-      proxyPass: proxy?.password || "",
+      deviceId: env.deviceId || "",
+      proxyType: device?.type || "direct",
+      proxyHost: device?.host || "",
+      proxyPort: device?.port || "",
+      proxyUser: device?.username || "",
+      proxyPass: device?.password || "",
       os: fp.os || "windows",
       browser: fp.browser || "chrome",
       browserVersion: fp.browserVersion || "147",
@@ -194,6 +176,7 @@ export class EnvironmentService {
       if (data.remark !== undefined) updateData.remark = data.remark;
       if (data.group !== undefined) updateData.group = data.group;
       if (data.platform !== undefined) updateData.platform = data.platform;
+      if (data.deviceId !== undefined) updateData.deviceId = data.deviceId;
 
       // 2. Update Fingerprint
       if (data.os || data.browser || data.hardwareConcurrency) {
@@ -220,26 +203,26 @@ export class EnvironmentService {
 
       await tx.update(browserEnvironments).set(updateData).where(eq(browserEnvironments.id, id));
 
-      // 3. Update Proxy
+      // 3. Update Device
       if (data.proxyType) {
-        if (env.proxyId) {
-          await tx.update(proxies).set({
+        if (env.deviceId) {
+          await tx.update(devices).set({
             type: data.proxyType,
             host: data.proxyHost,
             port: data.proxyPort,
             username: data.proxyUser,
             password: data.proxyPass,
             updatedAt: new Date()
-          }).where(eq(proxies.id, env.proxyId));
+          }).where(eq(devices.id, env.deviceId));
         } else {
-          const [proxy] = await tx.insert(proxies).values({
+          const [device] = await tx.insert(devices).values({
             type: data.proxyType,
             host: data.proxyHost,
             port: data.proxyPort,
             username: data.proxyUser,
             password: data.proxyPass,
-          }).returning({ id: proxies.id });
-          await tx.update(browserEnvironments).set({ proxyId: proxy.id }).where(eq(browserEnvironments.id, id));
+          }).returning({ id: devices.id });
+          await tx.update(browserEnvironments).set({ deviceId: device.id }).where(eq(browserEnvironments.id, id));
         }
       }
 
@@ -272,13 +255,13 @@ export class EnvironmentService {
    * 启动浏览器环境
    */
   static async startEnvironment(id: string) {
-    const envs = await db.select({ env: browserEnvironments, proxy: proxies })
+    const envs = await db.select({ env: browserEnvironments, device: devices })
       .from(browserEnvironments)
-      .leftJoin(proxies, eq(browserEnvironments.proxyId, proxies.id))
+      .leftJoin(devices, eq(browserEnvironments.deviceId, devices.id))
       .where(eq(browserEnvironments.id, id));
 
     if (!envs.length) throw new Error("Environment not found");
-    const { env, proxy } = envs[0];
+    const { env, device } = envs[0];
 
     const fp: any = env.fingerprint || {};
 
@@ -293,8 +276,8 @@ export class EnvironmentService {
       "--fingerprint-gpu-renderer": fp.webglRenderer || "",
     };
 
-    if (proxy && proxy.type !== "direct") {
-      cliArgs["--proxy-server"] = `${proxy.type}://${proxy.host}:${proxy.port}`;
+    if (device && device.type !== "direct") {
+      cliArgs["--proxy-server"] = `${device.type}://${device.host}:${device.port}`;
     }
 
     // 更新状态

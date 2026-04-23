@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -32,9 +32,9 @@ const QuickEditCell = ({ value, onSave }: { value: string; onSave: (newVal: stri
   if (editing) {
     return (
       <div className="flex items-center gap-1">
-        <Input 
+        <Input
           autoFocus
-          value={val} 
+          value={val}
           onChange={e => setVal(e.target.value)}
           onKeyDown={e => {
             if (e.key === 'Enter') {
@@ -69,7 +69,7 @@ export default function EnvironmentsPage() {
 
   const fetchEnvironments = async () => {
     try {
-      const res = await fetch("http://localhost:4005/api/environments", { cache: "no-store" });
+      const res = await fetch(`${process.env.NEXT_PUBLIC_CLOUD_API_URL}/api/environments`, { cache: "no-store" });
       const data = await res.json();
       if (data.success) {
         setProfiles(data.data.map((item: any, index: number) => ({
@@ -84,15 +84,53 @@ export default function EnvironmentsPage() {
     }
   }
 
+  const profilesRef = useRef<any[]>([]);
+  useEffect(() => {
+    profilesRef.current = profiles;
+  }, [profiles]);
+
   useEffect(() => {
     fetchEnvironments();
+
+    // 状态检测：每 6s 查一次本地 daemon 的实际运行状态
+    // 只给本地发请求，避免给云端接口造成压力
+    const timer = setInterval(async () => {
+      try {
+        const daemonRes = await fetch(`${process.env.NEXT_PUBLIC_LOCAL_DAEMON_URL}/api/status`);
+        const daemonData = await daemonRes.json();
+
+        if (daemonData.success) {
+          const runningInDaemon = new Set<string>(daemonData.runningEnvs || []);
+
+          // 根据前端当前缓存的列表，找出我们“认为”正在运行的环境
+          const runningInCloud = profilesRef.current.filter((e: any) => e.status === "running");
+
+          // 找出前端认为在运行，但本地 daemon 中实际已经不存在的环境（说明被用户手动关闭了）
+          const toStop = runningInCloud.filter((e: any) => !runningInDaemon.has(e.id));
+
+          if (toStop.length > 0) {
+            await Promise.all(
+              toStop.map((e: any) =>
+                fetch(`${process.env.NEXT_PUBLIC_CLOUD_API_URL}/api/environments/${e.id}/stop`, { method: "POST" })
+              )
+            );
+            // 同步完停止状态后，拉取一次最新的列表刷新 UI
+            fetchEnvironments();
+          }
+        }
+      } catch {
+        // daemon 未启动等情况，静默失败
+      }
+    }, 6000);
+
+    return () => clearInterval(timer);
   }, []);
 
   const handleDelete = (id: string) => {
     setTimeout(async () => {
       if (!confirm("确定要删除这个环境吗？")) return;
       try {
-        const res = await fetch(`http://localhost:4005/api/environments/${id}`, { method: "DELETE" });
+        const res = await fetch(`${process.env.NEXT_PUBLIC_CLOUD_API_URL}/api/environments/${id}`, { method: "DELETE" });
         const data = await res.json();
         if (data.success) fetchEnvironments();
       } catch (error) {
@@ -103,11 +141,11 @@ export default function EnvironmentsPage() {
 
   const handleStart = async (id: string) => {
     try {
-      const res = await fetch(`http://localhost:4005/api/environments/${id}/start`, { method: "POST" });
+      const res = await fetch(`${process.env.NEXT_PUBLIC_CLOUD_API_URL}/api/environments/${id}/start`, { method: "POST" });
       const data = await res.json();
       if (data.success && data.data?.cli_args) {
         // Forward cli_args to local daemon
-        const daemonRes = await fetch("http://localhost:4001/api/start", {
+        const daemonRes = await fetch(`${process.env.NEXT_PUBLIC_LOCAL_DAEMON_URL}/api/start`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ id, cli_args: data.data.cli_args })
@@ -126,9 +164,9 @@ export default function EnvironmentsPage() {
   const handleStop = async (id: string) => {
     try {
       // Notify cloud
-      await fetch(`http://localhost:4005/api/environments/${id}/stop`, { method: "POST" });
+      await fetch(`${process.env.NEXT_PUBLIC_CLOUD_API_URL}/api/environments/${id}/stop`, { method: "POST" });
       // Notify local daemon
-      await fetch("http://localhost:4001/api/stop", {
+      await fetch(`${process.env.NEXT_PUBLIC_LOCAL_DAEMON_URL}/api/stop`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id })
@@ -141,7 +179,7 @@ export default function EnvironmentsPage() {
 
   const handleQuickEdit = async (id: string, field: string, value: string) => {
     try {
-      const res = await fetch(`http://localhost:4005/api/environments/${id}`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_CLOUD_API_URL}/api/environments/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ [field]: value })
@@ -220,7 +258,7 @@ export default function EnvironmentsPage() {
               </TableHeader>
               <TableBody>
                 {loading ? (
-                   <TableRow><TableCell colSpan={11} className="text-center py-8 text-neutral-500">加载中...</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={11} className="text-center py-8 text-neutral-500">加载中...</TableCell></TableRow>
                 ) : profiles.map((profile) => (
                   <TableRow key={profile.id} className="group hover:bg-[#f6f9fc] border-b border-neutral-100/60 h-16">
                     <TableCell className="text-center pl-4"><Checkbox className="border-neutral-300" /></TableCell>
@@ -290,10 +328,10 @@ export default function EnvironmentsPage() {
                                 <RiMore2Fill className="h-4 w-4 text-white/80" />
                               </Button>
                             </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="w-40 text-sm text-neutral-700 font-normal">
-                                  <DropdownMenuItem className="py-2" onSelect={() => window.location.href = `/create?id=${profile.id}`}><RiEditLine className="mr-2 h-4 w-4" /> 编辑</DropdownMenuItem>
-                                  <DropdownMenuItem className="py-2 text-red-600 focus:text-red-600" onSelect={() => handleDelete(profile.id)}><RiDeleteBinLine className="mr-2 h-4 w-4" /> 删除</DropdownMenuItem>
-                                </DropdownMenuContent>
+                            <DropdownMenuContent align="end" className="w-40 text-sm text-neutral-700 font-normal">
+                              <DropdownMenuItem className="py-2" onSelect={() => window.location.href = `/create?id=${profile.id}`}><RiEditLine className="mr-2 h-4 w-4" /> 编辑</DropdownMenuItem>
+                              <DropdownMenuItem className="py-2 text-red-600 focus:text-red-600" onSelect={() => handleDelete(profile.id)}><RiDeleteBinLine className="mr-2 h-4 w-4" /> 删除</DropdownMenuItem>
+                            </DropdownMenuContent>
                           </DropdownMenu>
                         </ButtonGroup>
                       </div>

@@ -55,12 +55,8 @@ const formSchema = z.object({
   username: z.string().optional(),
   password: z.string().optional(),
   cookie: z.string().optional(),
-  // Proxy
-  proxyType: z.enum(["direct", "http", "https", "socks5", "ssh"]).default("direct"),
-  proxyHost: z.string().optional(),
-  proxyPort: z.string().optional(),
-  proxyUser: z.string().optional(),
-  proxyPass: z.string().optional(),
+  // Device
+  deviceId: z.string().optional(),
   // Fingerprint
   os: z.enum(["windows", "macos"]).default("windows"),
   browser: z.string().default("chrome"),
@@ -76,6 +72,9 @@ const formSchema = z.object({
   webglRenderer: z.string().default("NVIDIA GeForce RTX 4070"),
   canvasNoise: z.enum(["real", "noise"]).default("noise"),
   audioNoise: z.enum(["real", "noise"]).default("noise"),
+  timezone: z.string().optional(),
+  lat: z.string().optional(),
+  lon: z.string().optional(),
 })
 
 export default function CreateProfilePage() {
@@ -83,12 +82,23 @@ export default function CreateProfilePage() {
   const [editId, setEditId] = React.useState<string | null>(null)
   const [activeTab, setActiveTab] = React.useState("basic")
   const [isMounted, setIsMounted] = React.useState(false)
+  const [devices, setDevices] = React.useState<any[]>([])
 
   React.useEffect(() => {
     setIsMounted(true)
     const params = new URLSearchParams(window.location.search)
     const id = params.get("id")
     if (id) setEditId(id)
+
+    // Fetch devices
+    fetch(`${process.env.NEXT_PUBLIC_CLOUD_API_URL}/api/devices`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          setDevices(data.data)
+        }
+      })
+      .catch(err => console.error("Failed to fetch devices", err))
   }, [])
 
   React.useEffect(() => {
@@ -132,11 +142,7 @@ export default function CreateProfilePage() {
       username: "",
       password: "",
       cookie: "",
-      proxyType: "direct",
-      proxyHost: "",
-      proxyPort: "",
-      proxyUser: "",
-      proxyPass: "",
+      deviceId: "",
       os: "windows",
       browser: "chrome",
       browserVersion: "147",
@@ -156,7 +162,7 @@ export default function CreateProfilePage() {
 
   React.useEffect(() => {
     if (editId) {
-      fetch(`http://localhost:4005/api/environments/${editId}`)
+      fetch(`${process.env.NEXT_PUBLIC_CLOUD_API_URL}/api/environments/${editId}`)
         .then(res => res.json())
         .then(data => {
           if (data.success && data.data) {
@@ -170,8 +176,8 @@ export default function CreateProfilePage() {
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
       const url = editId 
-        ? `http://localhost:4005/api/environments/${editId}` 
-        : "http://localhost:4005/api/environments";
+        ? `${process.env.NEXT_PUBLIC_CLOUD_API_URL}/api/environments/${editId}` 
+        : `${process.env.NEXT_PUBLIC_CLOUD_API_URL}/api/environments`;
       const method = editId ? "PUT" : "POST";
 
       const response = await fetch(url, {
@@ -205,8 +211,34 @@ export default function CreateProfilePage() {
     form.setValue("webglRenderer", "Apple M2")
   }
 
-  // 监听 proxyType 变化以切换界面
-  const watchProxyType = form.watch("proxyType")
+  // 监听 deviceId 变化，同步覆盖指纹的地理信息
+  React.useEffect(() => {
+    const sub = form.watch((value, { name }) => {
+      if (name === "deviceId") {
+        const deviceId = value.deviceId;
+        if (deviceId && deviceId !== "none") {
+          const device = devices.find(d => d.id === deviceId);
+          if (device) {
+            if (device.timezone) form.setValue("timezone", device.timezone);
+            if (device.lat) form.setValue("lat", device.lat);
+            if (device.lon) form.setValue("lon", device.lon);
+            // Optionally set Auto to false since we are manually specifying from device
+            form.setValue("timezoneAuto", false);
+            form.setValue("geolocationAuto", false);
+          }
+        } else {
+          // If none selected, revert to auto
+          form.setValue("timezoneAuto", true);
+          form.setValue("geolocationAuto", true);
+          form.setValue("timezone", "");
+          form.setValue("lat", "");
+          form.setValue("lon", "");
+        }
+      }
+    });
+    return () => sub.unsubscribe();
+  }, [form, devices]);
+
   const watchOs = form.watch("os")
 
   return (
@@ -254,7 +286,7 @@ export default function CreateProfilePage() {
             }}
             className={`text-sm font-medium pb-3 -mb-3 border-b-2 transition-colors ${activeTab === 'proxy' ? 'border-blue-600 text-blue-600' : 'border-transparent text-neutral-500 hover:text-neutral-900'}`}
           >
-            代理设置
+            设备设置
           </button>
           <button 
             type="button"
@@ -397,105 +429,38 @@ export default function CreateProfilePage() {
                   </div>
                 </div>
 
-                {/* Proxy Settings Section */}
+                {/* Device Settings Section */}
                 <div id="section-proxy" className="space-y-6 scroll-mt-20">
                   <div>
-                    <h2 className="text-lg font-medium text-neutral-900 mb-4">代理网络</h2>
+                    <h2 className="text-lg font-medium text-neutral-900 mb-4">关联设备</h2>
                     <div className="space-y-6 p-6 bg-white rounded-xl border border-neutral-200 shadow-sm">
                       <FormField
                         control={form.control}
-                        name="proxyType"
+                        name="deviceId"
                         render={({ field }) => (
                           <FormItem className="space-y-2">
-                            <FormLabel className="text-neutral-700">代理类型</FormLabel>
-                            <div className="flex items-center gap-2">
-                              {[
-                                { value: "direct", label: "直连 (不用代理)" }, 
-                                { value: "http", label: "HTTP" }, 
-                                { value: "https", label: "HTTPS" }, 
-                                { value: "socks5", label: "Socks5" }, 
-                                { value: "ssh", label: "SSH" }
-                              ].map(type => (
-                                <div 
-                                  key={type.value}
-                                  onClick={() => field.onChange(type.value)}
-                                  className={`px-4 py-2 border rounded-md text-sm cursor-pointer transition-all ${field.value === type.value ? 'border-blue-600 bg-blue-50 text-blue-600' : 'border-neutral-200 text-neutral-600 hover:border-neutral-300 hover:bg-neutral-50'}`}
-                                >
-                                  {type.label}
-                                </div>
-                              ))}
-                            </div>
+                            <FormLabel className="text-neutral-700">选择设备 <span className="text-red-500">*</span></FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value || "none"}>
+                              <FormControl>
+                                <SelectTrigger className="h-10">
+                                  <SelectValue placeholder="请选择已配置的代理设备" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="none">无 / 本机直连网络</SelectItem>
+                                {devices.map(device => (
+                                  <SelectItem key={device.id} value={device.id}>
+                                    [{device.id}] {device.host}:{device.port} ({device.ipLoc || '未知地区'})
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormDescription>
+                              选择设备后，环境指纹的地理位置、时区将自动同步为该设备的解析结果。
+                            </FormDescription>
                           </FormItem>
                         )}
                       />
-
-                      {watchProxyType !== "direct" && (
-                        <>
-                          <div className="grid grid-cols-3 gap-6">
-                            <FormField
-                              control={form.control}
-                              name="proxyHost"
-                              render={({ field }) => (
-                                <FormItem className="space-y-2 col-span-2">
-                                  <FormLabel className="text-neutral-700">代理主机 (Host) <span className="text-red-500">*</span></FormLabel>
-                                  <FormControl>
-                                    <Input placeholder="如: 127.0.0.1" className="h-10" {...field} />
-                                  </FormControl>
-                                </FormItem>
-                              )}
-                            />
-                            <FormField
-                              control={form.control}
-                              name="proxyPort"
-                              render={({ field }) => (
-                                <FormItem className="space-y-2">
-                                  <FormLabel className="text-neutral-700">端口 (Port) <span className="text-red-500">*</span></FormLabel>
-                                  <FormControl>
-                                    <Input placeholder="如: 7897" className="h-10" {...field} />
-                                  </FormControl>
-                                </FormItem>
-                              )}
-                            />
-                          </div>
-
-                          <div className="grid grid-cols-2 gap-6">
-                            <FormField
-                              control={form.control}
-                              name="proxyUser"
-                              render={({ field }) => (
-                                <FormItem className="space-y-2">
-                                  <FormLabel className="text-neutral-700">代理账号 (可选)</FormLabel>
-                                  <FormControl>
-                                    <Input placeholder="输入代理认证账号" className="h-10" {...field} />
-                                  </FormControl>
-                                </FormItem>
-                              )}
-                            />
-                            <FormField
-                              control={form.control}
-                              name="proxyPass"
-                              render={({ field }) => (
-                                <FormItem className="space-y-2">
-                                  <FormLabel className="text-neutral-700">代理密码 (可选)</FormLabel>
-                                  <FormControl>
-                                    <Input type="password" placeholder="输入代理认证密码" className="h-10" {...field} />
-                                  </FormControl>
-                                </FormItem>
-                              )}
-                            />
-                          </div>
-                        </>
-                      )}
-
-                      <div className="pt-4 border-t border-neutral-100 flex items-center justify-between">
-                        <div className="text-sm text-neutral-500 flex items-center gap-2">
-                          <RiGlobalLine className="h-4 w-4" />
-                          尚未测试代理连通性
-                        </div>
-                        <Button type="button" variant="outline" className="h-9 text-blue-600 border-blue-200 hover:bg-blue-50 disabled:opacity-50">
-                          检查网络
-                        </Button>
-                      </div>
                     </div>
                   </div>
                  </div>

@@ -1,5 +1,5 @@
 {
-  "id": "e5436c4a-8c31-48c0-a26e-0e2ef2dc888e",
+  "id": "00f3a57b-7eec-49c8-bc6f-e0882b0c7da5",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -110,8 +110,8 @@
           "notNull": false,
           "default": "'[]'"
         },
-        "proxy_id": {
-          "name": "proxy_id",
+        "device_id": {
+          "name": "device_id",
           "type": "text",
           "primaryKey": false,
           "notNull": false
@@ -158,12 +158,12 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "browser_environments_proxy_id_proxies_id_fk": {
-          "name": "browser_environments_proxy_id_proxies_id_fk",
+        "browser_environments_device_id_devices_id_fk": {
+          "name": "browser_environments_device_id_devices_id_fk",
           "tableFrom": "browser_environments",
-          "tableTo": "proxies",
+          "tableTo": "devices",
           "columnsFrom": [
-            "proxy_id"
+            "device_id"
           ],
           "columnsTo": [
             "id"
@@ -190,8 +190,8 @@
       "policies": {},
       "checkConstraints": {}
     },
-    "public.proxies": {
-      "name": "proxies",
+    "public.devices": {
+      "name": "devices",
       "schema": "",
       "columns": {
         "id": {
@@ -199,6 +199,13 @@
           "type": "text",
           "primaryKey": true,
           "notNull": true
+        },
+        "provider": {
+          "name": "provider",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'custom'"
         },
         "type": {
           "name": "type",
@@ -240,6 +247,42 @@
         "ip_loc": {
           "name": "ip_loc",
           "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "timezone": {
+          "name": "timezone",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "country": {
+          "name": "country",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "city": {
+          "name": "city",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "lat": {
+          "name": "lat",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "lon": {
+          "name": "lon",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "expire_at": {
+          "name": "expire_at",
+          "type": "timestamp",
           "primaryKey": false,
           "notNull": false
         },
