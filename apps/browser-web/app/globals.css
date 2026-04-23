@@ -2,7 +2,28 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
-@custom-variant dark (&:is(.dark *));
+@utility drag-region {
+  -webkit-app-region: drag;
+}
+
+@utility no-drag-region {
+  -webkit-app-region: no-drag;
+}
+
+/* Global Electron Drag Region for Main Headers & Sidebar Headers */
+[data-slot="sidebar-inset"] > header,
+[data-slot="sidebar"] > [data-sidebar="header"] {
+  -webkit-app-region: drag;
+}
+
+[data-slot="sidebar-inset"] > header button,
+[data-slot="sidebar-inset"] > header a,
+[data-slot="sidebar-inset"] > header input,
+[data-slot="sidebar-inset"] > header [role="button"],
+[data-slot="sidebar"] > [data-sidebar="header"] button,
+[data-slot="sidebar"] > [data-sidebar="header"] a {
+  -webkit-app-region: no-drag;
+}
 
 @theme inline {
   --font-heading: var(--font-sans);

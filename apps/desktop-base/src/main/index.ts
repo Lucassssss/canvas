@@ -1,4 +1,4 @@
-import { app, BrowserWindow } from 'electron'
+import { app, BrowserWindow, Menu } from 'electron'
 import log from 'electron-log'
 import { loadConfig } from './config'
 import { registerSchemesBeforeReady, registerAppProtocol } from './protocol'
@@ -18,6 +18,8 @@ const resourceManager = new ResourceManager()
 const serverManager = new ServerManager(resourceManager)
 
 app.whenReady().then(async () => {
+  Menu.setApplicationMenu(null)
+  
   let config
   try {
     config = loadConfig()
