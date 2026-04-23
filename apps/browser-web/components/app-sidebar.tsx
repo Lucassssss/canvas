@@ -104,7 +104,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </Button>
       </SidebarHeader>
 
-      <SidebarContent className="px-2 group-data-[collapsible=icon]:px-1">
+      <SidebarContent className="px-2 group-data-[collapsible=icon]:px-0">
         {/* Flat Primary Nav */}
         <SidebarGroup className="group-data-[collapsible=icon]:p-0">
           <SidebarMenu>
