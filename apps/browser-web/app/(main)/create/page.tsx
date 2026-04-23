@@ -201,10 +201,6 @@ export default function CreateProfilePage() {
               </BreadcrumbList>
             </Breadcrumb>
           </div>
-          <div className="flex items-center gap-3">
-            <Button variant="outline" className="h-8 px-4 text-sm" onClick={() => router.back()}>取消</Button>
-            <Button onClick={form.handleSubmit(onSubmit)} className="h-8 px-6 text-sm bg-blue-600 hover:bg-blue-700 text-white">确定创建</Button>
-          </div>
         </header>
 
         {/* Tab Navigation (Static, Fixed) */}
@@ -245,9 +241,10 @@ export default function CreateProfilePage() {
         </div>
 
         {/* Scrollable Form Content */}
-        <main id="scroll-container" className="flex-1 overflow-y-auto min-h-0 bg-[#f6f9fc] p-8">
-          <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="max-w-3xl mx-auto space-y-12 pb-32">
+        <main id="scroll-container" className="flex-1 overflow-y-auto min-h-0 bg-[#f6f9fc] flex flex-col relative">
+          <div className="flex-1 p-8">
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="max-w-3xl mx-auto space-y-12 pb-16">
                 
                 {/* Basic Settings Section */}
                 <div id="section-basic" className="space-y-6 scroll-mt-20">
@@ -772,6 +769,13 @@ export default function CreateProfilePage() {
 
               </form>
             </Form>
+          </div>
+
+          {/* Sticky Footer */}
+          <div className="sticky bottom-0 z-20 bg-white border-t border-neutral-200 px-8 py-4 flex items-center justify-end gap-3 shrink-0 shadow-[0_-4px_10px_-4px_rgba(0,0,0,0.05)]">
+            <Button variant="outline" type="button" onClick={() => router.back()}>取消</Button>
+            <Button onClick={form.handleSubmit(onSubmit)} type="button" className="bg-blue-600 hover:bg-blue-700 text-white">确定创建</Button>
+          </div>
         </main>
     </>
   )
