@@ -1,14 +1,16 @@
 import { Router, Request, Response } from "express";
-import { db } from "../db";
-import { rpaScripts } from "../db/schema";
-import { eq } from "drizzle-orm";
+import { db } from "../db/index.js";
+import { rpaScripts } from "../db/schema.js";
+import { eq, and } from "drizzle-orm";
 
 const router = Router();
 
 // Get all RPA scripts
 router.get("/", async (req: Request, res: Response) => {
   try {
-    const scripts = await db.select().from(rpaScripts).orderBy(rpaScripts.createdAt);
+    const scripts = await db.select().from(rpaScripts)
+      .where(eq(rpaScripts.teamId, req.user!.teamId))
+      .orderBy(rpaScripts.createdAt);
     res.json({ success: true, data: scripts });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });
@@ -19,7 +21,7 @@ router.get("/", async (req: Request, res: Response) => {
 router.get("/:id", async (req: Request, res: Response) => {
   try {
     const script = await db.query.rpaScripts.findFirst({
-      where: eq(rpaScripts.id, req.params.id)
+      where: and(eq(rpaScripts.id, req.params.id), eq(rpaScripts.teamId, req.user!.teamId))
     });
     if (!script) {
       return res.status(404).json({ success: false, error: "Script not found" });
@@ -39,6 +41,7 @@ router.post("/", async (req: Request, res: Response) => {
     // Ensure empty arrays are stored securely as stringified JSON if passed directly,
     // although drizzle jsonb understands arrays directly depending on config.
     const newScript = await db.insert(rpaScripts).values({
+      teamId: req.user!.teamId,
       name,
       groupId: groupId || null,
       nodes: "[]",
@@ -67,7 +70,7 @@ router.put("/:id", async (req: Request, res: Response) => {
 
     const updated = await db.update(rpaScripts)
       .set(updateData)
-      .where(eq(rpaScripts.id, id))
+      .where(and(eq(rpaScripts.id, id), eq(rpaScripts.teamId, req.user!.teamId)))
       .returning();
 
     res.json({ success: true, data: updated[0] });
@@ -80,7 +83,7 @@ router.put("/:id", async (req: Request, res: Response) => {
 router.delete("/:id", async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    await db.delete(rpaScripts).where(eq(rpaScripts.id, id));
+    await db.delete(rpaScripts).where(and(eq(rpaScripts.id, id), eq(rpaScripts.teamId, req.user!.teamId)));
     res.json({ success: true });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });

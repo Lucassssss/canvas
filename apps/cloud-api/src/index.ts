@@ -9,6 +9,7 @@ import { teamRouter } from "./routes/team.js";
 import { logsRouter } from "./routes/logs.js";
 import { rpaRouter } from "./routes/rpa.js";
 import { authRouter } from "./routes/auth.js";
+import { requireAuth } from "./middleware/authMiddleware.js";
 
 dotenv.config();
 
@@ -20,13 +21,13 @@ app.use(express.json());
 
 // 注册路由
 app.use("/api", rootRouter);
-app.use("/api/environments", environmentRouter);
-app.use("/api/devices", deviceRouter);
-app.use("/api/groups", groupsRouter);
-app.use("/api/team", teamRouter);
-app.use("/api/logs", logsRouter);
-app.use("/api/rpa", rpaRouter);
+app.use("/api/environments", requireAuth, environmentRouter);
+app.use("/api/devices", requireAuth, deviceRouter);
+app.use("/api/groups", requireAuth, groupsRouter);
 app.use("/api/auth", authRouter);
+app.use("/api/team", requireAuth, teamRouter);
+app.use("/api/logs", requireAuth, logsRouter);
+app.use("/api/rpa", requireAuth, rpaRouter);
 
 // 全局错误处理
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {

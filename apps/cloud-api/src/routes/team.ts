@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db } from "../db/index.js";
-import { eq, ne } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { users, roles, accessPolicies, loginSettings } from "../db/schema.js";
 import bcrypt from "bcryptjs";
 
@@ -22,7 +22,9 @@ teamRouter.get("/members", async (req, res) => {
       browserLimit: users.browserLimit,
       status: users.status,
       createdAt: users.createdAt
-    }).from(users);
+    })
+    .from(users)
+    .where(eq(users.teamId, req.user!.teamId));
     res.json({ success: true, data: allUsers });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });
@@ -38,7 +40,7 @@ teamRouter.post("/members", async (req, res) => {
       return res.status(400).json({ success: false, error: "Missing required fields" });
     }
 
-    // Check if username already exists
+    // Check if username already exists globally (since username is strictly unique across the system in schema)
     const existingUser = await db.query.users.findFirst({
       where: eq(users.username, username)
     });
@@ -50,6 +52,7 @@ teamRouter.post("/members", async (req, res) => {
     const passwordHash = await bcrypt.hash(password, salt);
 
     const inserted = await db.insert(users).values({
+      teamId: req.user!.teamId,
       name,
       username,
       phone,
@@ -88,9 +91,15 @@ teamRouter.put("/members/:id", async (req, res) => {
       updateData.username = username;
     }
     
+      // Security Check: Make sure the user belongs to the same team!
+    const targetUser = await db.query.users.findFirst({
+      where: and(eq(users.id, id), eq(users.teamId, req.user!.teamId))
+    });
+    if (!targetUser) return res.status(404).json({ success: false, error: "User not found or unauthorized" });
+
     const updated = await db.update(users)
       .set(updateData)
-      .where(eq(users.id, id))
+      .where(and(eq(users.id, id), eq(users.teamId, req.user!.teamId)))
       .returning({ id: users.id });
       
     res.json({ success: true, data: updated[0] });
@@ -116,7 +125,9 @@ teamRouter.delete("/members/:id", async (req, res) => {
 
 teamRouter.get("/roles", async (req, res) => {
   try {
-    const allRoles = await db.select().from(roles);
+    const allRoles = await db.select()
+      .from(roles)
+      .where(eq(roles.teamId, req.user!.teamId));
     res.json({ success: true, data: allRoles });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });
@@ -127,6 +138,7 @@ teamRouter.post("/roles", async (req, res) => {
   try {
     const { name, permissions } = req.body;
     const inserted = await db.insert(roles).values({
+      teamId: req.user!.teamId,
       name,
       type: "custom",
       permissions: permissions || "{}"
