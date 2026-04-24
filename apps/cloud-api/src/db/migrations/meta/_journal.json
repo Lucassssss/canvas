@@ -8,6 +8,20 @@
       "when": 1776931216285,
       "tag": "0000_icy_kree",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1776955177059,
+      "tag": "0001_mature_iron_fist",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1776957792974,
+      "tag": "0002_windy_talos",
+      "breakpoints": true
     }
   ]
 }
