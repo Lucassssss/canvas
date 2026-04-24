@@ -63,7 +63,7 @@ const automationNavItems = [
 const teamNavItems = [
   { title: "费用中心", shortTitle: "费用", url: "/team/billing", icon: RiWallet3Line },
   { title: "成员管理", shortTitle: "成员", url: "/team/members", icon: RiShieldUserLine },
-  { title: "操作日志", shortTitle: "日志", url: "/team/logs", icon: RiFileList3Line },
+  { title: "操作日志", shortTitle: "日志", url: "/team/team-logs", icon: RiFileList3Line },
   { title: "访问控制", shortTitle: "访问", url: "/team/access-control", icon: RiShieldKeyholeLine },
   { title: "全局设置", shortTitle: "设置", url: "/settings", icon: RiSettings4Line },
 ]
