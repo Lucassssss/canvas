@@ -10,7 +10,7 @@
   },
   "dev": {
     "enabled": true,
-    "webUrl": "http://localhost:4000/dashboard",
+    "webUrl": "http://localhost:4000",
     "skipServers": false
   },
   "servers": [

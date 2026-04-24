@@ -1,10 +1,25 @@
 "use client"
 
 import * as React from "react"
-import { RiSubtractLine, RiCheckboxBlankLine, RiCloseLine, RiBook2Line, RiNotification3Line } from "@remixicon/react"
+import { useRouter } from "next/navigation"
+import { RiSubtractLine, RiCheckboxBlankLine, RiCloseLine, RiBook2Line, RiNotification3Line, RiLogoutBoxRLine } from "@remixicon/react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 function HeaderActions() {
+  const router = useRouter()
+
+  const handleLogout = () => {
+    // Perform any clear token logic here in the future
+    router.push("/login")
+  }
+
   return (
     <div className="flex items-center gap-0.5">
       <button
@@ -19,15 +34,33 @@ function HeaderActions() {
       >
         <RiNotification3Line className="h-4 w-4" />
       </button>
-      <button
-        className="flex h-8 w-8 items-center justify-center rounded-full transition-colors ml-1 hover:ring-2 hover:ring-primary/20"
-        title="用户"
-      >
-        <Avatar className="h-5 w-5">
-          <AvatarImage src="" alt="Avatar" />
-          <AvatarFallback className="text-[8px] bg-primary font-bold text-white">王</AvatarFallback>
-        </Avatar>
-      </button>
+
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button
+            className="flex h-8 w-8 items-center justify-center rounded-full transition-colors ml-1 hover:ring-2 hover:ring-primary/20 outline-none"
+            title="用户"
+          >
+            <Avatar className="h-5 w-5">
+              <AvatarImage src="" alt="Avatar" />
+              <AvatarFallback className="text-[8px] bg-primary font-bold text-white">王</AvatarFallback>
+            </Avatar>
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-40 mt-1">
+          <DropdownMenuItem className="cursor-pointer">
+            <Avatar className="h-5 w-5 mr-2">
+              <AvatarFallback className="text-[8px] bg-primary font-bold text-white">王</AvatarFallback>
+            </Avatar>
+            个人资料
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-destructive focus:text-destructive">
+            <RiLogoutBoxRLine className="mr-2 h-4 w-4" />
+            <span>退出登录</span>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   )
 }
