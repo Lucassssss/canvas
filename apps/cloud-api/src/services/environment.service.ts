@@ -266,7 +266,10 @@ export class EnvironmentService {
     const fp: any = env.fingerprint || {};
 
     const cliArgs: Record<string, string> = {
+      // ── 用户数据目录 ──────────────────────────────────────
       "--user-data-dir": `D:\\ai\\canvas\\apps\\local-daemon\\profiles\\${id}`,
+
+      // ── 指纹参数 ──────────────────────────────────────────
       "--fingerprint-platform": fp.os || "windows",
       "--fingerprint-brand": fp.browser || "chrome",
       "--fingerprint-brand-version": fp.browserVersion || "147",
@@ -274,10 +277,29 @@ export class EnvironmentService {
       "--fingerprint-hardware-concurrency": fp.hardwareConcurrency || "16",
       "--fingerprint-gpu-vendor": fp.webglVendor || "",
       "--fingerprint-gpu-renderer": fp.webglRenderer || "",
+
+      // ── 稳定性 & UI 静默（已测试）────────────────────────
+      "--no-first-run": "",
+      "--no-default-browser-check": "",
+      "--disable-extensions": "",
+      "--disable-translate": "",
+      "--password-store": "basic",
+
+      // ── 后台网络 & 同步（已测试）─────────────────────────
+      "--disable-background-networking": "",
+      "--disable-sync": "",
+      "--dns-prefetch-disable": "",
+      "--disable-features": "DnsOverHttps,DnsHttpsSvcb,MediaRouter",
+
+      // ── WebRTC 防泄漏（已测试）───────────────────────────
+      "--disable-non-proxied-udp": "",
+      "--force-webrtc-ip-handling-policy": "disable_non_proxied_udp",
     };
 
     if (device && device.type !== "direct") {
       cliArgs["--proxy-server"] = `${device.type}://${device.host}:${device.port}`;
+      // DNS 防泄漏：阻断本地 DNS，排除代理服务器本身（已测试，bad_flags 警告已从源码移除）
+      cliArgs["--host-resolver-rules"] = `MAP * ~NOTFOUND, EXCLUDE ${device.host}`;
     }
 
     // 更新状态
