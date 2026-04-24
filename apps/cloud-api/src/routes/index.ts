@@ -9,6 +9,5 @@ rootRouter.get("/health", (req, res) => {
   return ApiResponse.success(res, null, "Cloud API is running gracefully.");
 });
 
-// 挂载浏览器环境相关的路由
-import { environmentRouter } from "./environments.js";
-rootRouter.use("/environments", environmentRouter);
+// rootRouter just holds open routes like health
+

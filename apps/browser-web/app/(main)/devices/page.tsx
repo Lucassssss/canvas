@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { cloudFetch } from "@/lib/api"
 import {
   Table,
   TableBody,
@@ -42,7 +43,7 @@ export default function DevicesPage() {
   const fetchDevices = React.useCallback(async () => {
     setLoading(true)
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_CLOUD_API_URL}/api/devices`)
+      const res = await cloudFetch(`/api/devices`)
       const data = await res.json()
       if (data.success) {
         setDevices(data.data)
@@ -61,7 +62,7 @@ export default function DevicesPage() {
   const handleDelete = async (id: string) => {
     if (!confirm("确定要删除此设备吗？")) return
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_CLOUD_API_URL}/api/devices/${id}`, { method: "DELETE" })
+      const res = await cloudFetch(`/api/devices/${id}`, { method: "DELETE" })
       const data = await res.json()
       if (data.success) fetchDevices()
     } catch (err) {
@@ -72,7 +73,7 @@ export default function DevicesPage() {
   const handleQuickTest = async (device: any) => {
     setTestingId(device.id)
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_CLOUD_API_URL}/api/devices/test`, {
+      const res = await cloudFetch(`/api/devices/test`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ type: device.type, host: device.host, port: device.port, username: device.username, password: device.password })
@@ -90,7 +91,7 @@ export default function DevicesPage() {
           lat: testRes.lat?.toString() || "",
           lon: testRes.lon?.toString() || ""
         }
-        await fetch(`${process.env.NEXT_PUBLIC_CLOUD_API_URL}/api/devices/${device.id}`, {
+        await cloudFetch(`/api/devices/${device.id}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(updatePayload)

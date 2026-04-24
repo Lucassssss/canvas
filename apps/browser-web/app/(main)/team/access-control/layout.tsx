@@ -10,7 +10,7 @@ export default function AccessControlLayout({ children }: { children: React.Reac
   const tabs = [
     { name: "登录控制", path: "/team/access-control/login" },
     { name: "访问策略", path: "/team/access-control/policies" },
-    { name: "访问日志", path: "/team/access-control/logs" },
+    { name: "访问日志", path: "/team/access-control/access-logs" },
   ]
 
   const currentTabName = tabs.find(t => pathname.includes(t.path))?.name || "访问控制"
@@ -19,7 +19,7 @@ export default function AccessControlLayout({ children }: { children: React.Reac
     <>
       <PageHeader breadcrumb={[{ label: "团队管理" }, { label: "访问控制" }, { label: currentTabName }]} />
       <div className="flex flex-1 overflow-hidden bg-background">
-        
+
         {/* Access Control Sidebar */}
         <div className="w-48 border-r border-border bg-muted/10 p-4 space-y-1">
           {tabs.map((tab) => {
