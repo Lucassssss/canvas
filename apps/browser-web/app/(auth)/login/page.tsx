@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { useAuthStore } from "@/lib/store/useAuthStore"
 import {
   Form,
   FormControl,
@@ -113,9 +114,11 @@ function useCountdown() {
 
 export default function LoginPage() {
   const router = useRouter()
+  const { setAuth } = useAuthStore()
   const [mode, setMode] = React.useState<"login" | "register">("login")
   const [isLoading, setIsLoading] = React.useState(false)
   const [showPassword, setShowPassword] = React.useState(false)
+  const [activeTab, setActiveTab] = React.useState("phone-code")
 
   const [recentAccounts, setRecentAccounts] = React.useState<string[]>([])
   const [recentPhones, setRecentPhones] = React.useState<string[]>([])
@@ -160,24 +163,70 @@ export default function LoginPage() {
     defaultValues: { phone: "", code: "", password: "", agree: false },
   })
 
+  const getApiUrl = () => process.env.NEXT_PUBLIC_CLOUD_API_URL || 'http://localhost:4005'
+
   const onSubmit = async (values: any) => {
     setIsLoading(true)
 
-    // Save to history
-    if (values.phone) saveToHistory(values.phone, 'phone')
-    if (values.account) saveToHistory(values.account, 'account')
-
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      if (mode === "register") {
+        const res = await fetch(`${getApiUrl()}/api/auth/register`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ phone: values.phone, code: values.code, password: values.password })
+        })
+        const data = await res.json()
+        if (data.success) {
+          saveToHistory(values.phone, 'phone')
+          setAuth(data.data.token, data.data.user)
+          router.push("/environments")
+        } else {
+          alert(data.error)
+        }
+      } else {
+        // Login mode
+        let type = activeTab;
+        const res = await fetch(`${getApiUrl()}/api/auth/login`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ type, phone: values.phone, account: values.account, password: values.password, code: values.code })
+        })
+        const data = await res.json()
+        if (data.success) {
+          if (values.phone) saveToHistory(values.phone, 'phone')
+          if (values.account) saveToHistory(values.account, 'account')
+          setAuth(data.data.token, data.data.user)
+          router.push("/environments")
+        } else {
+          alert(data.error)
+        }
+      }
+    } catch (err: any) {
+      alert("网络异常，请重试：" + err.message)
+    } finally {
       setIsLoading(false)
-      router.push("/environments")
-    }, 1500)
+    }
   }
 
-  const handleSendCode = (e: React.MouseEvent) => {
+  const handleSendCode = async (e: React.MouseEvent) => {
     e.preventDefault()
+    // Need current phone field value
+    const phone = mode === 'register' ? registerForm.getValues().phone : phoneCodeForm.getValues().phone;
+    if (!phone) return alert("请先输入手机号")
     if (!isCodeCounting) {
       startCodeCountdown(60)
+      try {
+        const res = await fetch(`${getApiUrl()}/api/auth/send-code`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ phone })
+        })
+        const data = await res.json()
+        if (data.success) alert("验证码下发成功，请查看模拟短信终端！")
+        else alert(data.error)
+      } catch (err) {
+        alert("发送失败")
+      }
     }
   }
 
@@ -220,7 +269,7 @@ export default function LoginPage() {
                 <p className="text-sm text-muted-foreground">选择一种方式登录您的账号</p>
               </div>
 
-              <Tabs defaultValue="phone-code" className="w-full">
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                 <TabsList variant="line" className="flex h-auto w-full justify-start gap-6 rounded-none bg-transparent p-0 mb-6">
                   <TabsTrigger value="phone-code" className={customTabTrigger}>
                     验证码登录
