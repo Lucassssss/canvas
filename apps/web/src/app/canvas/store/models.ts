@@ -43,7 +43,7 @@ interface ModelsActions {
 
 type ModelsStore = ModelsState & ModelsActions
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
 
 export const useModelsStore = create<ModelsStore>((set, get) => ({
   models: [],
@@ -63,7 +63,8 @@ export const useModelsStore = create<ModelsStore>((set, get) => ({
     try {
       set({ loading: true })
 
-      const response = await fetch(`${API_BASE_URL}/api/models`)
+      console.log('[ModelsStore] 从后端获取模型配置')
+      const response = await fetch(`${API_BASE_URL}/models`)
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)
@@ -79,7 +80,7 @@ export const useModelsStore = create<ModelsStore>((set, get) => ({
           error: null,
           initialized: true,
         })
-
+        console.log(`[ModelsStore] 获取到 ${data.data.models.length} 个模型，默认: ${data.data.defaultModel}`)
       } else {
         throw new Error('后端返回的模型列表为空')
       }

@@ -13,8 +13,9 @@ export function createWindow(config: AppConfig): BrowserWindow {
     height: config.window.height,
     minWidth: config.window.minWidth,
     minHeight: config.window.minHeight,
+    frame: false,
     titleBarStyle: config.window.titleBarStyle,
-    titleBarOverlay: config.window.titleBarStyle === 'hidden',
+    titleBarOverlay: false,
     title: config.appName,
     show: false,
     webPreferences: {

@@ -137,7 +137,7 @@ router.post("/api/image/generate", authMiddleware, async (req, res) => {
       return res.status(400).json({ success: false, error: "combinationTypeId is required" });
     }
 
-    const modelId = settings?.model
+    const modelId = settings?.model || 'openrouter-gemini-2-5-flash'
     
     const creditCheck = await checkCredits(userId, modelId)
     if (!creditCheck.sufficient) {
@@ -353,13 +353,10 @@ router.post("/api/chat", authMiddleware, async (req, res) => {
     const defaultModel = process.env.DEFAULT_MODEL;
 
     const { 
-      conversationId,
+      conversationId, 
       messages, 
       mode = "agent", 
       model,
-      imageModel,
-      resolution,
-      aspectRatio,
     } = req.body;
 
     const modelName = model || defaultModel;
@@ -401,21 +398,9 @@ router.post("/api/chat", authMiddleware, async (req, res) => {
       .map((msg) => ({
         role: msg.role as "user" | "assistant",
         content: msg.content,
-        images: msg.images || [],
       }));
 
     const allMessages = [...historicalUIMessages, ...incomingUIMessages];
-
-    const llmMessages = allMessages.map((msg) => {
-      let content = msg.content;
-      if (msg.images && msg.images.length > 0) {
-        content += "\n\n[用户附加的参考图URL（请在需要重绘时提取并传给 canvasRedrawImage 的 sourceImageUrl 中）]：\n" + msg.images.join("\n");
-      }
-      return {
-        role: msg.role,
-        content,
-      };
-    });
 
     const lastUserMessage = messages.filter((m) => m.role === "user").pop()?.content || "";
 
@@ -423,7 +408,7 @@ router.post("/api/chat", authMiddleware, async (req, res) => {
       let lastAssistantContent = "";
       
       await runChat(
-        llmMessages, 
+        allMessages, 
         modelName, 
         res, 
         currentConversationId, 
@@ -432,18 +417,13 @@ router.post("/api/chat", authMiddleware, async (req, res) => {
           if (isComplete) {
             lastAssistantContent = content;
           }
-        },
-        {},
-        imageModel,
-        resolution,
-        aspectRatio,
-        userId
+        }
       );
 
       res.write("data: [DONE]\n\n");
 
       for (const msg of incomingUIMessages) {
-        await addMessage(currentConversationId, msg.role, msg.content, msg.images);
+        await addMessage(currentConversationId, msg.role, msg.content);
       }
 
       if (lastAssistantContent) {
@@ -483,20 +463,14 @@ router.post("/api/chat", authMiddleware, async (req, res) => {
   }
 });
 
-import { calculateCredits } from "../services/credits/rules.js";
-
 // ========== 系统端点 ==========
 router.get("/health", (req, res) => {
   res.json({ status: "ok" });
 });
 
-router.get("/api/models", (req, res) => {
+router.get("/models", (req, res) => {
   const stats = getModelStats();
-  const rawModels = getEnabledModels();
-  const models = rawModels.map(model => ({
-    ...model,
-    credits: calculateCredits(model.pricing, model.credits)
-  }));
+  const models = getEnabledModels();
 
   res.json({
     success: true,

@@ -19,7 +19,7 @@ export function PageHeader({ breadcrumb }: PageHeaderProps) {
     <header className="flex h-16 shrink-0 items-center justify-between gap-2 border-b border-border bg-background px-4 [-webkit-app-region:drag]">
       <div className="flex items-center gap-2 [-webkit-app-region:no-drag]">
         <SidebarTrigger className="-ml-1 text-muted-foreground" />
-        <Separator orientation="vertical" className="mr-2 h-4" />
+        <Separator orientation="vertical" className="mr-2 h-4 data-vertical:self-center" />
         <Breadcrumb>
           <BreadcrumbList>
             {breadcrumb.map((item, index) => (
