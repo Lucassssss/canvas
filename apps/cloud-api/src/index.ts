@@ -7,6 +7,7 @@ import { deviceRouter } from "./routes/devices.js";
 import { groupsRouter } from "./routes/groups.js";
 import { teamRouter } from "./routes/team.js";
 import { logsRouter } from "./routes/logs.js";
+import { rpaRouter } from "./routes/rpa.js";
 
 dotenv.config();
 
@@ -23,6 +24,7 @@ app.use("/api/devices", deviceRouter);
 app.use("/api/groups", groupsRouter);
 app.use("/api/team", teamRouter);
 app.use("/api/logs", logsRouter);
+app.use("/api/rpa", rpaRouter);
 
 // 全局错误处理
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
