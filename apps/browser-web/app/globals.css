@@ -11,17 +11,17 @@
 }
 
 /* Global Electron Drag Region for Main Headers & Sidebar Headers */
-[data-slot="sidebar-inset"] > header,
-[data-slot="sidebar"] > [data-sidebar="header"] {
+[data-slot="sidebar-inset"]>header,
+[data-slot="sidebar"]>[data-sidebar="header"] {
   -webkit-app-region: drag;
 }
 
-[data-slot="sidebar-inset"] > header button,
-[data-slot="sidebar-inset"] > header a,
-[data-slot="sidebar-inset"] > header input,
-[data-slot="sidebar-inset"] > header [role="button"],
-[data-slot="sidebar"] > [data-sidebar="header"] button,
-[data-slot="sidebar"] > [data-sidebar="header"] a {
+[data-slot="sidebar-inset"]>header button,
+[data-slot="sidebar-inset"]>header a,
+[data-slot="sidebar-inset"]>header input,
+[data-slot="sidebar-inset"]>header [role="button"],
+[data-slot="sidebar"]>[data-sidebar="header"] button,
+[data-slot="sidebar"]>[data-sidebar="header"] a {
   -webkit-app-region: no-drag;
 }
 
@@ -89,7 +89,7 @@
   --card-foreground: oklch(0.14 0.01 260);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.14 0.01 260);
-  --primary: oklch(0.488 0.243 264.376);
+  --primary: #2B7FFF;
   --primary-foreground: oklch(0.97 0.014 254.604);
   --secondary: oklch(0.96 0.01 260);
   --secondary-foreground: oklch(0.2 0.02 260);
@@ -119,13 +119,13 @@
 
 .dark {
   --background: oklch(0.14 0.01 260);
-  --foreground: oklch(0.98 0.005 260);
+  --foreground: oklch(96.715% 0.00011 271.152);
   --card: oklch(0.2 0.01 260);
   --card-foreground: oklch(0.98 0.005 260);
   --popover: oklch(0.2 0.01 260);
   --popover-foreground: oklch(0.98 0.005 260);
-  --primary: oklch(0.424 0.199 265.638);
-  --primary-foreground: oklch(0.97 0.014 254.604);
+  --primary: #e3e6e9;
+  --primary-foreground: oklch(19.574% 0.00002 271.152);
   --secondary: oklch(0.26 0.02 260);
   --secondary-foreground: oklch(0.98 0.005 260);
   --muted: oklch(0.26 0.02 260);

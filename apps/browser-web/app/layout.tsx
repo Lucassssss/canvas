@@ -17,6 +17,8 @@ const fontMono = Geist_Mono({
   variable: "--font-mono",
 })
 
+import { WindowControls } from "@/components/window-controls"
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -31,6 +33,7 @@ export default function RootLayout({
       <body>
         <ThemeProvider>
           <TooltipProvider>{children}</TooltipProvider>
+          <WindowControls />
         </ThemeProvider>
       </body>
     </html>
