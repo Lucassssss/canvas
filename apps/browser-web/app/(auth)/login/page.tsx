@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useAuthStore } from "@/lib/store/useAuthStore"
+import { cloudFetch } from "@/lib/api"
 import {
   Form,
   FormControl,
@@ -163,14 +164,14 @@ export default function LoginPage() {
     defaultValues: { phone: "", code: "", password: "", agree: false },
   })
 
-  const getApiUrl = () => process.env.NEXT_PUBLIC_CLOUD_API_URL || 'http://localhost:4005'
+
 
   const onSubmit = async (values: any) => {
     setIsLoading(true)
 
     try {
       if (mode === "register") {
-        const res = await fetch(`${getApiUrl()}/api/auth/register`, {
+        const res = await cloudFetch(`/api/auth/register`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ phone: values.phone, code: values.code, password: values.password })
@@ -186,7 +187,7 @@ export default function LoginPage() {
       } else {
         // Login mode
         let type = activeTab;
-        const res = await fetch(`${getApiUrl()}/api/auth/login`, {
+        const res = await cloudFetch(`/api/auth/login`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ type, phone: values.phone, account: values.account, password: values.password, code: values.code })
@@ -216,7 +217,7 @@ export default function LoginPage() {
     if (!isCodeCounting) {
       startCodeCountdown(60)
       try {
-        const res = await fetch(`${getApiUrl()}/api/auth/send-code`, {
+        const res = await cloudFetch(`/api/auth/send-code`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ phone })

@@ -1,5 +1,6 @@
 "use client"
 import * as React from "react"
+import { cloudFetch } from "@/lib/api"
 import { PageHeader } from "@/components/ui/page-header"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -76,11 +77,14 @@ export default function MembersPage() {
 
   const fetchData = React.useCallback(async () => {
     try {
-      const [rRes, mRes, gRes] = await Promise.all([
-        fetch(`${process.env.NEXT_PUBLIC_CLOUD_API_URL}/api/team/roles`).then(v => v.json()),
-        fetch(`${process.env.NEXT_PUBLIC_CLOUD_API_URL}/api/team/members`).then(v => v.json()),
-        fetch(`${process.env.NEXT_PUBLIC_CLOUD_API_URL}/api/groups`).then(v => v.json()),
+      const [rReq, mReq, gReq] = await Promise.all([
+        cloudFetch(`/api/team/roles`),
+        cloudFetch(`/api/team/members`),
+        cloudFetch(`/api/groups`),
       ])
+      const rRes = await rReq.json();
+      const mRes = await mReq.json();
+      const gRes = await gReq.json();
       if (rRes.success) setRoles(rRes.data)
       if (mRes.success) setMembers(mRes.data)
       if (gRes.success) setGroups(gRes.data)
@@ -96,7 +100,7 @@ export default function MembersPage() {
   const onRoleSubmit = async (values: z.infer<typeof roleSchema>) => {
     setIsSubmitting(true)
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_CLOUD_API_URL}/api/team/roles`, {
+      const res = await cloudFetch(`/api/team/roles`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: values.name, permissions: JSON.stringify(selectedPerms) })
@@ -122,7 +126,7 @@ export default function MembersPage() {
         ...values,
         accessibleGroups: JSON.stringify(values.groupId === "all" ? [] : [values.groupId])
       }
-      const res = await fetch(`${process.env.NEXT_PUBLIC_CLOUD_API_URL}/api/team/members`, {
+      const res = await cloudFetch(`/api/team/members`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
@@ -143,7 +147,7 @@ export default function MembersPage() {
   const handleDeleteMember = async (id: string) => {
     if (!confirm("确认删除此成员？")) return
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_CLOUD_API_URL}/api/team/members/${id}`, { method: "DELETE" })
+      const res = await cloudFetch(`/api/team/members/${id}`, { method: "DELETE" })
       const data = await res.json()
       if (data.success) fetchData()
     } catch (err) { console.error(err) }
@@ -152,7 +156,7 @@ export default function MembersPage() {
   const handleDeleteRole = async (id: string) => {
     if (!confirm("确认删除此角色？")) return
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_CLOUD_API_URL}/api/team/roles/${id}`, { method: "DELETE" })
+      const res = await cloudFetch(`/api/team/roles/${id}`, { method: "DELETE" })
       const data = await res.json()
       if (data.success) fetchData()
     } catch (err) { console.error(err) }

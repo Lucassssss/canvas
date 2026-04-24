@@ -1,5 +1,6 @@
 "use client"
 import * as React from "react"
+import { cloudFetch } from "@/lib/api"
 import { Button } from "@/components/ui/button"
 import { RiAddLine, RiShieldKeyholeLine, RiMore2Fill, RiDeleteBinLine } from "@remixicon/react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -56,10 +57,12 @@ export default function PoliciesPage() {
   const fetchData = React.useCallback(async () => {
     try {
       setIsLoading(true)
-      const [polRes, roleRes] = await Promise.all([
-        fetch(`${process.env.NEXT_PUBLIC_CLOUD_API_URL}/api/team/policies`).then(v => v.json()),
-        fetch(`${process.env.NEXT_PUBLIC_CLOUD_API_URL}/api/team/roles`).then(v => v.json())
+      const [polReq, roleReq] = await Promise.all([
+        cloudFetch(`/api/team/policies`),
+        cloudFetch(`/api/team/roles`)
       ])
+      const polRes = await polReq.json()
+      const roleRes = await roleReq.json()
       if (polRes.success) setPolicies(polRes.data)
       if (roleRes.success) setRoles(roleRes.data)
     } catch (err) {
@@ -86,7 +89,7 @@ export default function PoliciesPage() {
         appliedTo: JSON.stringify(appliedToArray)
       }
 
-      const res = await fetch(`${process.env.NEXT_PUBLIC_CLOUD_API_URL}/api/team/policies`, {
+      const res = await cloudFetch(`/api/team/policies`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
@@ -110,7 +113,7 @@ export default function PoliciesPage() {
   const handleDelete = async (id: string) => {
     if (!confirm("确定删除此策略吗？")) return
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_CLOUD_API_URL}/api/team/policies/${id}`, { method: "DELETE" })
+      const res = await cloudFetch(`/api/team/policies/${id}`, { method: "DELETE" })
       const data = await res.json()
       if (data.success) fetchData()
     } catch (err) { console.error(err) }
