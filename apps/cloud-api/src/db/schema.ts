@@ -110,3 +110,14 @@ export const loginSettings = pgTable("login_settings", {
   allowTimeStart: text("allow_time_start"), // HH:mm
   allowTimeEnd: text("allow_time_end"), // HH:mm
 });
+
+export const rpaScripts = pgTable("rpa_scripts", {
+  id: text("id").primaryKey().$defaultFn(generateShortId),
+  name: text("name").notNull(),
+  groupId: text("group_id").references(() => groups.id, { onDelete: "set null" }),
+  nodes: jsonb("nodes").default("[]"), // Array of Node objects mapped for flow editor
+  edges: jsonb("edges").default("[]"), // Array of Edge objects
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
