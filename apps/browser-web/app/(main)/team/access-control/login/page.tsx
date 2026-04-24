@@ -1,5 +1,6 @@
 "use client"
 import * as React from "react"
+import { cloudFetch } from "@/lib/api"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
@@ -18,7 +19,7 @@ export default function LoginControlPage() {
 
   const fetchSettings = React.useCallback(async () => {
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_CLOUD_API_URL}/api/team/login-settings`)
+      const res = await cloudFetch(`/api/team/login-settings`)
       const data = await res.json()
       if (data.success && data.data) {
         const d = data.data
@@ -49,7 +50,7 @@ export default function LoginControlPage() {
         allowTimeStart,
         allowTimeEnd
       }
-      const res = await fetch(`${process.env.NEXT_PUBLIC_CLOUD_API_URL}/api/team/login-settings`, {
+      const res = await cloudFetch(`/api/team/login-settings`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)

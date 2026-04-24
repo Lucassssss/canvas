@@ -1,6 +1,6 @@
 "use client"
-
 import * as React from "react"
+import { cloudFetch } from "@/lib/api"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 
@@ -41,9 +41,10 @@ export default function CreateDevicePage() {
     if (id) {
       setEditId(id)
       // Fetch device data
-      fetch(`${process.env.NEXT_PUBLIC_CLOUD_API_URL}/api/devices/${id}`)
-        .then(res => res.json())
-        .then(data => {
+      const loadDevice = async () => {
+        try {
+          const res = await cloudFetch(`/api/devices/${id}`)
+          const data = await res.json()
           if (data.success && data.data) {
             setProvider(data.data.provider)
             setType(data.data.type)
@@ -63,8 +64,11 @@ export default function CreateDevicePage() {
               })
             }
           }
-        })
-        .catch(err => console.error(err))
+        } catch (err) {
+          console.error(err)
+        }
+      }
+      loadDevice()
     }
   }, [])
 
@@ -72,7 +76,7 @@ export default function CreateDevicePage() {
     setTesting(true)
     setTestResult(null)
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_CLOUD_API_URL}/api/devices/test`, {
+      const res = await cloudFetch(`/api/devices/test`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ type, host, port, username, password })
@@ -97,8 +101,8 @@ export default function CreateDevicePage() {
 
     try {
       const url = editId
-        ? `${process.env.NEXT_PUBLIC_CLOUD_API_URL}/api/devices/${editId}`
-        : `${process.env.NEXT_PUBLIC_CLOUD_API_URL}/api/devices`;
+        ? `/api/devices/${editId}`
+        : `/api/devices`;
       const method = editId ? "PUT" : "POST";
 
       const payload: any = {
@@ -120,7 +124,7 @@ export default function CreateDevicePage() {
         payload.lon = testResult.lon?.toString() || ""
       }
 
-      const res = await fetch(url, {
+      const res = await cloudFetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
