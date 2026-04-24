@@ -44,7 +44,7 @@ const memberSchema = z.object({
   name: z.string().min(1, "真实姓名不能为空"),
   username: z.string().min(3, "用户名至少3个字符"),
   phone: z.string().optional(),
-  passwordHash: z.string().min(6, "初始密码至少6位"),
+  password: z.string().min(6, "初始密码至少6位"),
   roleId: z.string().min(1, "请选择角色"),
   groupId: z.string().optional(),
   browserLimit: z.number().min(0).default(0),
@@ -71,7 +71,7 @@ export default function MembersPage() {
 
   const memberForm = useForm<z.infer<typeof memberSchema>>({
     resolver: zodResolver(memberSchema),
-    defaultValues: { name: "", username: "", phone: "", passwordHash: "", roleId: "", groupId: "all", browserLimit: 0 },
+    defaultValues: { name: "", username: "", phone: "", password: "", roleId: "", groupId: "all", browserLimit: 0 },
   })
 
   const fetchData = React.useCallback(async () => {
@@ -345,7 +345,7 @@ export default function MembersPage() {
                       </FormItem>
                     )} />
 
-                    <FormField control={memberForm.control} name="passwordHash" render={({ field }) => (
+                    <FormField control={memberForm.control} name="password" render={({ field }) => (
                       <FormItem className="grid grid-cols-4 items-center gap-4 space-y-0 text-right">
                         <Label className="text-muted-foreground">初始密码</Label>
                         <div className="col-span-3 text-left">

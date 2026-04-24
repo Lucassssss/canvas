@@ -1,7 +1,8 @@
 import { Router } from "express";
 import { db } from "../db/index.js";
-import { eq } from "drizzle-orm";
+import { eq, ne } from "drizzle-orm";
 import { users, roles, accessPolicies, loginSettings } from "../db/schema.js";
+import bcrypt from "bcryptjs";
 
 export const teamRouter = Router();
 
@@ -11,7 +12,17 @@ export const teamRouter = Router();
 
 teamRouter.get("/members", async (req, res) => {
   try {
-    const allUsers = await db.select().from(users);
+    const allUsers = await db.select({
+      id: users.id,
+      roleId: users.roleId,
+      name: users.name,
+      username: users.username,
+      phone: users.phone,
+      accessibleGroups: users.accessibleGroups,
+      browserLimit: users.browserLimit,
+      status: users.status,
+      createdAt: users.createdAt
+    }).from(users);
     res.json({ success: true, data: allUsers });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });
@@ -20,22 +31,36 @@ teamRouter.get("/members", async (req, res) => {
 
 teamRouter.post("/members", async (req, res) => {
   try {
-    const { name, username, phone, passwordHash, roleId, accessibleGroups, browserLimit } = req.body;
+    const { name, username, phone, password, roleId, accessibleGroups, browserLimit } = req.body;
     
     // Minimal validation
-    if (!name || !username || !passwordHash) {
+    if (!name || !username || !password) {
       return res.status(400).json({ success: false, error: "Missing required fields" });
     }
+
+    // Check if username already exists
+    const existingUser = await db.query.users.findFirst({
+      where: eq(users.username, username)
+    });
+    if (existingUser) {
+      return res.status(400).json({ success: false, error: "该用户名已被使用" });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const passwordHash = await bcrypt.hash(password, salt);
 
     const inserted = await db.insert(users).values({
       name,
       username,
       phone,
-      passwordHash, // In real world, hash on insertion
+      passwordHash,
       roleId,
-      accessibleGroups,
+      accessibleGroups: accessibleGroups || "[]",
       browserLimit: browserLimit || 0
-    }).returning();
+    }).returning({
+      id: users.id,
+      username: users.username
+    });
     
     res.json({ success: true, data: inserted[0] });
   } catch (err: any) {
@@ -46,12 +71,27 @@ teamRouter.post("/members", async (req, res) => {
 teamRouter.put("/members/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const updateData = req.body;
+    const { password, username, ...updateData } = req.body;
+    
+    if (password) {
+      const salt = await bcrypt.genSalt(10);
+      updateData.passwordHash = await bcrypt.hash(password, salt);
+    }
+
+    if (username) {
+      const existingUser = await db.query.users.findFirst({
+         where: eq(users.username, username)
+      });
+      if (existingUser && existingUser.id !== id) {
+        return res.status(400).json({ success: false, error: "该用户名已被其他人使用" });
+      }
+      updateData.username = username;
+    }
     
     const updated = await db.update(users)
       .set(updateData)
       .where(eq(users.id, id))
-      .returning();
+      .returning({ id: users.id });
       
     res.json({ success: true, data: updated[0] });
   } catch (err: any) {
