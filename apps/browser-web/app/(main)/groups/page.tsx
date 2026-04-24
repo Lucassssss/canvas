@@ -1,5 +1,6 @@
 "use client"
 import * as React from "react"
+import { cloudFetch } from "@/lib/api"
 import { PageHeader } from "@/components/ui/page-header"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -48,7 +49,7 @@ export default function GroupsPage() {
 
   const fetchGroups = React.useCallback(async () => {
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_CLOUD_API_URL}/api/groups`)
+      const res = await cloudFetch(`/api/groups`)
       const data = await res.json()
       if (data.success) {
         setGroups(data.data)
@@ -65,7 +66,7 @@ export default function GroupsPage() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true)
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_CLOUD_API_URL}/api/groups`, {
+      const res = await cloudFetch(`/api/groups`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(values),
@@ -88,7 +89,7 @@ export default function GroupsPage() {
   const handleDelete = async (id: string) => {
     if (!confirm("确定要删除此分组吗？(关联的环境将被保留在默认分组)")) return
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_CLOUD_API_URL}/api/groups/${id}`, { method: "DELETE" })
+      const res = await cloudFetch(`/api/groups/${id}`, { method: "DELETE" })
       const data = await res.json()
       if (data.success) fetchGroups()
     } catch (err) {

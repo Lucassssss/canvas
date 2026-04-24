@@ -1,5 +1,6 @@
 "use client"
 import * as React from "react"
+import { cloudFetch } from "@/lib/api"
 import { PageHeader } from "@/components/ui/page-header"
 import { Button } from "@/components/ui/button"
 import { RiRobot2Line, RiAddLine, RiSave3Line, RiDeleteBinLine, RiPlayCircleLine } from "@remixicon/react"
@@ -57,10 +58,12 @@ export default function RpaPage() {
 
   const fetchScriptsAndGroups = React.useCallback(async () => {
     try {
-      const [rpaRes, grpRes] = await Promise.all([
-        fetch(`${process.env.NEXT_PUBLIC_CLOUD_API_URL}/api/rpa`).then(v => v.json()),
-        fetch(`${process.env.NEXT_PUBLIC_CLOUD_API_URL}/api/groups`).then(v => v.json())
+      const [rpaReq, grpReq] = await Promise.all([
+        cloudFetch(`/api/rpa`),
+        cloudFetch(`/api/groups`)
       ])
+      const rpaRes = await rpaReq.json()
+      const grpRes = await grpReq.json()
       if (rpaRes.success) setScripts(rpaRes.data)
       if (grpRes.success) setGroups(grpRes.data)
     } catch (err) {
@@ -76,7 +79,7 @@ export default function RpaPage() {
     if (!newScriptName) return alert("脚本名称不能为空")
     setIsLoading(true)
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_CLOUD_API_URL}/api/rpa`, {
+      const res = await cloudFetch(`/api/rpa`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: newScriptName, groupId: newScriptGroup === 'default' ? null : newScriptGroup })
@@ -116,7 +119,7 @@ export default function RpaPage() {
   const handleSaveFlow = async () => {
     if (!activeScript) return
     try {
-       const res = await fetch(`${process.env.NEXT_PUBLIC_CLOUD_API_URL}/api/rpa/${activeScript.id}`, {
+       const res = await cloudFetch(`/api/rpa/${activeScript.id}`, {
          method: "PUT",
          headers: { "Content-Type": "application/json" },
          body: JSON.stringify({ nodes, edges })
@@ -178,7 +181,7 @@ export default function RpaPage() {
     e.stopPropagation()
     if (!confirm("确定彻底删除此 RPA 脚本吗？")) return
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_CLOUD_API_URL}/api/rpa/${id}`, { method: "DELETE" })
+      const res = await cloudFetch(`/api/rpa/${id}`, { method: "DELETE" })
       const data = await res.json()
       if (data.success) {
          if (activeScript?.id === id) {

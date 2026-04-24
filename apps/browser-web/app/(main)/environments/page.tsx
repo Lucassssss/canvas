@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState, useRef } from "react"
+import { cloudFetch } from "@/lib/api"
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -69,7 +70,7 @@ export default function EnvironmentsPage() {
 
   const fetchEnvironments = async () => {
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_CLOUD_API_URL}/api/environments`, { cache: "no-store" });
+      const res = await cloudFetch(`/api/environments`, { cache: "no-store" });
       const data = await res.json();
       if (data.success) {
         setProfiles(data.data.map((item: any, index: number) => ({
@@ -111,7 +112,7 @@ export default function EnvironmentsPage() {
           if (toStop.length > 0) {
             await Promise.all(
               toStop.map((e: any) =>
-                fetch(`${process.env.NEXT_PUBLIC_CLOUD_API_URL}/api/environments/${e.id}/stop`, { method: "POST" })
+                cloudFetch(`/api/environments/${e.id}/stop`, { method: "POST" })
               )
             );
             // 同步完停止状态后，拉取一次最新的列表刷新 UI
@@ -130,7 +131,7 @@ export default function EnvironmentsPage() {
     setTimeout(async () => {
       if (!confirm("确定要删除这个环境吗？")) return;
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_CLOUD_API_URL}/api/environments/${id}`, { method: "DELETE" });
+        const res = await cloudFetch(`/api/environments/${id}`, { method: "DELETE" });
         const data = await res.json();
         if (data.success) fetchEnvironments();
       } catch (error) {
@@ -141,7 +142,7 @@ export default function EnvironmentsPage() {
 
   const handleStart = async (id: string) => {
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_CLOUD_API_URL}/api/environments/${id}/start`, { method: "POST" });
+      const res = await cloudFetch(`/api/environments/${id}/start`, { method: "POST" });
       const data = await res.json();
       if (data.success && data.data?.cli_args) {
         // Forward cli_args to local daemon
@@ -164,7 +165,7 @@ export default function EnvironmentsPage() {
   const handleStop = async (id: string) => {
     try {
       // Notify cloud
-      await fetch(`${process.env.NEXT_PUBLIC_CLOUD_API_URL}/api/environments/${id}/stop`, { method: "POST" });
+      await cloudFetch(`/api/environments/${id}/stop`, { method: "POST" });
       // Notify local daemon
       await fetch(`${process.env.NEXT_PUBLIC_LOCAL_DAEMON_URL}/api/stop`, {
         method: "POST",
@@ -179,7 +180,7 @@ export default function EnvironmentsPage() {
 
   const handleQuickEdit = async (id: string, field: string, value: string) => {
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_CLOUD_API_URL}/api/environments/${id}`, {
+      const res = await cloudFetch(`/api/environments/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ [field]: value })

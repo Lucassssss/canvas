@@ -1,6 +1,6 @@
 "use client"
-
 import * as React from "react"
+import { cloudFetch } from "@/lib/api"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { useForm } from "react-hook-form"
@@ -91,14 +91,18 @@ export default function CreateProfilePage() {
     if (id) setEditId(id)
 
     // Fetch devices
-    fetch(`${process.env.NEXT_PUBLIC_CLOUD_API_URL}/api/devices`)
-      .then(res => res.json())
-      .then(data => {
+    const loadDevices = async () => {
+      try {
+        const res = await cloudFetch(`/api/devices`)
+        const data = await res.json()
         if (data.success) {
           setDevices(data.data)
         }
-      })
-      .catch(err => console.error("Failed to fetch devices", err))
+      } catch (err) {
+        console.error("Failed to fetch devices", err)
+      }
+    }
+    loadDevices()
   }, [])
 
   React.useEffect(() => {
@@ -162,25 +166,29 @@ export default function CreateProfilePage() {
 
   React.useEffect(() => {
     if (editId) {
-      fetch(`${process.env.NEXT_PUBLIC_CLOUD_API_URL}/api/environments/${editId}`)
-        .then(res => res.json())
-        .then(data => {
+      const loadEnv = async () => {
+        try {
+          const res = await cloudFetch(`/api/environments/${editId}`)
+          const data = await res.json()
           if (data.success && data.data) {
             form.reset(data.data);
           }
-        })
-        .catch(err => console.error("Failed to load environment:", err));
+        } catch (err) {
+          console.error("Failed to load environment:", err)
+        }
+      }
+      loadEnv()
     }
   }, [editId, form]);
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
       const url = editId 
-        ? `${process.env.NEXT_PUBLIC_CLOUD_API_URL}/api/environments/${editId}` 
-        : `${process.env.NEXT_PUBLIC_CLOUD_API_URL}/api/environments`;
+        ? `/api/environments/${editId}` 
+        : `/api/environments`;
       const method = editId ? "PUT" : "POST";
 
-      const response = await fetch(url, {
+      const response = await cloudFetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(values),

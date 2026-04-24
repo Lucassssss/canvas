@@ -18,6 +18,7 @@ const fontMono = Geist_Mono({
 })
 
 import { WindowControls } from "@/components/window-controls"
+import { AuthInterceptor } from "@/components/auth-interceptor"
 
 export default function RootLayout({
   children,
@@ -33,6 +34,7 @@ export default function RootLayout({
       <body>
         <ThemeProvider>
           <TooltipProvider>{children}</TooltipProvider>
+          <AuthInterceptor />
           <WindowControls />
         </ThemeProvider>
       </body>

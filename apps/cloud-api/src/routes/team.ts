@@ -1,7 +1,8 @@
 import { Router } from "express";
 import { db } from "../db/index.js";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { users, roles, accessPolicies, loginSettings } from "../db/schema.js";
+import bcrypt from "bcryptjs";
 
 export const teamRouter = Router();
 
@@ -11,7 +12,19 @@ export const teamRouter = Router();
 
 teamRouter.get("/members", async (req, res) => {
   try {
-    const allUsers = await db.select().from(users);
+    const allUsers = await db.select({
+      id: users.id,
+      roleId: users.roleId,
+      name: users.name,
+      username: users.username,
+      phone: users.phone,
+      accessibleGroups: users.accessibleGroups,
+      browserLimit: users.browserLimit,
+      status: users.status,
+      createdAt: users.createdAt
+    })
+    .from(users)
+    .where(eq(users.teamId, req.user!.teamId));
     res.json({ success: true, data: allUsers });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });
@@ -20,22 +33,37 @@ teamRouter.get("/members", async (req, res) => {
 
 teamRouter.post("/members", async (req, res) => {
   try {
-    const { name, username, phone, passwordHash, roleId, accessibleGroups, browserLimit } = req.body;
+    const { name, username, phone, password, roleId, accessibleGroups, browserLimit } = req.body;
     
     // Minimal validation
-    if (!name || !username || !passwordHash) {
+    if (!name || !username || !password) {
       return res.status(400).json({ success: false, error: "Missing required fields" });
     }
 
+    // Check if username already exists globally (since username is strictly unique across the system in schema)
+    const existingUser = await db.query.users.findFirst({
+      where: eq(users.username, username)
+    });
+    if (existingUser) {
+      return res.status(400).json({ success: false, error: "该用户名已被使用" });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const passwordHash = await bcrypt.hash(password, salt);
+
     const inserted = await db.insert(users).values({
+      teamId: req.user!.teamId,
       name,
       username,
       phone,
-      passwordHash, // In real world, hash on insertion
+      passwordHash,
       roleId,
-      accessibleGroups,
+      accessibleGroups: accessibleGroups || "[]",
       browserLimit: browserLimit || 0
-    }).returning();
+    }).returning({
+      id: users.id,
+      username: users.username
+    });
     
     res.json({ success: true, data: inserted[0] });
   } catch (err: any) {
@@ -46,12 +74,33 @@ teamRouter.post("/members", async (req, res) => {
 teamRouter.put("/members/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const updateData = req.body;
+    const { password, username, ...updateData } = req.body;
     
+    if (password) {
+      const salt = await bcrypt.genSalt(10);
+      updateData.passwordHash = await bcrypt.hash(password, salt);
+    }
+
+    if (username) {
+      const existingUser = await db.query.users.findFirst({
+         where: eq(users.username, username)
+      });
+      if (existingUser && existingUser.id !== id) {
+        return res.status(400).json({ success: false, error: "该用户名已被其他人使用" });
+      }
+      updateData.username = username;
+    }
+    
+      // Security Check: Make sure the user belongs to the same team!
+    const targetUser = await db.query.users.findFirst({
+      where: and(eq(users.id, id), eq(users.teamId, req.user!.teamId))
+    });
+    if (!targetUser) return res.status(404).json({ success: false, error: "User not found or unauthorized" });
+
     const updated = await db.update(users)
       .set(updateData)
-      .where(eq(users.id, id))
-      .returning();
+      .where(and(eq(users.id, id), eq(users.teamId, req.user!.teamId)))
+      .returning({ id: users.id });
       
     res.json({ success: true, data: updated[0] });
   } catch (err: any) {
@@ -76,7 +125,9 @@ teamRouter.delete("/members/:id", async (req, res) => {
 
 teamRouter.get("/roles", async (req, res) => {
   try {
-    const allRoles = await db.select().from(roles);
+    const allRoles = await db.select()
+      .from(roles)
+      .where(eq(roles.teamId, req.user!.teamId));
     res.json({ success: true, data: allRoles });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });
@@ -87,6 +138,7 @@ teamRouter.post("/roles", async (req, res) => {
   try {
     const { name, permissions } = req.body;
     const inserted = await db.insert(roles).values({
+      teamId: req.user!.teamId,
       name,
       type: "custom",
       permissions: permissions || "{}"
