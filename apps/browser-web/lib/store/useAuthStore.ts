@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { cloudFetch } from '@/lib/api';
 
 interface User {
   id: string;
@@ -39,11 +40,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     if (!token) return;
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_CLOUD_API_URL || 'http://localhost:4005'}/api/auth/me`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
+      const res = await cloudFetch(`/api/auth/me`);
       const data = await res.json();
       if (data.success) {
         set({ token, user: data.data, isAuthenticated: true });
