@@ -1,13 +1,15 @@
 import { Router } from "express";
 import { db } from "../db/index.js";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { groups } from "../db/schema.js";
 
 export const groupsRouter = Router();
 
 groupsRouter.get("/", async (req, res) => {
   try {
-    const allGroups = await db.select().from(groups).orderBy(groups.createdAt);
+    const allGroups = await db.select().from(groups)
+      .where(eq(groups.teamId, req.user!.teamId))
+      .orderBy(groups.createdAt);
     
     // TODO: Join with browser_environments to get 'count' dynamically 
     
@@ -26,6 +28,7 @@ groupsRouter.post("/", async (req, res) => {
     }
 
     const inserted = await db.insert(groups).values({
+      teamId: req.user!.teamId,
       name,
       desc
     }).returning();
@@ -43,7 +46,7 @@ groupsRouter.put("/:id", async (req, res) => {
     
     const updated = await db.update(groups)
       .set({ name, desc })
-      .where(eq(groups.id, id))
+      .where(and(eq(groups.id, id), eq(groups.teamId, req.user!.teamId)))
       .returning();
       
     res.json({ success: true, data: updated[0] });
@@ -55,7 +58,7 @@ groupsRouter.put("/:id", async (req, res) => {
 groupsRouter.delete("/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    await db.delete(groups).where(eq(groups.id, id));
+    await db.delete(groups).where(and(eq(groups.id, id), eq(groups.teamId, req.user!.teamId)));
     res.json({ success: true, message: "Group deleted successfully" });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });
