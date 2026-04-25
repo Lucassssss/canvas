@@ -66,6 +66,7 @@ const formSchema = z.object({
   webrtcReplace: z.boolean().optional(),
   geolocationAuto: z.boolean().optional(),
   languageAuto: z.boolean().optional(),
+  language: z.string().optional(),
   hardwareConcurrency: z.string().optional(),
   deviceMemory: z.string().optional(),
   webglVendor: z.string().optional(),
@@ -155,6 +156,7 @@ export default function CreateProfilePage() {
       webrtcReplace: true,
       geolocationAuto: true,
       languageAuto: true,
+      language: "en-US,en;q=0.9",
       hardwareConcurrency: "16",
       deviceMemory: "8",
       webglVendor: "NVIDIA Corporation",
@@ -248,6 +250,7 @@ export default function CreateProfilePage() {
   }, [form, devices]);
 
   const watchOs = form.watch("os")
+  const watchLanguageAuto = form.watch("languageAuto")
 
   return (
     <>
@@ -638,6 +641,44 @@ export default function CreateProfilePage() {
                         )}
                       />
                     </div>
+                    {/* 手动语言选择器，仅在 languageAuto=false 时显示 */}
+                    {!watchLanguageAuto && (
+                      <FormField
+                        control={form.control}
+                        name="language"
+                        render={({ field }) => (
+                          <FormItem className="space-y-2">
+                            <FormLabel className="text-foreground">指定语言</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger className="h-10">
+                                  <SelectValue placeholder="选择语言" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="en-US,en">英语 (US) — en-US</SelectItem>
+                                <SelectItem value="en-GB,en">英语 (UK) — en-GB</SelectItem>
+                                <SelectItem value="zh-CN,zh,en-US,en">简体中文 — zh-CN</SelectItem>
+                                <SelectItem value="zh-TW,zh,en-US,en">繁体中文 — zh-TW</SelectItem>
+                                <SelectItem value="ja,en-US,en">日语 — ja</SelectItem>
+                                <SelectItem value="ko,en-US,en">韩语 — ko</SelectItem>
+                                <SelectItem value="de-DE,de,en-US,en">德语 — de-DE</SelectItem>
+                                <SelectItem value="fr-FR,fr,en-US,en">法语 — fr-FR</SelectItem>
+                                <SelectItem value="es-ES,es,en-US,en">西班牙语 — es-ES</SelectItem>
+                                <SelectItem value="pt-BR,pt,en-US,en">葡萄牙语 (BR) — pt-BR</SelectItem>
+                                <SelectItem value="ru-RU,ru,en-US,en">俄语 — ru-RU</SelectItem>
+                                <SelectItem value="ar-SA,ar,en-US,en">阿拉伯语 — ar-SA</SelectItem>
+                                <SelectItem value="th-TH,th,en-US,en">泰语 — th-TH</SelectItem>
+                                <SelectItem value="vi-VN,vi,en-US,en">越南语 — vi-VN</SelectItem>
+                                <SelectItem value="id-ID,id,en-US,en">印尼语 — id-ID</SelectItem>
+                                <SelectItem value="ms-MY,ms,en-US,en">马来语 — ms-MY</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormDescription className="text-xs">将同时设置 HTTP Accept-Language 请求头和 navigator.languages</FormDescription>
+                          </FormItem>
+                        )}
+                      />
+                    )}
                   </div>
 
                   {/* Hardware */}

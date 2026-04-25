@@ -7,7 +7,7 @@ export const deviceRouter = Router();
 // Get all devices
 deviceRouter.get("/", async (req, res) => {
   try {
-    const data = await DeviceService.listDevices();
+    const data = await DeviceService.listDevices(req.user!.teamId);
     return ApiResponse.success(res, data);
   } catch (error: any) {
     return ApiResponse.error(res, error.message);
@@ -17,7 +17,7 @@ deviceRouter.get("/", async (req, res) => {
 // Get single device
 deviceRouter.get("/:id", async (req, res) => {
   try {
-    const data = await DeviceService.getDevice(req.params.id);
+    const data = await DeviceService.getDevice(req.params.id, req.user!.teamId);
     if (!data) return ApiResponse.error(res, "Device not found");
     return ApiResponse.success(res, data);
   } catch (error: any) {
@@ -42,7 +42,7 @@ deviceRouter.post("/test", async (req, res) => {
 // Create new device
 deviceRouter.post("/", async (req, res) => {
   try {
-    const data = await DeviceService.createDevice(req.body);
+    const data = await DeviceService.createDevice({ ...req.body, teamId: req.user!.teamId });
     return ApiResponse.success(res, data);
   } catch (error: any) {
     return ApiResponse.error(res, error.message);
@@ -52,7 +52,7 @@ deviceRouter.post("/", async (req, res) => {
 // Update device
 deviceRouter.put("/:id", async (req, res) => {
   try {
-    const data = await DeviceService.updateDevice(req.params.id, req.body);
+    const data = await DeviceService.updateDevice(req.params.id, req.user!.teamId, req.body);
     return ApiResponse.success(res, data);
   } catch (error: any) {
     return ApiResponse.error(res, error.message);
@@ -62,7 +62,7 @@ deviceRouter.put("/:id", async (req, res) => {
 // Delete device
 deviceRouter.delete("/:id", async (req, res) => {
   try {
-    const data = await DeviceService.deleteDevice(req.params.id);
+    const data = await DeviceService.deleteDevice(req.params.id, req.user!.teamId);
     return ApiResponse.success(res, data);
   } catch (error: any) {
     return ApiResponse.error(res, error.message);
