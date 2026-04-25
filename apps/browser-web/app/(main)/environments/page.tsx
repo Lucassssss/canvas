@@ -311,7 +311,7 @@ export default function EnvironmentsPage() {
                     <TableCell>
                       {startingState[profile.id] === 'checking' ? (
                         <Badge variant="outline" className="font-normal px-1.5 h-5 text-xs rounded-sm text-blue-600 border-blue-200 bg-blue-50 dark:bg-blue-950/30 dark:border-blue-900/50 dark:text-blue-500">
-                          <RiLoader4Line className="mr-1 h-3 w-3 animate-spin inline-block" /> 确认位置...
+                          <RiLoader4Line className="mr-1 h-3 w-3 animate-spin inline-block" /> IP定位中...
                         </Badge>
                       ) : startingState[profile.id] === 'starting' ? (
                         <Badge variant="outline" className="font-normal px-1.5 h-5 text-xs rounded-sm text-amber-600 border-amber-200 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-900/50 dark:text-amber-500">
@@ -338,7 +338,7 @@ export default function EnvironmentsPage() {
                         <ButtonGroup className="shadow-none rounded-md">
                           {startingState[profile.id] ? (
                             <Button size="sm" disabled className="h-7 bg-muted text-muted-foreground shadow-none px-3 text-xs font-normal border border-transparent">
-                              <RiLoader4Line className="mr-1 h-3 w-3 animate-spin inline-block" /> 处理中
+                              <RiLoader4Line className="mr-1 h-3 w-3 animate-spin inline-block" /> {startingState[profile.id] === 'checking' ? 'IP定位中' : '启动中'}
                             </Button>
                           ) : profile.status === 'running' ? (
                             <Button size="sm" onClick={() => handleStop(profile.id)} className="h-7 bg-destructive hover:bg-destructive/90 text-destructive-foreground shadow-none px-3 text-xs font-normal border border-transparent">
