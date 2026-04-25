@@ -3,7 +3,7 @@ import os from 'os';
 import killPort from 'kill-port';
 
 const PORT = 4003;
-const CHROME_BIN = "e:\\chromium\\c142\\chrome.exe";
+const CHROME_BIN = "e:\\chromium\\c142-5\\chrome.exe";
 
 // 追踪每个环境的调试端口，用于 CDP 连接
 const activeEnvs = new Map<string, { debugPort: number; ws?: WebSocket }>();
@@ -156,7 +156,7 @@ const server = Bun.serve({
                 }
 
                 console.log(`[START] 启动环境 ${id}，CDP 端口=${debugPort}`);
-                console.log(`[START] 启动环境 ${id}，命令=${cmdArgs}`);
+                console.log(`[START] 启动环境 ${id}，${CHROME_BIN + ' ' + cmdArgs.join(' ')}`);
 
                 const child = spawn(CHROME_BIN, cmdArgs, {
                     detached: true,
@@ -217,5 +217,6 @@ const server = Bun.serve({
 console.log(`============================================`);
 console.log(`🚀 Joii Berry Local Daemon 启动成功`);
 console.log(`📡 监听端口: http://localhost:${server.port}`);
+console.log(`🚀 浏览器目录: ${CHROME_BIN}`);
 console.log(`🔗 无状态调度 + CDP 浏览器状态感知`);
 console.log(`============================================`);
