@@ -38,7 +38,8 @@ import {
 
 import { 
   RiArrowLeftLine, 
-  RiRefreshLine, 
+  RiRefreshLine,
+  RiShuffleLine,
   RiGlobalLine, 
   RiAppleLine, 
   RiWindowsLine 
@@ -69,6 +70,7 @@ const formSchema = z.object({
   language: z.string().optional(),
   hardwareConcurrency: z.string().optional(),
   deviceMemory: z.string().optional(),
+  webglMode: z.enum(["custom", "disabled", "real"]).optional(),
   webglVendor: z.string().optional(),
   webglRenderer: z.string().optional(),
   canvasNoise: z.enum(["real", "noise"]).optional(),
@@ -150,17 +152,18 @@ export default function CreateProfilePage() {
       deviceId: "",
       os: "windows",
       browser: "chrome",
-      browserVersion: "147",
-      userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36",
+      browserVersion: "142.0.7444.175",
+      userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
       timezoneAuto: true,
       webrtcReplace: true,
       geolocationAuto: true,
       languageAuto: true,
-      language: "en-US,en;q=0.9",
+      language: "en-US,en",
       hardwareConcurrency: "16",
       deviceMemory: "8",
-      webglVendor: "NVIDIA Corporation",
-      webglRenderer: "NVIDIA GeForce RTX 4070",
+      webglMode: "custom",
+      webglVendor: "Google Inc. (NVIDIA)",
+      webglRenderer: "ANGLE (NVIDIA, NVIDIA GeForce RTX 4070 Direct3D11 vs_5_0 ps_5_0, D3D11)",
       canvasNoise: "noise",
       audioNoise: "noise",
     },
@@ -214,11 +217,12 @@ export default function CreateProfilePage() {
   const handleGenerateRandomFingerprint = () => {
     // 简单模拟一套 macOS 随机指纹
     form.setValue("os", "macos")
-    form.setValue("browserVersion", "146")
-    form.setValue("userAgent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36")
+    form.setValue("browserVersion", "142.0.7444.175")
+    form.setValue("userAgent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36")
     form.setValue("hardwareConcurrency", "8")
-    form.setValue("webglVendor", "Apple")
-    form.setValue("webglRenderer", "Apple M2")
+    form.setValue("webglMode", "custom")
+    form.setValue("webglVendor", "Google Inc. (Apple)")
+    form.setValue("webglRenderer", "ANGLE (Apple, Apple M2, OpenGL 4.1)")
   }
 
   // 监听 deviceId 变化，同步覆盖指纹的地理信息
@@ -248,6 +252,35 @@ export default function CreateProfilePage() {
     });
     return () => sub.unsubscribe();
   }, [form, devices]);
+
+  // 监听内核版本和操作系统的变化，联动更新 User-Agent 和 WebGL 元数据
+  React.useEffect(() => {
+    const sub = form.watch((value, { name }) => {
+      if (name === "browserVersion" || name === "os") {
+        const currentVersion = form.getValues("browserVersion");
+        const currentOs = form.getValues("os");
+        if (currentVersion && currentOs) {
+          const majorVersion = currentVersion.split('.')[0];
+          const osString = currentOs === "macos" 
+            ? "Macintosh; Intel Mac OS X 10_15_7"
+            : "Windows NT 10.0; Win64; x64";
+            
+          form.setValue("userAgent", `Mozilla/5.0 (${osString}) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${majorVersion}.0.0.0 Safari/537.36`);
+          
+          if (name === "os") {
+            if (currentOs === "macos") {
+              form.setValue("webglVendor", "Google Inc. (Apple)");
+              form.setValue("webglRenderer", "ANGLE (Apple, Apple M2, OpenGL 4.1)");
+            } else {
+              form.setValue("webglVendor", "Google Inc. (NVIDIA)");
+              form.setValue("webglRenderer", "ANGLE (NVIDIA, NVIDIA GeForce RTX 4070 Direct3D11 vs_5_0 ps_5_0, D3D11)");
+            }
+          }
+        }
+      }
+    });
+    return () => sub.unsubscribe();
+  }, [form]);
 
   const watchOs = form.watch("os")
   const watchLanguageAuto = form.watch("languageAuto")
@@ -451,7 +484,7 @@ export default function CreateProfilePage() {
                         render={({ field }) => (
                           <FormItem className="space-y-2">
                             <FormLabel className="text-foreground">选择设备 <span className="text-destructive">*</span></FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value || "none"}>
+                            <Select key={devices.length ? "loaded" : "loading"} onValueChange={field.onChange} value={field.value || "none"}>
                               <FormControl>
                                 <SelectTrigger className="h-10">
                                   <SelectValue placeholder="请选择已配置的代理设备" />
@@ -543,15 +576,29 @@ export default function CreateProfilePage() {
                         render={({ field }) => (
                           <FormItem className="space-y-2">
                             <FormLabel className="text-foreground">内核版本</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value}>
+                            <Select onValueChange={(val) => {
+                              const defaults: Record<string, string> = {
+                                "147": "147.0.7727.102",
+                                "146": "146.0.7688.10",
+                                "145": "145.0.7454.101",
+                                "144": "144.0.7566.25",
+                                "143": "143.0.7505.100",
+                                "142": "142.0.7444.175"
+                              };
+                              field.onChange(defaults[val] || val);
+                            }} value={field.value ? field.value.split('.')[0] : "142"}>
                               <FormControl>
                                 <SelectTrigger className="h-10">
                                   <SelectValue />
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                <SelectItem value="147">147.0.7727.102 (最新)</SelectItem>
-                                <SelectItem value="146">146.0.7688.10</SelectItem>
+                                <SelectItem value="147">Chrome 147 (最新稳定版)</SelectItem>
+                                <SelectItem value="146">Chrome 146</SelectItem>
+                                <SelectItem value="145">Chrome 145</SelectItem>
+                                <SelectItem value="144">Chrome 144</SelectItem>
+                                <SelectItem value="143">Chrome 143</SelectItem>
+                                <SelectItem value="142">Chrome 142 (当前内核)</SelectItem>
                               </SelectContent>
                             </Select>
                           </FormItem>
@@ -562,17 +609,54 @@ export default function CreateProfilePage() {
                     <FormField
                       control={form.control}
                       name="userAgent"
-                      render={({ field }) => (
-                        <FormItem className="space-y-2">
-                          <FormLabel className="text-neutral-700">User-Agent</FormLabel>
-                          <FormControl>
-                            <Textarea 
-                              className="resize-none h-20 font-mono text-xs bg-muted text-foreground" 
-                              {...field}
-                            />
-                          </FormControl>
-                        </FormItem>
-                      )}
+                      render={({ field }) => {
+                        const currentFullVersion = form.watch("browserVersion") || "142.0.7444.175";
+                        const currentMajor = currentFullVersion.split('.')[0];
+                        
+                        const handleRandomizeMinorVersion = () => {
+                          if (currentMajor === "142") {
+                            const STABLE_142 = [
+                              "142.0.7444.177", "142.0.7444.176", "142.0.7444.175",
+                              "142.0.7444.164", "142.0.7444.163", "142.0.7444.162",
+                              "142.0.7444.136", "142.0.7444.135", "142.0.7444.134",
+                              "142.0.7444.61", "142.0.7444.60", "142.0.7444.59"
+                            ];
+                            const randomVer = STABLE_142[Math.floor(Math.random() * STABLE_142.length)];
+                            form.setValue("browserVersion", randomVer);
+                          } else {
+                            alert("目前仅支持为您编译的 142 内核随机切换小版本");
+                          }
+                        };
+
+                        return (
+                          <FormItem className="space-y-2">
+                            <FormLabel className="flex items-center text-neutral-700">
+                              User-Agent
+                              <span className="ml-2 text-xs text-muted-foreground font-normal">
+                                (记录小版本: {currentFullVersion})
+                              </span>
+                              {currentMajor === "142" && (
+                                <Button 
+                                  type="button" 
+                                  variant="ghost" 
+                                  size="icon" 
+                                  className="h-5 w-5 ml-1 text-muted-foreground hover:text-foreground"
+                                  onClick={handleRandomizeMinorVersion}
+                                  title="随机切换内核子版本以增加指纹多样性"
+                                >
+                                  <RiShuffleLine className="h-3 w-3" />
+                                </Button>
+                              )}
+                            </FormLabel>
+                            <FormControl>
+                              <Textarea 
+                                className="resize-none h-20 font-mono text-xs bg-muted text-foreground" 
+                                {...field}
+                              />
+                            </FormControl>
+                          </FormItem>
+                        );
+                      }}
                     />
                   </div>
 
@@ -730,32 +814,107 @@ export default function CreateProfilePage() {
                       />
                     </div>
                     
-                    <div className="space-y-2">
-                      <Label className="text-foreground">显卡厂商 & 渲染器 (WebGL Vendor & Renderer)</Label>
-                      <div className="grid grid-cols-2 gap-4">
-                        <FormField
-                          control={form.control}
-                          name="webglVendor"
-                          render={({ field }) => (
-                            <FormItem>
+                    <div className="space-y-4">
+                      <FormField
+                        control={form.control}
+                        name="webglMode"
+                        render={({ field }) => (
+                          <FormItem className="space-y-2">
+                            <FormLabel className="text-foreground">WebGL 配置</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value || "custom"}>
                               <FormControl>
-                                <Input className="h-10 bg-muted text-foreground font-mono text-xs" {...field} />
+                                <SelectTrigger className="h-10">
+                                  <SelectValue />
+                                </SelectTrigger>
                               </FormControl>
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={form.control}
-                          name="webglRenderer"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormControl>
-                                <Input className="h-10 bg-muted text-foreground font-mono text-xs" {...field} />
-                              </FormControl>
-                            </FormItem>
-                          )}
-                        />
-                      </div>
+                              <SelectContent>
+                                <SelectItem value="custom">自定义 (Custom)</SelectItem>
+                                <SelectItem value="disabled">禁用 (Disabled)</SelectItem>
+                                <SelectItem value="real">真实 (Real)</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </FormItem>
+                        )}
+                      />
+
+                      {form.watch("webglMode") === "custom" && (
+                        <div className="space-y-2 pt-2">
+                          <Label className="flex items-center text-foreground">
+                            显卡厂商 & 渲染器 (WebGL Vendor & Renderer)
+                            <Button 
+                              type="button" 
+                              variant="ghost" 
+                              size="icon" 
+                              className="h-5 w-5 ml-2 text-muted-foreground hover:text-foreground"
+                              onClick={() => {
+                                const currentOs = form.getValues("os") || "windows";
+                                if (currentOs === "windows") {
+                                  const WINDOWS_WEBGL = [
+                                    { vendor: "Google Inc. (NVIDIA)", renderer: "ANGLE (NVIDIA, NVIDIA GeForce RTX 4090 Direct3D11 vs_5_0 ps_5_0, D3D11)" },
+                                    { vendor: "Google Inc. (NVIDIA)", renderer: "ANGLE (NVIDIA, NVIDIA GeForce RTX 4080 Direct3D11 vs_5_0 ps_5_0, D3D11)" },
+                                    { vendor: "Google Inc. (NVIDIA)", renderer: "ANGLE (NVIDIA, NVIDIA GeForce RTX 4070 Ti Direct3D11 vs_5_0 ps_5_0, D3D11)" },
+                                    { vendor: "Google Inc. (NVIDIA)", renderer: "ANGLE (NVIDIA, NVIDIA GeForce RTX 4070 Direct3D11 vs_5_0 ps_5_0, D3D11)" },
+                                    { vendor: "Google Inc. (NVIDIA)", renderer: "ANGLE (NVIDIA, NVIDIA GeForce RTX 3080 Direct3D11 vs_5_0 ps_5_0, D3D11)" },
+                                    { vendor: "Google Inc. (NVIDIA)", renderer: "ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 Direct3D11 vs_5_0 ps_5_0, D3D11)" },
+                                    { vendor: "Google Inc. (NVIDIA)", renderer: "ANGLE (NVIDIA, NVIDIA GeForce RTX 3060 Direct3D11 vs_5_0 ps_5_0, D3D11)" },
+                                    { vendor: "Google Inc. (NVIDIA)", renderer: "ANGLE (NVIDIA, NVIDIA GeForce GTX 1660 Ti Direct3D11 vs_5_0 ps_5_0, D3D11)" },
+                                    { vendor: "Google Inc. (AMD)", renderer: "ANGLE (AMD, AMD Radeon RX 7900 XTX Direct3D11 vs_5_0 ps_5_0, D3D11)" },
+                                    { vendor: "Google Inc. (AMD)", renderer: "ANGLE (AMD, AMD Radeon RX 7800 XT Direct3D11 vs_5_0 ps_5_0, D3D11)" },
+                                    { vendor: "Google Inc. (AMD)", renderer: "ANGLE (AMD, AMD Radeon RX 6800 XT Direct3D11 vs_5_0 ps_5_0, D3D11)" },
+                                    { vendor: "Google Inc. (AMD)", renderer: "ANGLE (AMD, AMD Radeon RX 6700 XT Direct3D11 vs_5_0 ps_5_0, D3D11)" },
+                                    { vendor: "Google Inc. (Intel)", renderer: "ANGLE (Intel, Intel(R) UHD Graphics 770 Direct3D11 vs_5_0 ps_5_0, D3D11)" },
+                                    { vendor: "Google Inc. (Intel)", renderer: "ANGLE (Intel, Intel(R) Iris(R) Xe Graphics Direct3D11 vs_5_0 ps_5_0, D3D11)" }
+                                  ];
+                                  const random = WINDOWS_WEBGL[Math.floor(Math.random() * WINDOWS_WEBGL.length)];
+                                  form.setValue("webglVendor", random.vendor);
+                                  form.setValue("webglRenderer", random.renderer);
+                                } else {
+                                  const MACOS_WEBGL = [
+                                    { vendor: "Google Inc. (Apple)", renderer: "ANGLE (Apple, Apple M1, OpenGL 4.1)" },
+                                    { vendor: "Google Inc. (Apple)", renderer: "ANGLE (Apple, Apple M1 Pro, OpenGL 4.1)" },
+                                    { vendor: "Google Inc. (Apple)", renderer: "ANGLE (Apple, Apple M1 Max, OpenGL 4.1)" },
+                                    { vendor: "Google Inc. (Apple)", renderer: "ANGLE (Apple, Apple M2, OpenGL 4.1)" },
+                                    { vendor: "Google Inc. (Apple)", renderer: "ANGLE (Apple, Apple M2 Pro, OpenGL 4.1)" },
+                                    { vendor: "Google Inc. (Apple)", renderer: "ANGLE (Apple, Apple M2 Max, OpenGL 4.1)" },
+                                    { vendor: "Google Inc. (Apple)", renderer: "ANGLE (Apple, Apple M3, OpenGL 4.1)" },
+                                    { vendor: "Google Inc. (Apple)", renderer: "ANGLE (Apple, Apple M3 Pro, OpenGL 4.1)" }
+                                  ];
+                                  const random = MACOS_WEBGL[Math.floor(Math.random() * MACOS_WEBGL.length)];
+                                  form.setValue("webglVendor", random.vendor);
+                                  form.setValue("webglRenderer", random.renderer);
+                                }
+                              }}
+                              title="一键随机生成真实配置"
+                            >
+                              <RiShuffleLine className="h-3 w-3" />
+                            </Button>
+                          </Label>
+                          <div className="grid grid-cols-2 gap-4">
+                            <FormField
+                              control={form.control}
+                              name="webglVendor"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormControl>
+                                    <Input className="h-10 bg-muted text-foreground font-mono text-xs" {...field} />
+                                  </FormControl>
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={form.control}
+                              name="webglRenderer"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormControl>
+                                    <Input className="h-10 bg-muted text-foreground font-mono text-xs" {...field} />
+                                  </FormControl>
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+                        </div>
+                      )}
                     </div>
 
                     <div className="grid grid-cols-2 gap-y-6 gap-x-12 pt-4 border-t border-border/50">
