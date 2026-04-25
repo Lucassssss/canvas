@@ -10,7 +10,7 @@ export class EnvironmentService {
    */
   static async createEnvironment(data: any) {
     return await db.transaction(async (tx) => {
-      let deviceId = data.deviceId || null;
+      let deviceId = (data.deviceId && data.deviceId !== "none") ? data.deviceId : null;
       let accountId = null;
 
       // 2. 如果有账号信息，创建独立账号记录
@@ -35,8 +35,13 @@ export class EnvironmentService {
         webrtcReplace: data.webrtcReplace,
         geolocationAuto: data.geolocationAuto,
         languageAuto: data.languageAuto,
+        language: data.language,
+        timezone: data.timezone,
+        lat: data.lat,
+        lon: data.lon,
         hardwareConcurrency: data.hardwareConcurrency,
         deviceMemory: data.deviceMemory,
+        webglMode: data.webglMode,
         webglVendor: data.webglVendor,
         webglRenderer: data.webglRenderer,
         canvasNoise: data.canvasNoise,
@@ -74,7 +79,8 @@ export class EnvironmentService {
       .from(browserEnvironments)
       .leftJoin(devices, eq(browserEnvironments.deviceId, devices.id))
       .leftJoin(accounts, eq(browserEnvironments.accountId, accounts.id))
-      .where(eq(browserEnvironments.teamId, teamId));
+      .where(eq(browserEnvironments.teamId, teamId))
+      .orderBy(desc(browserEnvironments.createdAt));
 
     // 格式化为前端所需结构
     return results.map((row) => {
@@ -142,10 +148,15 @@ export class EnvironmentService {
       webrtcReplace: fp.webrtcReplace ?? true,
       geolocationAuto: fp.geolocationAuto ?? true,
       languageAuto: fp.languageAuto ?? true,
+      language: fp.language || "en-US,en",
+      timezone: fp.timezone || "",
+      lat: fp.lat || "",
+      lon: fp.lon || "",
       hardwareConcurrency: fp.hardwareConcurrency || "16",
       deviceMemory: fp.deviceMemory || "8",
-      webglVendor: fp.webglVendor || "NVIDIA Corporation",
-      webglRenderer: fp.webglRenderer || "NVIDIA GeForce RTX 4070",
+      webglMode: fp.webglMode || "custom",
+      webglVendor: fp.webglVendor || "Google Inc. (NVIDIA)",
+      webglRenderer: fp.webglRenderer || "ANGLE (NVIDIA, NVIDIA GeForce RTX 4070 Direct3D11 vs_5_0 ps_5_0, D3D11)",
       canvasNoise: fp.canvasNoise || "noise",
       audioNoise: fp.audioNoise || "noise",
     };
@@ -180,7 +191,7 @@ export class EnvironmentService {
       if (data.remark !== undefined) updateData.remark = data.remark;
       if (data.group !== undefined) updateData.group = data.group;
       if (data.platform !== undefined) updateData.platform = data.platform;
-      if (data.deviceId !== undefined) updateData.deviceId = data.deviceId;
+      if (data.deviceId !== undefined) updateData.deviceId = (data.deviceId && data.deviceId !== "none") ? data.deviceId : null;
 
       // 2. Update Fingerprint
       if (data.os || data.browser || data.hardwareConcurrency) {
@@ -196,8 +207,13 @@ export class EnvironmentService {
           webrtcReplace: data.webrtcReplace ?? currentFp.webrtcReplace,
           geolocationAuto: data.geolocationAuto ?? currentFp.geolocationAuto,
           languageAuto: data.languageAuto ?? currentFp.languageAuto,
+          language: data.language ?? currentFp.language,
+          timezone: data.timezone ?? currentFp.timezone,
+          lat: data.lat ?? currentFp.lat,
+          lon: data.lon ?? currentFp.lon,
           hardwareConcurrency: data.hardwareConcurrency ?? currentFp.hardwareConcurrency,
           deviceMemory: data.deviceMemory ?? currentFp.deviceMemory,
+          webglMode: data.webglMode ?? currentFp.webglMode,
           webglVendor: data.webglVendor ?? currentFp.webglVendor,
           webglRenderer: data.webglRenderer ?? currentFp.webglRenderer,
           canvasNoise: data.canvasNoise ?? currentFp.canvasNoise,
@@ -362,6 +378,15 @@ export class EnvironmentService {
     const autoLang = resolvedCountry ? (COUNTRY_LANG_MAP[resolvedCountry.toUpperCase()] || "en-US,en") : "en-US,en";
     const resolvedLang = (fp.languageAuto ? autoLang : fp.language) || "en-US,en";
 
+    // TODO: --fingerprint 总开关暂时关闭，等待与源码 patch 行为确认后再恢复
+    // 将环境 ID 转换为 32位正整数作为指纹种子 (C++ 底层 std::stoi 要求)
+    // let seedInt = 0;
+    // for (let i = 0; i < id.length; i++) {
+    //   seedInt = (seedInt << 5) - seedInt + id.charCodeAt(i);
+    //   seedInt |= 0;
+    // }
+    // const fingerprintSeed = Math.abs(seedInt).toString();
+
     const cliArgs: Record<string, string> = {
       // ── 用户数据目录 ──────────────────────────────────────
       "--user-data-dir": `D:\\ai\\canvas\\apps\\local-daemon\\profiles\\${id}`,
@@ -369,24 +394,45 @@ export class EnvironmentService {
       // ── 指纹参数 ──────────────────────────────────────────
       // ⚠️ 注意：browserVersion 必须与实际 Chromium 二进制版本一致，
       //    伪造高版本会被 Sec-CH-UA / CDP 协议版本特征检测出来。
+      // ⚠️ --fingerprint 是总开关：只要传入，就会对 Canvas/Audio/Font 等全量启用种子化噪音。
+      //    如果 Canvas 和 Audio 均为 real，则不传此参数，让宿主机 100% 真实硬件透出。
       "--fingerprint-platform": fp.os || "windows",
       "--fingerprint-brand": fp.browser || "chrome",
       "--fingerprint-brand-version": fp.browserVersion || "130",
       "--user-agent": fp.userAgent || "",
       "--fingerprint-hardware-concurrency": fp.hardwareConcurrency || "16",
 
-      // ── 稳定性 & UI 静默（已测试）────────────────────────
+      // ── RPA与自动化挂机稳定性 ────────────────────────
+      "--disable-backgrounding-occluded-windows": "",
+      "--disable-popup-blocking": "",
+      "--disable-prompt-on-repost": "",
+      "--disable-background-mode": "",
+
+      // ── 账号数据迁移与加密凭证隔离 ───────────────────
+      "--password-store": "basic",
+      "--use-mock-keychain": "",
+
+      // ── 高级防检测与指纹一致性 ────────────────────────
+      "--disable-blink-features": "AutomationControlled",
+      "--enable-blink-features": "IdleDetection",
+      "--force-color-profile": "srgb",
+      "--x-dont-nest-system-proxy": "",
+      "--origin-trial-disabled-features": "CanvasTextNg|WebAssemblyCustomDescriptors",
+
+      // ── UI与静默控制 ────────────────────────────────
+      "--disable-component-update": "",
+      "--metrics-recording-only": "",
+      "--disable-search-engine-choice-screen": "",
       "--no-first-run": "",
       "--no-default-browser-check": "",
       "--disable-extensions": "",
       "--disable-translate": "",
-      "--password-store": "basic",
 
-      // ── 后台网络 & 同步（已测试）─────────────────────────
+      // ── 后台网络 & 同步 ─────────────────────────
       "--disable-background-networking": "",
       "--disable-sync": "",
       "--dns-prefetch-disable": "",
-      "--disable-features": "DnsOverHttps,DnsHttpsSvcb,MediaRouter",
+      "--disable-features": "DnsOverHttps,DnsHttpsSvcb,MediaRouter,CalculateNativeWinOcclusion",
 
       // ── WebRTC 防泄漏（已测试）───────────────────────────
       "--disable-non-proxied-udp": "",
@@ -406,18 +452,39 @@ export class EnvironmentService {
     cliArgs["--lang"] = langPrimary;
     cliArgs["--accept-lang"] = resolvedLang;
 
-    // ── GPU 指纹：仅当平台与 GPU 品牌匹配时注入，避免矛盾特征被检测 ───────────
-    // Apple GPU (Metal) 只在 macOS 上真实存在；在 Windows 注入会造成 WebGL 参数矛盾
-    if (fp.webglVendor && fp.webglRenderer) {
-      const isAppleGpu = fp.webglVendor.toLowerCase().includes("apple");
-      const isMacOs = (fp.os || "").toLowerCase() === "macos";
-      // 只有非 Apple GPU 或平台确实是 macos 时才注入
-      if (!isAppleGpu || isMacOs) {
-        cliArgs["--fingerprint-gpu-vendor"] = fp.webglVendor;
-        cliArgs["--fingerprint-gpu-renderer"] = fp.webglRenderer;
+    // ── GPU/WebGL 指纹 ───────────────────────────────────────────────────────
+    if (fp.webglMode === "disabled") {
+      cliArgs["--disable-webgl"] = "";
+      cliArgs["--disable-3d-apis"] = "";
+    } else if (fp.webglMode === "custom" || !fp.webglMode) {
+      if (fp.webglVendor && fp.webglRenderer) {
+        const isAppleGpu = fp.webglVendor.toLowerCase().includes("apple");
+        const isMacOs = (fp.os || "").toLowerCase() === "macos";
+        if (!isAppleGpu || isMacOs) {
+          cliArgs["--fingerprint-gpu-vendor"] = fp.webglVendor;
+          cliArgs["--fingerprint-gpu-renderer"] = fp.webglRenderer;
+        }
       }
-      // 否则跳过，让 Chromium 使用宿主机真实 GPU 信息
     }
+    // webglMode=real: 不注入任何 GPU 参数，宿主机 GPU 真实透出
+
+    // TODO: --fingerprint 总开关及 --disable-spoofing 暂时全部注释，
+    //       等确认 fingerprint-chromium 各 patch 的精确行为后再恢复。
+    //       恢复逻辑参考：canvasNoise/audioNoise/webglMode 三项均 real → 不传种子；
+    //       任一为 noise → 传种子，并用 --disable-spoofing 细粒度关掉真实项。
+    //
+    // const needsNoise = fp.canvasNoise !== "real" || fp.audioNoise !== "real" || fp.webglMode === "noise";
+    // if (needsNoise) {
+    //   cliArgs["--fingerprint"] = fingerprintSeed;
+    // }
+    // if (needsNoise) {
+    //   const disableSpoofing: string[] = [];
+    //   if (fp.canvasNoise === "real") disableSpoofing.push("canvas");
+    //   if (fp.audioNoise === "real") disableSpoofing.push("audio");
+    //   if (disableSpoofing.length > 0) {
+    //     cliArgs["--disable-spoofing"] = disableSpoofing.join(",");
+    //   }
+    // }
 
     if (device && device.type !== "direct") {
       cliArgs["--proxy-server"] = `${device.type}://${device.host}:${device.port}`;
