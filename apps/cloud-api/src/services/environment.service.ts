@@ -378,14 +378,13 @@ export class EnvironmentService {
     const autoLang = resolvedCountry ? (COUNTRY_LANG_MAP[resolvedCountry.toUpperCase()] || "en-US,en") : "en-US,en";
     const resolvedLang = (fp.languageAuto ? autoLang : fp.language) || "en-US,en";
 
-    // TODO: --fingerprint 总开关暂时关闭，等待与源码 patch 行为确认后再恢复
-    // 将环境 ID 转换为 32位正整数作为指纹种子 (C++ 底层 std::stoi 要求)
-    // let seedInt = 0;
-    // for (let i = 0; i < id.length; i++) {
-    //   seedInt = (seedInt << 5) - seedInt + id.charCodeAt(i);
-    //   seedInt |= 0;
-    // }
-    // const fingerprintSeed = Math.abs(seedInt).toString();
+    // 将环境 ID 转换为 32位正整数作为指纹种子 (C++ 底层要求 32-bit int)
+    let seedInt = 0;
+    for (let i = 0; i < id.length; i++) {
+      seedInt = (seedInt << 5) - seedInt + id.charCodeAt(i);
+      seedInt |= 0;
+    }
+    const fingerprintSeed = Math.abs(seedInt).toString();
 
     const cliArgs: Record<string, string> = {
       // ── 用户数据目录 ──────────────────────────────────────
@@ -468,23 +467,26 @@ export class EnvironmentService {
     }
     // webglMode=real: 不注入任何 GPU 参数，宿主机 GPU 真实透出
 
-    // TODO: --fingerprint 总开关及 --disable-spoofing 暂时全部注释，
-    //       等确认 fingerprint-chromium 各 patch 的精确行为后再恢复。
-    //       恢复逻辑参考：canvasNoise/audioNoise/webglMode 三项均 real → 不传种子；
-    //       任一为 noise → 传种子，并用 --disable-spoofing 细粒度关掉真实项。
-    //
-    // const needsNoise = fp.canvasNoise !== "real" || fp.audioNoise !== "real" || fp.webglMode === "noise";
-    // if (needsNoise) {
-    //   cliArgs["--fingerprint"] = fingerprintSeed;
-    // }
-    // if (needsNoise) {
-    //   const disableSpoofing: string[] = [];
-    //   if (fp.canvasNoise === "real") disableSpoofing.push("canvas");
-    //   if (fp.audioNoise === "real") disableSpoofing.push("audio");
-    //   if (disableSpoofing.length > 0) {
-    //     cliArgs["--disable-spoofing"] = disableSpoofing.join(",");
-    //   }
-    // }
+    // ── --fingerprint 总开关 ──────────────────────────────────────────────────
+    // 当 canvasNoise/audioNoise 任意为 noise 时传入种子，驱动对应的像素/波形差异。
+    // 注意：此参数同时也影响 GPU 元数据生成。webglMode=real 时 GPU 会被种子随机化，
+    // 但 --fingerprint-gpu-vendor/renderer 未传，GPU 值由种子自动生成（非物理机值）。
+    // 彻底解耦 Canvas 和 GPU 控制需修改 C++ patch，详见：
+    // docs/canvas-independent-fingerprint.md
+    const needsNoise = fp.canvasNoise !== "real" || fp.audioNoise !== "real";
+    if (needsNoise) {
+      cliArgs["--fingerprint"] = fingerprintSeed;
+    }
+
+    // ── --disable-spoofing 细粒度控制 ────────────────────────────────────────
+    if (needsNoise) {
+      const disableSpoofing: string[] = [];
+      if (fp.canvasNoise === "real") disableSpoofing.push("canvas");
+      if (fp.audioNoise === "real") disableSpoofing.push("audio");
+      if (disableSpoofing.length > 0) {
+        cliArgs["--disable-spoofing"] = disableSpoofing.join(",");
+      }
+    }
 
     if (device && device.type !== "direct") {
       cliArgs["--proxy-server"] = `${device.type}://${device.host}:${device.port}`;
