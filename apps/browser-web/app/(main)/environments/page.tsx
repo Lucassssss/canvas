@@ -23,7 +23,7 @@ import {
   RiSearchLine, RiFilter3Line, RiMore2Fill, RiPlayFill, RiWindowsFill, RiAppleFill,
   RiEditLine, RiShareForwardLine, RiDeleteBinLine, RiDownload2Line, RiFileTransferLine,
   RiRobot2Line, RiSettings4Line, RiFileCopyLine, RiTiktokFill, RiAmazonFill, RiPaypalFill,
-  RiCloseCircleLine, RiCheckLine
+  RiCloseCircleLine, RiCheckLine, RiLoader4Line
 } from "@remixicon/react"
 
 const QuickEditCell = ({ value, onSave }: { value: string; onSave: (newVal: string) => void }) => {
@@ -67,6 +67,7 @@ const QuickEditCell = ({ value, onSave }: { value: string; onSave: (newVal: stri
 export default function EnvironmentsPage() {
   const [profiles, setProfiles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [startingState, setStartingState] = useState<Record<string, 'checking' | 'starting'>>({});
 
   const fetchEnvironments = async () => {
     try {
@@ -142,6 +143,12 @@ export default function EnvironmentsPage() {
 
   const handleStart = async (id: string) => {
     try {
+      // 1. 确认代理位置
+      setStartingState(prev => ({ ...prev, [id]: 'checking' }));
+      await cloudFetch(`/api/environments/${id}/check-proxy`, { method: "POST" });
+      
+      // 2. 启动浏览器
+      setStartingState(prev => ({ ...prev, [id]: 'starting' }));
       const res = await cloudFetch(`/api/environments/${id}/start`, { method: "POST" });
       const data = await res.json();
       if (data.success && data.data?.cli_args) {
@@ -156,9 +163,15 @@ export default function EnvironmentsPage() {
           console.error("Local daemon start failed", daemonData.error);
         }
       }
-      fetchEnvironments();
     } catch (error) {
       console.error("Start failed", error);
+    } finally {
+      setStartingState(prev => {
+        const next = { ...prev };
+        delete next[id];
+        return next;
+      });
+      fetchEnvironments();
     }
   }
 
@@ -296,9 +309,19 @@ export default function EnvironmentsPage() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline" className={`font-normal px-1.5 h-5 text-xs rounded-sm ${profile.status === 'running' ? 'text-green-600 border-green-200 bg-green-50 dark:bg-green-950/30 dark:border-green-900/50 dark:text-green-500' : 'text-muted-foreground border-border bg-muted/50'}`}>
-                        {profile.status === 'running' ? '运行中' : '空闲'}
-                      </Badge>
+                      {startingState[profile.id] === 'checking' ? (
+                        <Badge variant="outline" className="font-normal px-1.5 h-5 text-xs rounded-sm text-blue-600 border-blue-200 bg-blue-50 dark:bg-blue-950/30 dark:border-blue-900/50 dark:text-blue-500">
+                          <RiLoader4Line className="mr-1 h-3 w-3 animate-spin inline-block" /> 确认位置...
+                        </Badge>
+                      ) : startingState[profile.id] === 'starting' ? (
+                        <Badge variant="outline" className="font-normal px-1.5 h-5 text-xs rounded-sm text-amber-600 border-amber-200 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-900/50 dark:text-amber-500">
+                          <RiLoader4Line className="mr-1 h-3 w-3 animate-spin inline-block" /> 启动中...
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className={`font-normal px-1.5 h-5 text-xs rounded-sm ${profile.status === 'running' ? 'text-green-600 border-green-200 bg-green-50 dark:bg-green-950/30 dark:border-green-900/50 dark:text-green-500' : 'text-muted-foreground border-border bg-muted/50'}`}>
+                          {profile.status === 'running' ? '运行中' : '空闲'}
+                        </Badge>
+                      )}
                     </TableCell>
                     <TableCell>
                       <QuickEditCell value={profile.note} onSave={(val) => handleQuickEdit(profile.id, 'remark', val)} />
@@ -313,7 +336,11 @@ export default function EnvironmentsPage() {
                     <TableCell className="text-right pr-4 sticky right-0 bg-background group-hover:bg-muted/50 shadow-[-1px_0_0_rgba(0,0,0,0.05)]">
                       <div className="flex items-center justify-end">
                         <ButtonGroup className="shadow-none rounded-md">
-                          {profile.status === 'running' ? (
+                          {startingState[profile.id] ? (
+                            <Button size="sm" disabled className="h-7 bg-muted text-muted-foreground shadow-none px-3 text-xs font-normal border border-transparent">
+                              <RiLoader4Line className="mr-1 h-3 w-3 animate-spin inline-block" /> 处理中
+                            </Button>
+                          ) : profile.status === 'running' ? (
                             <Button size="sm" onClick={() => handleStop(profile.id)} className="h-7 bg-destructive hover:bg-destructive/90 text-destructive-foreground shadow-none px-3 text-xs font-normal border border-transparent">
                               关闭
                             </Button>

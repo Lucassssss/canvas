@@ -7,7 +7,7 @@ export const environmentRouter = Router();
 // GET /api/environments - 获取环境列表
 environmentRouter.get("/", async (req, res) => {
   try {
-    const list = await EnvironmentService.listEnvironments();
+    const list = await EnvironmentService.listEnvironments(req.user!.teamId);
     return ApiResponse.success(res, list);
   } catch (error: any) {
     console.error("[GET /api/environments] Error:", error);
@@ -19,7 +19,7 @@ environmentRouter.get("/", async (req, res) => {
 environmentRouter.get("/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const data = await EnvironmentService.getEnvironment(id);
+    const data = await EnvironmentService.getEnvironment(id, req.user!.teamId);
     if (!data) return ApiResponse.error(res, "Environment not found", 404);
     return ApiResponse.success(res, data);
   } catch (error: any) {
@@ -31,7 +31,7 @@ environmentRouter.get("/:id", async (req, res) => {
 // POST /api/environments - 创建环境
 environmentRouter.post("/", async (req, res) => {
   try {
-    const newEnv = await EnvironmentService.createEnvironment(req.body);
+    const newEnv = await EnvironmentService.createEnvironment({ ...req.body, teamId: req.user!.teamId });
     return ApiResponse.success(res, newEnv);
   } catch (error: any) {
     console.error("[POST /api/environments] Error:", error);
@@ -43,7 +43,7 @@ environmentRouter.post("/", async (req, res) => {
 environmentRouter.delete("/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const success = await EnvironmentService.deleteEnvironment(id);
+    const success = await EnvironmentService.deleteEnvironment(id, req.user!.teamId);
     if (!success) {
       return ApiResponse.error(res, "Environment not found", 404);
     }
@@ -58,10 +58,22 @@ environmentRouter.delete("/:id", async (req, res) => {
 environmentRouter.put("/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    await EnvironmentService.updateEnvironment(id, req.body);
+    await EnvironmentService.updateEnvironment(id, req.user!.teamId, req.body);
     return ApiResponse.success(res, null, "Environment updated");
   } catch (error: any) {
     console.error(`[PUT /api/environments/${req.params.id}] Error:`, error);
+    return ApiResponse.error(res, error.message);
+  }
+});
+
+// POST /api/environments/:id/check-proxy - 检查代理 IP 并更新设备信息
+environmentRouter.post("/:id/check-proxy", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await EnvironmentService.checkProxyIp(id, req.user!.teamId);
+    return ApiResponse.success(res, result, "Proxy checked");
+  } catch (error: any) {
+    console.error(`[POST /api/environments/${req.params.id}/check-proxy] Error:`, error);
     return ApiResponse.error(res, error.message);
   }
 });
@@ -70,7 +82,7 @@ environmentRouter.put("/:id", async (req, res) => {
 environmentRouter.post("/:id/start", async (req, res) => {
   try {
     const { id } = req.params;
-    const result = await EnvironmentService.startEnvironment(id);
+    const result = await EnvironmentService.startEnvironment(id, req.user!.teamId);
     return ApiResponse.success(res, result, "Environment started");
   } catch (error: any) {
     console.error(`[POST /api/environments/${req.params.id}/start] Error:`, error);
@@ -82,7 +94,7 @@ environmentRouter.post("/:id/start", async (req, res) => {
 environmentRouter.post("/:id/stop", async (req, res) => {
   try {
     const { id } = req.params;
-    const result = await EnvironmentService.stopEnvironment(id);
+    const result = await EnvironmentService.stopEnvironment(id, req.user!.teamId);
     return ApiResponse.success(res, result, "Environment stopped");
   } catch (error: any) {
     console.error(`[POST /api/environments/${req.params.id}/stop] Error:`, error);

@@ -3,7 +3,7 @@ import os from 'os';
 import killPort from 'kill-port';
 
 const PORT = 4003;
-const CHROME_BIN = "d:\\ai\\canvas\\apps\\browser\\chromium142\\src\\out\\Default\\chrome.exe";
+const CHROME_BIN = "e:\\chromium\\c142\\chrome.exe";
 
 // 追踪每个环境的调试端口，用于 CDP 连接
 const activeEnvs = new Map<string, { debugPort: number; ws?: WebSocket }>();
@@ -156,6 +156,7 @@ const server = Bun.serve({
                 }
 
                 console.log(`[START] 启动环境 ${id}，CDP 端口=${debugPort}`);
+                console.log(`[START] 启动环境 ${id}，命令=${cmdArgs}`);
 
                 const child = spawn(CHROME_BIN, cmdArgs, {
                     detached: true,
@@ -194,7 +195,7 @@ const server = Bun.serve({
 
                 // 2. 主动关闭 CDP WebSocket
                 if (entry?.ws) {
-                    try { entry.ws.close(); } catch {}
+                    try { entry.ws.close(); } catch { }
                 }
 
                 // 3. 强制杀进程（异步，不阻塞响应）
