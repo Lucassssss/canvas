@@ -23,8 +23,10 @@ import {
   RiSearchLine, RiFilter3Line, RiMore2Fill, RiPlayFill, RiWindowsFill, RiAppleFill,
   RiEditLine, RiShareForwardLine, RiDeleteBinLine, RiDownload2Line, RiFileTransferLine,
   RiRobot2Line, RiSettings4Line, RiFileCopyLine, RiTiktokFill, RiAmazonFill, RiPaypalFill,
-  RiCloseCircleLine, RiCheckLine, RiLoader4Line
+  RiCloseCircleLine, RiCheckLine, RiLoader4Line,
+  RiFacebookCircleFill, RiGoogleFill, RiPinterestFill, RiTwitterXFill, RiStore2Line, RiGlobalLine, RiAddLine, RiLayoutGridLine
 } from "@remixicon/react"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 const QuickEditCell = ({ value, onSave }: { value: string; onSave: (newVal: string) => void }) => {
   const [editing, setEditing] = useState(false);
@@ -64,10 +66,89 @@ const QuickEditCell = ({ value, onSave }: { value: string; onSave: (newVal: stri
   )
 }
 
+const GroupSelectCell = ({ value, groupId, groups, onSave }: { value: string; groupId: string; groups: any[]; onSave: (newVal: string) => void }) => {
+  const [editing, setEditing] = useState(false);
+  
+  if (editing) {
+    return (
+      <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+        <Select 
+          defaultOpen 
+          value={groupId || "default"}
+          onValueChange={(val) => {
+            onSave(val);
+            setEditing(false);
+          }}
+          onOpenChange={(open) => {
+            if (!open) setEditing(false);
+          }}
+        >
+          <SelectTrigger className="h-6 text-sm px-2 py-0 w-28 border-input bg-background shadow-none focus:ring-0">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="default">默认分组</SelectItem>
+            {groups.map(g => (
+              <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex items-center gap-2 group/edit cursor-pointer" onClick={() => setEditing(true)}>
+      <span className="text-sm text-foreground min-w-4 min-h-4">{value || "-"}</span>
+      <RiEditLine className="h-3.5 w-3.5 text-blue-500 opacity-0 group-hover/edit:opacity-100" />
+    </div>
+  )
+}
+
 export default function EnvironmentsPage() {
   const [profiles, setProfiles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [startingState, setStartingState] = useState<Record<string, 'checking' | 'starting'>>({});
+
+  // Selection and filtering state
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterGroupId, setFilterGroupId] = useState("all");
+  const [groups, setGroups] = useState<any[]>([]);
+
+  useEffect(() => {
+    // Fetch groups
+    const loadGroups = async () => {
+      try {
+        const res = await cloudFetch(`/api/groups`);
+        const data = await res.json();
+        if (data.success) {
+          setGroups(data.data);
+        }
+      } catch (error) {
+        console.error("Failed to fetch groups:", error);
+      }
+    };
+    loadGroups();
+  }, []);
+
+  const getPlatformDisplay = (platform: string) => {
+    switch (platform) {
+      case 'fb': return <><RiFacebookCircleFill className="w-4 h-4 text-blue-600" /> <span>Facebook</span></>;
+      case 'amz': return <><RiAmazonFill className="w-4 h-4 text-orange-500" /> <span>Amazon</span></>;
+      case 'tk': return <><RiTiktokFill className="w-4 h-4 text-foreground" /> <span>TikTok</span></>;
+      case 'paypal': return <><RiPaypalFill className="w-4 h-4 text-blue-800" /> <span>PayPal</span></>;
+      case 'google': return <><RiGoogleFill className="w-4 h-4 text-red-500" /> <span>Google</span></>;
+      case 'pinterest': return <><RiPinterestFill className="w-4 h-4 text-red-600" /> <span>Pinterest</span></>;
+      case 'x': return <><RiTwitterXFill className="w-4 h-4 text-foreground" /> <span>X (Twitter)</span></>;
+      case 'shopee': return <><RiStore2Line className="w-4 h-4 text-orange-600" /> <span>Shopee</span></>;
+      case 'lazada': return <><RiStore2Line className="w-4 h-4 text-blue-500" /> <span>Lazada</span></>;
+      case 'etsy': return <><RiStore2Line className="w-4 h-4 text-orange-400" /> <span>Etsy</span></>;
+      case 'ebay': return <><RiStore2Line className="w-4 h-4 text-blue-600" /> <span>eBay</span></>;
+      case 'aliexpress': return <><RiStore2Line className="w-4 h-4 text-red-600" /> <span>AliExpress</span></>;
+      default: return <><RiGlobalLine className="w-4 h-4 text-muted-foreground" /> <span className="text-muted-foreground">-</span></>;
+    }
+  }
 
   const fetchEnvironments = async () => {
     try {
@@ -146,7 +227,7 @@ export default function EnvironmentsPage() {
       // 1. 确认代理位置
       setStartingState(prev => ({ ...prev, [id]: 'checking' }));
       await cloudFetch(`/api/environments/${id}/check-proxy`, { method: "POST" });
-      
+
       // 2. 启动浏览器
       setStartingState(prev => ({ ...prev, [id]: 'starting' }));
       const res = await cloudFetch(`/api/environments/${id}/start`, { method: "POST" });
@@ -205,6 +286,72 @@ export default function EnvironmentsPage() {
     }
   }
 
+  const handleStartSelected = async () => {
+    if (selectedIds.size === 0) return;
+    for (const id of Array.from(selectedIds)) {
+      handleStart(id);
+    }
+  };
+
+  const handleCloseSelected = async () => {
+    if (selectedIds.size === 0) return;
+    for (const id of Array.from(selectedIds)) {
+      handleStop(id);
+    }
+  };
+
+  const handleArrangeSelected = async () => {
+    if (selectedIds.size === 0) return;
+    try {
+      await fetch(`${process.env.NEXT_PUBLIC_LOCAL_DAEMON_URL}/api/arrange`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ids: Array.from(selectedIds),
+          screenWidth: window.screen.availWidth,
+          screenHeight: window.screen.availHeight
+        })
+      });
+    } catch (error) {
+      console.error("Arrange failed", error);
+    }
+  };
+
+  const handleDeleteSelected = async () => {
+    if (selectedIds.size === 0) return;
+    if (!confirm(`确定要删除选中的 ${selectedIds.size} 个环境吗？`)) return;
+    try {
+      await Promise.all(Array.from(selectedIds).map(id => 
+        cloudFetch(`/api/environments/${id}`, { method: "DELETE" })
+      ));
+      setSelectedIds(new Set());
+      fetchEnvironments();
+    } catch (error) {
+      console.error("Delete selected failed", error);
+    }
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedIds(new Set(filteredProfiles.map(p => p.id)));
+    } else {
+      setSelectedIds(new Set());
+    }
+  };
+
+  const toggleSelect = (id: string, checked: boolean) => {
+    const newSet = new Set(selectedIds);
+    if (checked) newSet.add(id);
+    else newSet.delete(id);
+    setSelectedIds(newSet);
+  };
+
+  const filteredProfiles = profiles.filter(p => {
+    const matchGroup = filterGroupId === "all" || p.groupId === filterGroupId;
+    const matchSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) || p.id.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchGroup && matchSearch;
+  });
+
   return (
     <>
       <header className="flex h-16 shrink-0 items-center justify-between gap-2 border-b border-border bg-background px-4">
@@ -229,15 +376,26 @@ export default function EnvironmentsPage() {
       <div className="flex flex-1 flex-col p-6 overflow-y-auto gap-5 min-h-0">
         {/* Top Filter Bar */}
         <div className="flex items-center gap-3">
-          <Button variant="outline" size="sm" className="h-8 text-muted-foreground w-32 justify-between border-input">
-            全部分组
-            <span className="text-xs">▼</span>
-          </Button>
+          <Select value={filterGroupId} onValueChange={setFilterGroupId}>
+            <SelectTrigger className="h-8 w-36 bg-background border-input shadow-none text-muted-foreground">
+              <SelectValue placeholder="全部分组" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">全部分组</SelectItem>
+              <SelectItem value="default">默认分组</SelectItem>
+              {groups.map((g) => (
+                <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
           <div className="relative flex-1 max-w-md">
             <RiSearchLine className="absolute left-2.5 top-2 h-4 w-4 text-muted-foreground" />
             <Input
               type="search"
-              placeholder="搜索或新建搜索条件"
+              placeholder="搜索名称或ID"
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
               className="pl-8 h-8 text-sm bg-background border-input shadow-none focus-visible:ring-1 focus-visible:ring-primary"
             />
             <RiFilter3Line className="absolute right-2.5 top-2 h-4 w-4 text-muted-foreground" />
@@ -246,9 +404,31 @@ export default function EnvironmentsPage() {
 
         {/* Action Button Bar */}
         <div className="flex flex-wrap items-center gap-2">
-          <Button size="sm" className="h-8 bg-primary hover:bg-primary/90 text-primary-foreground px-4 shadow-none font-normal">
-            <RiPlayFill className="mr-1 h-4 w-4" /> 打开
+          <Button size="sm" onClick={() => window.location.href = '/create'} className="h-8 bg-blue-600 hover:bg-blue-700 text-white px-4 shadow-none font-normal">
+            <RiAddLine className="mr-1 h-4 w-4" /> 新建环境
           </Button>
+          <Button size="sm" onClick={handleStartSelected} variant="outline" className="h-8 text-foreground px-4 shadow-none font-normal" disabled={selectedIds.size === 0}>
+            <RiPlayFill className="mr-1 h-4 w-4" /> 打开所选 ({selectedIds.size})
+          </Button>
+          <Button size="sm" onClick={handleCloseSelected} variant="outline" className="h-8 text-foreground px-4 shadow-none font-normal" disabled={selectedIds.size === 0}>
+            <RiCloseCircleLine className="mr-1 h-4 w-4" /> 关闭所选
+          </Button>
+          <Button size="sm" onClick={handleArrangeSelected} variant="outline" className="h-8 text-foreground px-4 shadow-none font-normal" disabled={selectedIds.size === 0}>
+            <RiLayoutGridLine className="mr-1 h-4 w-4" /> 自动排列
+          </Button>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button size="sm" variant="outline" className="h-8 px-2 shadow-none" disabled={selectedIds.size === 0}>
+                <RiMore2Fill className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={handleDeleteSelected} className="text-destructive focus:bg-destructive/10 focus:text-destructive cursor-pointer">
+                <RiDeleteBinLine className="mr-2 h-4 w-4" /> 删除所选
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
         {/* Data Table Container */}
@@ -257,10 +437,17 @@ export default function EnvironmentsPage() {
             <Table>
               <TableHeader className="sticky top-0 z-10 bg-muted/50 after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[1px] after:bg-border">
                 <TableRow className="hover:bg-transparent border-0 h-12">
-                  <TableHead className="w-12 text-center pl-4"><Checkbox className="border-input" /></TableHead>
+                  <TableHead className="w-12 text-center pl-4">
+                    <Checkbox
+                      className="border-input"
+                      checked={filteredProfiles.length > 0 && selectedIds.size === filteredProfiles.length}
+                      onCheckedChange={(c) => handleSelectAll(!!c)}
+                    />
+                  </TableHead>
                   <TableHead className="w-16 font-normal text-muted-foreground">序号</TableHead>
                   <TableHead className="font-normal text-muted-foreground w-24">编号/ID</TableHead>
                   <TableHead className="font-normal text-muted-foreground">分组</TableHead>
+                  <TableHead className="font-normal text-muted-foreground">目标平台</TableHead>
                   <TableHead className="font-normal text-muted-foreground">名称</TableHead>
                   <TableHead className="font-normal text-muted-foreground">IP</TableHead>
                   <TableHead className="font-normal text-muted-foreground">最近打开</TableHead>
@@ -272,16 +459,34 @@ export default function EnvironmentsPage() {
               </TableHeader>
               <TableBody>
                 {loading ? (
-                  <TableRow><TableCell colSpan={11} className="text-center py-8 text-muted-foreground">加载中...</TableCell></TableRow>
-                ) : profiles.map((profile) => (
+                  <TableRow><TableCell colSpan={12} className="text-center py-8 text-muted-foreground">加载中...</TableCell></TableRow>
+                ) : filteredProfiles.length === 0 ? (
+                  <TableRow><TableCell colSpan={12} className="text-center py-8 text-muted-foreground">无符合条件的环境</TableCell></TableRow>
+                ) : filteredProfiles.map((profile) => (
                   <TableRow key={profile.id} className="group hover:bg-muted/50 border-b border-border/60 h-16">
-                    <TableCell className="text-center pl-4"><Checkbox className="border-input" /></TableCell>
+                    <TableCell className="text-center pl-4">
+                      <Checkbox
+                        className="border-input"
+                        checked={selectedIds.has(profile.id)}
+                        onCheckedChange={(c) => toggleSelect(profile.id, !!c)}
+                      />
+                    </TableCell>
                     <TableCell className="text-muted-foreground text-sm">{profile.index}</TableCell>
                     <TableCell className="text-muted-foreground text-xs font-mono">
                       {profile.id}
                     </TableCell>
                     <TableCell className="text-muted-foreground text-sm">
-                      <QuickEditCell value={profile.group} onSave={(val) => handleQuickEdit(profile.id, 'group', val)} />
+                      <GroupSelectCell 
+                        value={profile.group} 
+                        groupId={profile.groupId}
+                        groups={groups}
+                        onSave={(val) => handleQuickEdit(profile.id, 'groupId', val)} 
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-1">
+                        {getPlatformDisplay(profile.platform)}
+                      </div>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">

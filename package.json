@@ -8,8 +8,10 @@
   "scripts": {
     "dev": "turbo run dev",
     "dev:desktop": "turbo run dev --filter=electron",
+    "dev:browser": "turbo run dev --filter=browser-web --filter=cloud-api --filter=local-daemon --filter=desktop-base",
     "build": "turbo run build",
     "build:desktop": "turbo run build --filter=electron",
+    "build:browser": "turbo run build --filter=browser-web --filter=cloud-api --filter=local-daemon --filter=desktop-base",
     "lint": "turbo run lint",
     "clean": "turbo run clean && rm -rf node_modules",
     "desktop": "cd apps/electron && bun run start",

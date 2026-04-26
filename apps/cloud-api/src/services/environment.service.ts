@@ -1,5 +1,5 @@
 import { db } from "../db/index.js";
-import { browserEnvironments, devices, accounts } from "../db/schema.js";
+import { browserEnvironments, devices, accounts, groups } from "../db/schema.js";
 import { eq, desc, asc, sql, and } from "drizzle-orm";
 import { DeviceService } from "./device.service.js";
 
@@ -52,7 +52,7 @@ export class EnvironmentService {
       const [env] = await tx.insert(browserEnvironments).values({
         teamId: data.teamId,
         name: data.name,
-        group: data.group || "default",
+        groupId: data.groupId && data.groupId !== "default" ? data.groupId : null,
         platform: data.platform || "none",
         remark: data.remark,
         tags: [], // 默认空标签
@@ -75,10 +75,12 @@ export class EnvironmentService {
         environment: browserEnvironments,
         device: devices,
         account: accounts,
+        group: groups,
       })
       .from(browserEnvironments)
       .leftJoin(devices, eq(browserEnvironments.deviceId, devices.id))
       .leftJoin(accounts, eq(browserEnvironments.accountId, accounts.id))
+      .leftJoin(groups, eq(browserEnvironments.groupId, groups.id))
       .where(eq(browserEnvironments.teamId, teamId))
       .orderBy(desc(browserEnvironments.createdAt));
 
@@ -91,7 +93,8 @@ export class EnvironmentService {
       // 映射到前端 UNIFIED_PROFILES 类似结构
       return {
         id: env.id,
-        group: env.group,
+        groupId: row.group?.id || null,
+        group: row.group?.name || "默认分组",
         name: env.name,
         os: (env.fingerprint as any)?.os || "windows",
         ip: device?.ip || "-",
@@ -114,21 +117,24 @@ export class EnvironmentService {
       .select({
         env: browserEnvironments,
         device: devices,
-        account: accounts
+        account: accounts,
+        group: groups
       })
       .from(browserEnvironments)
       .leftJoin(devices, eq(browserEnvironments.deviceId, devices.id))
       .leftJoin(accounts, eq(browserEnvironments.accountId, accounts.id))
+      .leftJoin(groups, eq(browserEnvironments.groupId, groups.id))
       .where(and(eq(browserEnvironments.id, id), eq(browserEnvironments.teamId, teamId)));
 
     if (!results.length) return null;
-    const { env, device, account } = results[0];
+    const { env, device, account, group } = results[0];
     const fp = (env.fingerprint as any) || {};
 
     return {
       id: env.id,
       name: env.name,
-      group: env.group,
+      groupId: group?.id || null,
+      group: group?.name || "默认分组",
       platform: env.platform,
       remark: env.remark,
       username: account?.username || "",
@@ -189,7 +195,7 @@ export class EnvironmentService {
       const updateData: any = { updatedAt: new Date() };
       if (data.name !== undefined) updateData.name = data.name;
       if (data.remark !== undefined) updateData.remark = data.remark;
-      if (data.group !== undefined) updateData.group = data.group;
+      if (data.groupId !== undefined) updateData.groupId = (data.groupId && data.groupId !== "default") ? data.groupId : null;
       if (data.platform !== undefined) updateData.platform = data.platform;
       if (data.deviceId !== undefined) updateData.deviceId = (data.deviceId && data.deviceId !== "none") ? data.deviceId : null;
 
@@ -412,8 +418,8 @@ export class EnvironmentService {
       "--use-mock-keychain": "",
 
       // ── 高级防检测与指纹一致性 ────────────────────────
-      "--disable-blink-features": "AutomationControlled",
-      "--enable-blink-features": "IdleDetection",
+      // "--disable-blink-features": "AutomationControlled",
+      // "--enable-blink-features": "IdleDetection",
       "--force-color-profile": "srgb",
       "--x-dont-nest-system-proxy": "",
       "--origin-trial-disabled-features": "CanvasTextNg|WebAssemblyCustomDescriptors",

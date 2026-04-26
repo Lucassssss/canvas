@@ -210,6 +210,83 @@ const server = Bun.serve({
             }
         }
 
+        if (req.method === "POST" && url.pathname === "/api/arrange") {
+            try {
+                const body = await req.json();
+                const { ids, screenWidth = 1920, screenHeight = 1080 } = body;
+                if (!ids || !Array.isArray(ids)) {
+                    return new Response(JSON.stringify({ success: false, error: '缺少 ids 数组' }), { status: 400, headers });
+                }
+
+                const runningIds = ids.filter(id => activeEnvs.has(id));
+                const N = runningIds.length;
+                if (N === 0) {
+                    return new Response(JSON.stringify({ success: true, message: '没有需要排列的运行环境' }), { headers });
+                }
+
+                // 计算网格
+                const cols = Math.ceil(Math.sqrt(N));
+                const rows = Math.ceil(N / cols);
+                const w = Math.floor(screenWidth / cols);
+                const h = Math.floor(screenHeight / rows);
+
+                console.log(`[ARRANGE] 正在自动排列 ${N} 个窗口，网格=${cols}x${rows}，尺寸=${w}x${h}`);
+
+                const sendCDP = (ws: WebSocket, method: string, params: any = {}): Promise<any> => {
+                    return new Promise((resolve) => {
+                        const id = Math.floor(Math.random() * 100000);
+                        const listener = (event: MessageEvent) => {
+                            const data = JSON.parse(event.data.toString());
+                            if (data.id === id) {
+                                ws.removeEventListener('message', listener as EventListener);
+                                resolve(data.result);
+                            }
+                        };
+                        ws.addEventListener('message', listener as EventListener);
+                        ws.send(JSON.stringify({ id, method, params }));
+                        setTimeout(() => {
+                            ws.removeEventListener('message', listener as EventListener);
+                            resolve(null);
+                        }, 2000);
+                    });
+                };
+
+                for (let i = 0; i < N; i++) {
+                    const id = runningIds[i];
+                    const entry = activeEnvs.get(id);
+                    if (!entry?.ws) continue;
+
+                    const row = Math.floor(i / cols);
+                    const col = i % cols;
+                    const x = col * w;
+                    const y = row * h;
+
+                    try {
+                        const targets = await sendCDP(entry.ws, "Target.getTargets");
+                        if (!targets || !targets.targetInfos) continue;
+                        
+                        const pageTarget = targets.targetInfos.find((t: any) => t.type === 'page');
+                        if (!pageTarget) continue;
+
+                        const windowInfo = await sendCDP(entry.ws, "Browser.getWindowForTarget", { targetId: pageTarget.targetId });
+                        if (windowInfo && windowInfo.windowId) {
+                            await sendCDP(entry.ws, "Browser.setWindowBounds", {
+                                windowId: windowInfo.windowId,
+                                bounds: { left: x, top: y, width: w, height: h, windowState: 'normal' }
+                            });
+                        }
+                    } catch (err) {
+                        console.error(`[ARRANGE] 调整 ${id} 窗口失败`, err);
+                    }
+                }
+
+                return new Response(JSON.stringify({ success: true, message: '排列完成' }), { headers });
+            } catch (err: any) {
+                console.error("[ERROR] 自动排列失败:", err);
+                return new Response(JSON.stringify({ success: false, error: err.message }), { status: 500, headers });
+            }
+        }
+
         return new Response(JSON.stringify({ success: false, error: "Not Found" }), { status: 404, headers });
     }
 });
