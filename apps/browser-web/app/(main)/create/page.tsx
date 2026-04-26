@@ -42,14 +42,22 @@ import {
   RiShuffleLine,
   RiGlobalLine, 
   RiAppleLine, 
-  RiWindowsLine 
+  RiWindowsLine,
+  RiFacebookCircleFill,
+  RiAmazonFill,
+  RiTiktokFill,
+  RiPaypalFill,
+  RiGoogleFill,
+  RiPinterestFill,
+  RiTwitterXFill,
+  RiStore2Line
 } from "@remixicon/react"
 
 // --- Zod Schema ---
 const formSchema = z.object({
   // Basic
   name: z.string().min(1, "请输入环境名称"),
-  group: z.string().optional(),
+  groupId: z.string().optional(),
   platform: z.string().optional(),
   remark: z.string().optional(),
   // Account
@@ -86,6 +94,7 @@ export default function CreateProfilePage() {
   const [activeTab, setActiveTab] = React.useState("basic")
   const [isMounted, setIsMounted] = React.useState(false)
   const [devices, setDevices] = React.useState<any[]>([])
+  const [groups, setGroups] = React.useState<any[]>([])
 
   React.useEffect(() => {
     setIsMounted(true)
@@ -93,19 +102,26 @@ export default function CreateProfilePage() {
     const id = params.get("id")
     if (id) setEditId(id)
 
-    // Fetch devices
-    const loadDevices = async () => {
+    // Fetch devices and groups
+    const loadData = async () => {
       try {
-        const res = await cloudFetch(`/api/devices`)
-        const data = await res.json()
-        if (data.success) {
-          setDevices(data.data)
+        const [devRes, grpRes] = await Promise.all([
+          cloudFetch(`/api/devices`),
+          cloudFetch(`/api/groups`)
+        ])
+        const devData = await devRes.json()
+        const grpData = await grpRes.json()
+        if (devData.success) {
+          setDevices(devData.data)
+        }
+        if (grpData.success) {
+          setGroups(grpData.data)
         }
       } catch (err) {
-        console.error("Failed to fetch devices", err)
+        console.error("Failed to fetch data", err)
       }
     }
-    loadDevices()
+    loadData()
   }, [])
 
   React.useEffect(() => {
@@ -143,7 +159,7 @@ export default function CreateProfilePage() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
-      group: "default",
+      groupId: "default",
       platform: "none",
       remark: "",
       username: "",
@@ -371,11 +387,11 @@ export default function CreateProfilePage() {
                       />
                       <FormField
                         control={form.control}
-                        name="group"
+                        name="groupId"
                         render={({ field }) => (
                           <FormItem className="space-y-2">
                             <FormLabel className="text-foreground">所属分组</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <Select onValueChange={field.onChange} value={field.value || "default"}>
                               <FormControl>
                                 <SelectTrigger className="h-10">
                                   <SelectValue placeholder="选择分组" />
@@ -383,8 +399,9 @@ export default function CreateProfilePage() {
                               </FormControl>
                               <SelectContent>
                                 <SelectItem value="default">默认分组</SelectItem>
-                                <SelectItem value="fb">Facebook 跑量组</SelectItem>
-                                <SelectItem value="amz">亚马逊养号组</SelectItem>
+                                {groups.map(g => (
+                                  <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>
+                                ))}
                               </SelectContent>
                             </Select>
                           </FormItem>
@@ -396,17 +413,26 @@ export default function CreateProfilePage() {
                         render={({ field }) => (
                           <FormItem className="space-y-2 col-span-2">
                             <FormLabel className="text-foreground">目标平台</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <Select onValueChange={field.onChange} value={field.value || "none"}>
                               <FormControl>
                                 <SelectTrigger className="h-10">
                                   <SelectValue placeholder="选择平台 (可选)" />
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                <SelectItem value="none">无 / 自定义</SelectItem>
-                                <SelectItem value="fb">Facebook</SelectItem>
-                                <SelectItem value="amz">Amazon</SelectItem>
-                                <SelectItem value="tk">TikTok</SelectItem>
+                                <SelectItem value="none"><div className="flex items-center gap-2"><RiGlobalLine className="w-4 h-4 text-muted-foreground" /> 无 / 自定义</div></SelectItem>
+                                <SelectItem value="fb"><div className="flex items-center gap-2"><RiFacebookCircleFill className="w-4 h-4 text-blue-600" /> Facebook</div></SelectItem>
+                                <SelectItem value="amz"><div className="flex items-center gap-2"><RiAmazonFill className="w-4 h-4 text-orange-500" /> Amazon</div></SelectItem>
+                                <SelectItem value="tk"><div className="flex items-center gap-2"><RiTiktokFill className="w-4 h-4 text-black dark:text-white" /> TikTok</div></SelectItem>
+                                <SelectItem value="paypal"><div className="flex items-center gap-2"><RiPaypalFill className="w-4 h-4 text-blue-800" /> PayPal</div></SelectItem>
+                                <SelectItem value="google"><div className="flex items-center gap-2"><RiGoogleFill className="w-4 h-4 text-red-500" /> Google</div></SelectItem>
+                                <SelectItem value="pinterest"><div className="flex items-center gap-2"><RiPinterestFill className="w-4 h-4 text-red-600" /> Pinterest</div></SelectItem>
+                                <SelectItem value="x"><div className="flex items-center gap-2"><RiTwitterXFill className="w-4 h-4 text-black dark:text-white" /> X (Twitter)</div></SelectItem>
+                                <SelectItem value="shopee"><div className="flex items-center gap-2"><RiStore2Line className="w-4 h-4 text-orange-600" /> Shopee</div></SelectItem>
+                                <SelectItem value="lazada"><div className="flex items-center gap-2"><RiStore2Line className="w-4 h-4 text-blue-500" /> Lazada</div></SelectItem>
+                                <SelectItem value="etsy"><div className="flex items-center gap-2"><RiStore2Line className="w-4 h-4 text-orange-400" /> Etsy</div></SelectItem>
+                                <SelectItem value="ebay"><div className="flex items-center gap-2"><RiStore2Line className="w-4 h-4 text-blue-600" /> eBay</div></SelectItem>
+                                <SelectItem value="aliexpress"><div className="flex items-center gap-2"><RiStore2Line className="w-4 h-4 text-red-600" /> AliExpress</div></SelectItem>
                               </SelectContent>
                             </Select>
                           </FormItem>
