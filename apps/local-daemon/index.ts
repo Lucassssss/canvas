@@ -1,78 +1,363 @@
 import { spawn } from 'child_process';
 import os from 'os';
+import fs from 'fs';
+import path from 'path';
 import killPort from 'kill-port';
 
 const PORT = 4003;
 const CHROME_BIN = "e:\\chromium\\c142-5\\chrome.exe";
+const RUN_DIR = path.join(process.cwd(), '.run');
 
-// 追踪每个环境的调试端口，用于 CDP 连接
-const activeEnvs = new Map<string, { debugPort: number; ws?: WebSocket }>();
+// 确保状态目录存在
+if (!fs.existsSync(RUN_DIR)) {
+    fs.mkdirSync(RUN_DIR, { recursive: true });
+}
 
-// 分配调试端口：从 9300 开始，避免与常用 9222 冲突
+interface EnvState {
+    debugPort: number;
+    ws?: WebSocket;
+    sessionIds: Set<string>;
+    viewport?: { w: number, h: number };
+}
+
+// 追踪每个环境的状态 (内存级，辅助通信)
+const activeEnvs = new Map<string, EnvState>();
+
+// 同步会话：masterId -> followerIds
+const syncSessions = new Map<string, { followers: string[] }>();
+
+// -------------------------
+// 状态同步管理模块
+// -------------------------
+
+// 保存进程状态锁文件
+async function saveEnvState(id: string, pid: number, debugPort: number) {
+    const file = path.join(RUN_DIR, `${id}.json`);
+    await Bun.write(file, JSON.stringify({ pid, debugPort, time: Date.now() }));
+}
+
+// 删除进程状态锁文件
+async function removeEnvState(id: string) {
+    const file = path.join(RUN_DIR, `${id}.json`);
+    if (fs.existsSync(file)) {
+        await fs.promises.unlink(file).catch(() => {});
+    }
+}
+
+// 获取绝对准确的运行列表（毫秒级验证，剔除幽灵状态）
+async function getRunningEnvs(): Promise<string[]> {
+    const files = await fs.promises.readdir(RUN_DIR).catch(() => []);
+    const aliveIds: string[] = [];
+    
+    for (const file of files) {
+        if (!file.endsWith('.json')) continue;
+        const id = file.replace('.json', '');
+        const filePath = path.join(RUN_DIR, file);
+        
+        try {
+            const content = await Bun.file(filePath).text();
+            const data = JSON.parse(content);
+            
+            // 零成本保活检测 (0信号)
+            let isAlive = true;
+            try {
+                process.kill(data.pid, 0);
+            } catch (e: any) {
+                // 如果抛出错误，说明进程不存在
+                isAlive = false;
+            }
+            
+            if (isAlive) {
+                aliveIds.push(id);
+            } else {
+                // 清理幽灵状态
+                await removeEnvState(id);
+                activeEnvs.delete(id);
+            }
+        } catch (e) {
+            // 解析失败等，认为失效
+            await removeEnvState(id);
+            activeEnvs.delete(id);
+        }
+    }
+    
+    return aliveIds;
+}
+
+// 重启恢复机制：根据文件系统状态快速挂载 CDP，杜绝 wmic 扫描阻塞
+async function restoreRunningEnvs() {
+    console.log(`[INIT] 正在通过状态锁文件恢复存活环境...`);
+    const files = await fs.promises.readdir(RUN_DIR).catch(() => []);
+    
+    for (const file of files) {
+        if (!file.endsWith('.json')) continue;
+        const id = file.replace('.json', '');
+        const filePath = path.join(RUN_DIR, file);
+        
+        try {
+            const content = await Bun.file(filePath).text();
+            const data = JSON.parse(content);
+            
+            let isAlive = true;
+            try { process.kill(data.pid, 0); } catch (e) { isAlive = false; }
+            
+            if (isAlive && !activeEnvs.has(id)) {
+                console.log(`[INIT] 恢复运行中的环境: ${id} (端口: ${data.debugPort}, PID: ${data.pid})`);
+                activeEnvs.set(id, { debugPort: data.debugPort, sessionIds: new Set() });
+                startCDPWatcher(id, data.debugPort);
+            } else if (!isAlive) {
+                await removeEnvState(id);
+            }
+        } catch (e) {}
+    }
+}
+
+// 分配调试端口
 let nextDebugPort = 9300;
-function allocateDebugPort(): number {
-    // 找一个未被占用的端口
-    while ([...activeEnvs.values()].some(e => e.debugPort === nextDebugPort)) {
+async function allocateDebugPort(): Promise<number> {
+    const files = await fs.promises.readdir(RUN_DIR).catch(() => []);
+    const usedPorts = new Set<number>();
+    
+    for (const file of files) {
+        if (!file.endsWith('.json')) continue;
+        try {
+            const content = await Bun.file(path.join(RUN_DIR, file)).text();
+            usedPorts.add(JSON.parse(content).debugPort);
+        } catch(e) {}
+    }
+    
+    while (usedPorts.has(nextDebugPort)) {
         nextDebugPort++;
         if (nextDebugPort > 9400) nextDebugPort = 9300;
     }
     return nextDebugPort++;
 }
 
-/**
- * 通过 CDP WebSocket 监听 Chrome 是否关闭
- * Chrome 启动后需要等待几秒让调试端口就绪
- */
+// -------------------------
+// CDP 与底层通信
+// -------------------------
+
+const sendCDP = (ws: WebSocket, method: string, params: any = {}, sessionId?: string): Promise<any> => {
+    return new Promise((resolve) => {
+        if (!ws || ws.readyState !== WebSocket.OPEN) return resolve(null);
+        const id = Math.floor(Math.random() * 100000);
+        const listener = (event: MessageEvent) => {
+            const data = JSON.parse(event.data.toString());
+            if (data.id === id) {
+                ws.removeEventListener('message', listener as EventListener);
+                resolve(data.result);
+            }
+        };
+        ws.addEventListener('message', listener as EventListener);
+        ws.send(JSON.stringify({ id, method, params, sessionId }));
+        setTimeout(() => {
+            ws.removeEventListener('message', listener as EventListener);
+            resolve(null);
+        }, 2000);
+    });
+};
+
+function fireCDP(ws: WebSocket, method: string, params: any = {}, sessionId?: string) {
+    if (!ws || ws.readyState !== WebSocket.OPEN) return;
+    const msg = { id: Math.floor(Math.random() * 100000), method, params, sessionId };
+    ws.send(JSON.stringify(msg));
+}
+
+function handleSyncEvent(masterId: string, payload: any) {
+    const session = syncSessions.get(masterId);
+    if (!session) return;
+    
+    const masterEntry = activeEnvs.get(masterId);
+    if (!masterEntry) return;
+
+    if (payload.viewport) {
+        masterEntry.viewport = payload.viewport;
+    }
+
+    let syncCount = 0;
+    for (const fId of session.followers) {
+        const fEntry = activeEnvs.get(fId);
+        if (!fEntry?.ws || fEntry.sessionIds.size === 0 || !fEntry.viewport || !masterEntry.viewport) continue;
+        
+        const scaleX = fEntry.viewport.w / masterEntry.viewport.w;
+        const scaleY = fEntry.viewport.h / masterEntry.viewport.h;
+        const rx = Math.round(payload.x * scaleX);
+        const ry = Math.round(payload.y * scaleY);
+        
+        for (const sId of fEntry.sessionIds) {
+            syncCount++;
+            if (payload.type === 'mousemove') {
+                fireCDP(fEntry.ws, "Input.dispatchMouseEvent", { type: "mouseMoved", x: rx, y: ry }, sId);
+            } else if (payload.type === 'mousedown' || payload.type === 'mouseup') {
+                const buttonMap: any = { 0: 'left', 1: 'middle', 2: 'right' };
+                fireCDP(fEntry.ws, "Input.dispatchMouseEvent", {
+                    type: payload.type === 'mousedown' ? "mousePressed" : "mouseReleased",
+                    x: rx, y: ry, button: buttonMap[payload.button] || 'left', clickCount: 1
+                }, sId);
+            } else if (payload.type === 'wheel') {
+                fireCDP(fEntry.ws, "Input.dispatchMouseEvent", {
+                    type: "mouseWheel", x: rx, y: ry, deltaX: payload.deltaX, deltaY: payload.deltaY
+                }, sId);
+            } else if (payload.type === 'keydown' || payload.type === 'keyup') {
+                fireCDP(fEntry.ws, "Input.dispatchKeyEvent", {
+                    type: payload.type === 'keydown' ? (payload.text ? "keyDown" : "rawKeyDown") : "keyUp",
+                    windowsVirtualKeyCode: payload.keyCode, key: payload.key, code: payload.code, text: payload.text
+                }, sId);
+            }
+        }
+    }
+    
+    // 只在关键事件打印分发日志，mousemove 太多了
+    if (payload.type !== 'mousemove' && payload.type !== 'wheel') {
+        console.log(`[Daemon->Follower] 已将 ${payload.type} 分发给 ${syncCount} 个从控窗口`);
+    }
+}
+
+function handleSyncNavigation(masterId: string, url: string) {
+    const session = syncSessions.get(masterId);
+    if (!session) return;
+    for (const fId of session.followers) {
+        const fEntry = activeEnvs.get(fId);
+        if (fEntry?.ws && fEntry.sessionIds.size > 0) {
+            for (const sId of fEntry.sessionIds) {
+                fireCDP(fEntry.ws, "Page.navigate", { url }, sId);
+            }
+        }
+    }
+}
+
+const TRACKING_SCRIPT = `
+(function() {
+    if (window.__joii_sync_injected) return;
+    window.__joii_sync_injected = true;
+    let lastMoveTime = 0; let lastScrollTime = 0; const THROTTLE = 16;
+    function emit(type, event) {
+        if (!window.joiiSync) return;
+        const payload = {
+            type, x: event.clientX, y: event.clientY, deltaX: event.deltaX, deltaY: event.deltaY,
+            button: event.button, buttons: event.buttons, key: event.key, code: event.code, keyCode: event.keyCode,
+            text: event.key && event.key.length === 1 ? event.key : undefined,
+            viewport: { w: window.innerWidth, h: window.innerHeight }
+        };
+        window.joiiSync(JSON.stringify(payload));
+    }
+    window.addEventListener('mousemove', (e) => {
+        const now = Date.now();
+        if (now - lastMoveTime > THROTTLE) { lastMoveTime = now; emit('mousemove', e); }
+    }, true);
+    window.addEventListener('mousedown', (e) => emit('mousedown', e), true);
+    window.addEventListener('mouseup', (e) => emit('mouseup', e), true);
+    window.addEventListener('wheel', (e) => {
+        const now = Date.now();
+        if (now - lastScrollTime > THROTTLE) { lastScrollTime = now; emit('wheel', e); }
+    }, { capture: true, passive: true });
+    window.addEventListener('keydown', (e) => emit('keydown', e), true);
+    window.addEventListener('keyup', (e) => emit('keyup', e), true);
+})();
+`;
+
 async function startCDPWatcher(id: string, debugPort: number) {
-    // 等待 Chrome 启动并开放调试端口（最多重试 10 次，每次 1s）
     let wsUrl: string | null = null;
     for (let i = 0; i < 10; i++) {
         await Bun.sleep(1500);
         try {
-            const res = await fetch(`http://127.0.0.1:${debugPort}/json/version`, {
-                signal: AbortSignal.timeout(1000)
-            });
+            const res = await fetch(`http://127.0.0.1:${debugPort}/json/version`, { signal: AbortSignal.timeout(1000) });
             if (res.ok) {
                 const data: any = await res.json();
                 wsUrl = data.webSocketDebuggerUrl;
                 break;
             }
-        } catch {
-            // Chrome 还未就绪，继续等待
-        }
+        } catch { }
     }
 
-    if (!wsUrl) {
-        console.warn(`[CDP] 无法连接到环境 ${id} 的调试端口 ${debugPort}，放弃监听`);
-        return;
-    }
-
-    console.log(`[CDP] 已连接到环境 ${id} 的调试通道 (port=${debugPort})`);
-
+    if (!wsUrl) return console.warn(`[CDP] 无法连接到环境 ${id}，可能已退出`);
+    
     const ws = new WebSocket(wsUrl);
-
-    ws.onopen = () => {
-        // 将 ws 存入 map，方便 stop 时主动关闭
+    ws.onopen = async () => {
         const entry = activeEnvs.get(id);
         if (entry) entry.ws = ws;
+
+        // 让浏览器自动为所有新老 Target (Page/iframe) 进行附加
+        await sendCDP(ws, "Target.setAutoAttach", { 
+            autoAttach: true, 
+            waitForDebuggerOnStart: true, 
+            flatten: true 
+        });
+        
+        console.log(`[CDP] 环境 ${id} 已开启全局 Target 自动追踪`);
     };
 
-    ws.onclose = () => {
-        const entry = activeEnvs.get(id);
-        if (!entry) return; // 已被 /api/stop 主动清理
+    ws.addEventListener('message', async (event: MessageEvent) => {
+        const data = JSON.parse(event.data.toString());
+        
+        // 当自动追踪到任何一个新的 Target（如页面跳转、新开标签页、跨域 iframe）时
+        if (data.method === "Target.attachedToTarget") {
+            const sessionId = data.params.sessionId;
+            const targetInfo = data.params.targetInfo;
+            
+            if (targetInfo.type === 'page') {
+                const entry = activeEnvs.get(id);
+                if (entry) {
+                    entry.sessionIds.add(sessionId);
+                }
+                
+                await sendCDP(ws, "Runtime.enable", {}, sessionId);
+                await sendCDP(ws, "Page.enable", {}, sessionId);
+                await sendCDP(ws, "Runtime.addBinding", { name: "joiiSync" }, sessionId);
+                await sendCDP(ws, "Page.addScriptToEvaluateOnNewDocument", { source: TRACKING_SCRIPT }, sessionId);
+                await sendCDP(ws, "Runtime.evaluate", { expression: TRACKING_SCRIPT }, sessionId);
+                
+                console.log(`[CDP] 环境 ${id} 成功注入脚本到新目标: ${targetInfo.url}`);
+                
+                if (entry) {
+                    const vpRes = await sendCDP(ws, "Runtime.evaluate", { expression: "({ w: window.innerWidth, h: window.innerHeight })", returnByValue: true }, sessionId);
+                    if (vpRes?.result?.value) entry.viewport = vpRes.result.value;
+                }
+            }
+            // 所有 target（无论是否是 page）如果被暂停了，都需要恢复执行
+            if (data.params.waitingForDebugger) {
+                await sendCDP(ws, "Runtime.runIfWaitingForDebugger", {}, sessionId);
+            }
+        }
+        
+        // 当 Target 被销毁时清理
+        if (data.method === "Target.detachedFromTarget") {
+            const sessionId = data.params.sessionId;
+            const entry = activeEnvs.get(id);
+            if (entry) {
+                entry.sessionIds.delete(sessionId);
+            }
+        }
 
-        // daemon 只负责进程状态管理，不调用任何业务 API
-        // 前端通过轮询 /api/status 与 cloud-api 做状态对账
-        console.log(`[CDP] 环境 ${id} 浏览器已关闭，已从运行列表移除`);
+        if (data.method === "Page.frameNavigated" && data.params?.frame) {
+            if (!data.params.frame.parentId && syncSessions.has(id)) { 
+                handleSyncNavigation(id, data.params.frame.url);
+            }
+        }
+        if (data.method === "Runtime.bindingCalled" && data.params?.name === "joiiSync") {
+            try { 
+                const payload = JSON.parse(data.params.payload);
+                // 打印关键日志（只打印 master 避免日志刷屏）
+                if (syncSessions.has(id)) {
+                    console.log(`[CDP->Daemon] 捕获主控(${id})操作: ${payload.type} x:${payload.x || '-'} y:${payload.y || '-'}`);
+                }
+                handleSyncEvent(id, payload); 
+            } catch(e) { }
+        }
+    });
+
+    ws.onclose = async () => {
         activeEnvs.delete(id);
+        await removeEnvState(id); // 退出时同步清理文件状态
+        syncSessions.delete(id);
+        for (const [mId, session] of syncSessions.entries()) {
+            session.followers = session.followers.filter(f => f !== id);
+        }
+        console.log(`[CDP] 环境 ${id} 连接已断开`);
     };
-
     ws.onerror = () => ws.close();
 }
 
-/**
- * 通过 wmic + taskkill 强制杀掉所有匹配该 profile 的 Chrome 进程
- */
 async function killChromiumByProfile(profileId: string): Promise<void> {
     if (os.platform() !== 'win32') return;
     try {
@@ -85,24 +370,19 @@ async function killChromiumByProfile(profileId: string): Promise<void> {
 
         const pids = [...text.matchAll(/ProcessId=(\d+)/g)].map(m => m[1]);
         for (const pid of pids) {
-            const k = Bun.spawn(["taskkill", "/F", "/T", "/PID", pid], {
-                stdout: "pipe", stderr: "pipe", windowsHide: true
-            });
+            const k = Bun.spawn(["taskkill", "/F", "/T", "/PID", pid], { stdout: "pipe", stderr: "pipe", windowsHide: true });
             await k.exited;
-            console.log(`[KILL] taskkill PID=${pid} done`);
         }
-    } catch (err) {
-        console.error("[KILL] error:", err);
-    }
+    } catch (err) { }
 }
 
-// 启动前确保端口未被占用（使用成熟的 kill-port 库解决跨平台问题）
-try {
-    console.log(`[INIT] 正在检测并释放端口 ${PORT}...`);
-    await killPort(PORT, 'tcp');
-} catch (e) {
-    // 忽略错误，可能原本就没有占用
-}
+// -------------------------
+// 服务启动
+// -------------------------
+
+try { await killPort(PORT, 'tcp'); } catch (e) { }
+
+await restoreRunningEnvs();
 
 const server = Bun.serve({
     port: PORT,
@@ -126,37 +406,30 @@ const server = Bun.serve({
         };
 
         if (req.method === "GET" && url.pathname === "/api/status") {
-            const runningEnvs = Array.from(activeEnvs.keys());
+            // 获取最新绝对存活的环境 ID 列表
+            const runningEnvs = await getRunningEnvs();
             return new Response(JSON.stringify({ success: true, runningEnvs }), { headers });
         }
 
         if (req.method === "POST" && url.pathname === "/api/start") {
             try {
-                const body = await req.json();
-                const { id, cli_args } = body;
-
-                if (!id || !cli_args) {
-                    return new Response(JSON.stringify({ success: false, error: '缺少环境 id 或 cli_args 参数' }), { status: 400, headers });
+                const { id, cli_args } = await req.json();
+                if (!id || !cli_args) return new Response(JSON.stringify({ success: false, error: '缺少参数' }), { status: 400, headers });
+                
+                // 双重校验：内存 + 文件级锁
+                const runningEnvs = await getRunningEnvs();
+                if (runningEnvs.includes(id)) {
+                    return new Response(JSON.stringify({ success: false, error: '环境已运行' }), { status: 400, headers });
                 }
 
-                if (activeEnvs.has(id)) {
-                    return new Response(JSON.stringify({ success: false, error: '该环境已经在运行中' }), { status: 400, headers });
-                }
-
-                // 先清理残留进程
                 await killChromiumByProfile(id);
-
-                const debugPort = allocateDebugPort();
-
-                // 注入 CDP 调试端口参数
+                const debugPort = await allocateDebugPort();
+                
                 const cmdArgs: string[] = [`--remote-debugging-port=${debugPort}`];
                 for (const [key, value] of Object.entries(cli_args)) {
                     if (value === "") cmdArgs.push(`${key}`);
                     else cmdArgs.push(`${key}=${value}`);
                 }
-
-                console.log(`[START] 启动环境 ${id}，CDP 端口=${debugPort}`);
-                console.log(`[START] 启动环境 ${id}，${CHROME_BIN + ' ' + cmdArgs.join(' ')}`);
 
                 const child = spawn(CHROME_BIN, cmdArgs, {
                     detached: true,
@@ -165,91 +438,94 @@ const server = Bun.serve({
                 });
                 child.unref();
 
-                // 记录环境
-                activeEnvs.set(id, { debugPort });
-
-                // 异步启动 CDP 监听（不阻塞本次响应）
+                // 更新状态 (内存 + 落地文件锁)
+                if (child.pid) {
+                    await saveEnvState(id, child.pid, debugPort);
+                }
+                activeEnvs.set(id, { debugPort, sessionIds: new Set() });
                 startCDPWatcher(id, debugPort);
 
-                return new Response(JSON.stringify({ success: true, id, pid: child.pid }), { headers });
+                return new Response(JSON.stringify({ success: true, id }), { headers });
             } catch (err: any) {
-                console.error("[ERROR] 启动失败:", err);
                 return new Response(JSON.stringify({ success: false, error: err.message }), { status: 500, headers });
             }
         }
 
         if (req.method === "POST" && url.pathname === "/api/stop") {
             try {
-                const body = await req.json();
-                const { id } = body;
+                const { id } = await req.json();
+                if (!id) return new Response(JSON.stringify({ success: false, error: '缺少 id' }), { status: 400, headers });
 
-                if (!id) {
-                    return new Response(JSON.stringify({ success: false, error: '缺少环境 id' }), { status: 400, headers });
-                }
-
-                console.log(`[STOP] 强制关闭环境 ${id}...`);
-
-                // 1. 先从 map 中移除，防止 CDP onclose 重复触发状态同步
                 const entry = activeEnvs.get(id);
                 activeEnvs.delete(id);
+                await removeEnvState(id); // 删除锁文件
+                syncSessions.delete(id);
+                if (entry?.ws) { try { entry.ws.close(); } catch { } }
 
-                // 2. 主动关闭 CDP WebSocket
-                if (entry?.ws) {
-                    try { entry.ws.close(); } catch { }
+                killChromiumByProfile(id).catch(() => {});
+                return new Response(JSON.stringify({ success: true }), { headers });
+            } catch (err: any) {
+                return new Response(JSON.stringify({ success: false, error: err.message }), { status: 500, headers });
+            }
+        }
+
+        if (req.method === "POST" && url.pathname === "/api/sync/start") {
+            try {
+                const { masterId, followerIds } = await req.json();
+                if (!masterId || !followerIds || !Array.isArray(followerIds)) {
+                    return new Response(JSON.stringify({ success: false, error: '参数错误' }), { status: 400, headers });
+                }
+                
+                const runningEnvs = await getRunningEnvs();
+                if (!runningEnvs.includes(masterId)) {
+                    return new Response(JSON.stringify({ success: false, error: '主控环境未运行' }), { status: 400, headers });
                 }
 
-                // 3. 强制杀进程（异步，不阻塞响应）
-                killChromiumByProfile(id).then(() => {
-                    console.log(`[STOP] 环境 ${id} 进程清理完成`);
-                }).catch(console.error);
+                // 强制刷新一次所有参与者的 viewport
+                for (const id of [masterId, ...followerIds]) {
+                    const entry = activeEnvs.get(id);
+                    if (entry?.ws && entry.sessionIds.size > 0) {
+                        for (const sId of entry.sessionIds) {
+                            const vpRes = await sendCDP(entry.ws, "Runtime.evaluate", { expression: "({ w: window.innerWidth, h: window.innerHeight })", returnByValue: true }, sId);
+                            if (vpRes?.result?.value) {
+                                entry.viewport = vpRes.result.value;
+                            }
+                        }
+                    }
+                }
 
-                return new Response(JSON.stringify({ success: true, message: '环境已停止' }), { headers });
+                syncSessions.set(masterId, { followers: followerIds });
+                console.log(`[SYNC] 开始同步: Master=${masterId}, Followers=${followerIds.join(',')}`);
+
+                return new Response(JSON.stringify({ success: true }), { headers });
             } catch (err: any) {
-                console.error("[ERROR] 停止失败:", err);
+                return new Response(JSON.stringify({ success: false, error: err.message }), { status: 500, headers });
+            }
+        }
+
+        if (req.method === "POST" && url.pathname === "/api/sync/stop") {
+            try {
+                const { masterId } = await req.json();
+                syncSessions.delete(masterId);
+                console.log(`[SYNC] 停止同步: Master=${masterId}`);
+                return new Response(JSON.stringify({ success: true }), { headers });
+            } catch (err: any) {
                 return new Response(JSON.stringify({ success: false, error: err.message }), { status: 500, headers });
             }
         }
 
         if (req.method === "POST" && url.pathname === "/api/arrange") {
             try {
-                const body = await req.json();
-                const { ids, screenWidth = 1920, screenHeight = 1080 } = body;
-                if (!ids || !Array.isArray(ids)) {
-                    return new Response(JSON.stringify({ success: false, error: '缺少 ids 数组' }), { status: 400, headers });
-                }
-
-                const runningIds = ids.filter(id => activeEnvs.has(id));
+                const { ids, screenWidth = 1920, screenHeight = 1080 } = await req.json();
+                const runningEnvs = await getRunningEnvs();
+                const runningIds = (ids || []).filter((id: string) => runningEnvs.includes(id));
                 const N = runningIds.length;
-                if (N === 0) {
-                    return new Response(JSON.stringify({ success: true, message: '没有需要排列的运行环境' }), { headers });
-                }
+                if (N === 0) return new Response(JSON.stringify({ success: true }), { headers });
 
-                // 计算网格
                 const cols = Math.ceil(Math.sqrt(N));
                 const rows = Math.ceil(N / cols);
                 const w = Math.floor(screenWidth / cols);
                 const h = Math.floor(screenHeight / rows);
-
-                console.log(`[ARRANGE] 正在自动排列 ${N} 个窗口，网格=${cols}x${rows}，尺寸=${w}x${h}`);
-
-                const sendCDP = (ws: WebSocket, method: string, params: any = {}): Promise<any> => {
-                    return new Promise((resolve) => {
-                        const id = Math.floor(Math.random() * 100000);
-                        const listener = (event: MessageEvent) => {
-                            const data = JSON.parse(event.data.toString());
-                            if (data.id === id) {
-                                ws.removeEventListener('message', listener as EventListener);
-                                resolve(data.result);
-                            }
-                        };
-                        ws.addEventListener('message', listener as EventListener);
-                        ws.send(JSON.stringify({ id, method, params }));
-                        setTimeout(() => {
-                            ws.removeEventListener('message', listener as EventListener);
-                            resolve(null);
-                        }, 2000);
-                    });
-                };
 
                 for (let i = 0; i < N; i++) {
                     const id = runningIds[i];
@@ -263,9 +539,7 @@ const server = Bun.serve({
 
                     try {
                         const targets = await sendCDP(entry.ws, "Target.getTargets");
-                        if (!targets || !targets.targetInfos) continue;
-                        
-                        const pageTarget = targets.targetInfos.find((t: any) => t.type === 'page');
+                        const pageTarget = targets?.targetInfos?.find((t: any) => t.type === 'page');
                         if (!pageTarget) continue;
 
                         const windowInfo = await sendCDP(entry.ws, "Browser.getWindowForTarget", { targetId: pageTarget.targetId });
@@ -275,14 +549,11 @@ const server = Bun.serve({
                                 bounds: { left: x, top: y, width: w, height: h, windowState: 'normal' }
                             });
                         }
-                    } catch (err) {
-                        console.error(`[ARRANGE] 调整 ${id} 窗口失败`, err);
-                    }
+                    } catch (err) { }
                 }
 
-                return new Response(JSON.stringify({ success: true, message: '排列完成' }), { headers });
+                return new Response(JSON.stringify({ success: true }), { headers });
             } catch (err: any) {
-                console.error("[ERROR] 自动排列失败:", err);
                 return new Response(JSON.stringify({ success: false, error: err.message }), { status: 500, headers });
             }
         }
@@ -294,6 +565,6 @@ const server = Bun.serve({
 console.log(`============================================`);
 console.log(`🚀 Joii Berry Local Daemon 启动成功`);
 console.log(`📡 监听端口: http://localhost:${server.port}`);
-console.log(`🚀 浏览器目录: ${CHROME_BIN}`);
-console.log(`🔗 无状态调度 + CDP 浏览器状态感知`);
+console.log(`🚀 文件级 PID 状态锁挂载: ${RUN_DIR}`);
+console.log(`🔗 零阻塞稳定调度 + 精准状态感知`);
 console.log(`============================================`);
