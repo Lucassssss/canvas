@@ -18,12 +18,14 @@
     "typescript": "^5"
   },
   "dependencies": {
+    "agent-browser": "^0.26.0",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "drizzle-orm": "^0.45.2",
     "express": "^4.21.2",
     "kill-port": "^2.0.1",
     "kill-port-fast": "^0.2.3",
+    "playwright-core": "^1.59.1",
     "postgres": "^3.4.9"
   }
 }

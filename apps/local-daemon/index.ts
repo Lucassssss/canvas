@@ -1,4 +1,6 @@
-import { spawn } from 'child_process';
+import { spawn, exec } from 'child_process';
+import { promisify } from 'util';
+const execAsync = promisify(exec);
 import os from 'os';
 import fs from 'fs';
 import path from 'path';
@@ -7,6 +9,9 @@ import killPort from 'kill-port';
 const PORT = 4003;
 const CHROME_BIN = "e:\\chromium\\c142-5\\chrome.exe";
 const RUN_DIR = path.join(process.cwd(), '.run');
+const AGENT_BROWSER_BIN = os.platform() === 'win32' 
+    ? path.join(process.cwd(), 'node_modules', '.bin', 'agent-browser.exe')
+    : path.join(process.cwd(), 'node_modules', '.bin', 'agent-browser');
 
 // 确保状态目录存在
 if (!fs.existsSync(RUN_DIR)) {
@@ -25,6 +30,73 @@ const activeEnvs = new Map<string, EnvState>();
 
 // 同步会话：masterId -> followerIds
 const syncSessions = new Map<string, { followers: string[] }>();
+
+// 命令队列缓冲 (RPA 级排队)
+interface SyncCommand {
+    type: 'click' | 'fill' | 'press' | 'scroll' | 'mousemove';
+    selector?: string;
+    value?: string;
+    key?: string;
+    direction?: 'down' | 'up';
+    amount?: number;
+    x?: number;
+    y?: number;
+}
+const commandQueues = new Map<string, SyncCommand[]>();
+const isProcessing = new Set<string>();
+
+async function processQueue(followerId: string) {
+    if (isProcessing.has(followerId)) return;
+    isProcessing.add(followerId);
+    
+    const followerEntry = activeEnvs.get(followerId);
+    if (!followerEntry) {
+        isProcessing.delete(followerId);
+        return;
+    }
+    
+    const queue = commandQueues.get(followerId);
+    if (!queue) {
+        isProcessing.delete(followerId);
+        return;
+    }
+    
+    while (queue.length > 0) {
+        const cmd = queue.shift();
+        if (!cmd) continue;
+        
+        let cliCommand = "";
+        
+        // 按照用户约定的规范语义拼接 agent-browser CLI 指令
+        if (cmd.type === 'click' && cmd.selector) {
+            cliCommand = `"${AGENT_BROWSER_BIN}" --cdp ${followerEntry.debugPort} click "${cmd.selector}"`;
+        } else if (cmd.type === 'fill' && cmd.selector) {
+            const escaped = (cmd.value || '').replace(/"/g, '\\"');
+            cliCommand = `"${AGENT_BROWSER_BIN}" --cdp ${followerEntry.debugPort} fill "${cmd.selector}" "${escaped}"`;
+        } else if (cmd.type === 'press' && cmd.key) {
+            cliCommand = `"${AGENT_BROWSER_BIN}" --cdp ${followerEntry.debugPort} press "${cmd.key}"`;
+        } else if (cmd.type === 'scroll') {
+            cliCommand = `"${AGENT_BROWSER_BIN}" --cdp ${followerEntry.debugPort} scroll ${cmd.direction} ${cmd.amount}`;
+        }
+        
+        if (cliCommand) {
+            console.log(`\n=================================================`);
+            console.log(`[QUEUE_EXEC] 从控(${followerId}) 即将执行:`);
+            console.log(`> ${cliCommand}`);
+            const startTime = Date.now();
+            try {
+                // 增加 15 秒超时机制，防止单个命令卡死整个队列 (并自动杀掉僵尸进程)
+                await execAsync(cliCommand, { timeout: 15000 });
+                console.log(`[QUEUE_EXEC] 从控(${followerId}) 执行成功，耗时 ${Date.now() - startTime}ms`);
+            } catch (err: any) {
+                console.error(`[QUEUE_ERROR] 从控(${followerId}) 执行失败: ${err.message}`);
+            }
+            console.log(`=================================================\n`);
+        }
+    }
+    
+    isProcessing.delete(followerId);
+}
 
 // -------------------------
 // 状态同步管理模块
@@ -153,7 +225,7 @@ const sendCDP = (ws: WebSocket, method: string, params: any = {}, sessionId?: st
         setTimeout(() => {
             ws.removeEventListener('message', listener as EventListener);
             resolve(null);
-        }, 2000);
+        }, 3000);
     });
 };
 
@@ -170,58 +242,59 @@ function handleSyncEvent(masterId: string, payload: any) {
     const masterEntry = activeEnvs.get(masterId);
     if (!masterEntry) return;
 
-    if (payload.viewport) {
-        masterEntry.viewport = payload.viewport;
-    }
-
     let syncCount = 0;
     for (const fId of session.followers) {
         const fEntry = activeEnvs.get(fId);
-        if (!fEntry?.ws || fEntry.sessionIds.size === 0 || !fEntry.viewport || !masterEntry.viewport) continue;
+        if (!fEntry?.ws) continue;
         
-        const scaleX = fEntry.viewport.w / masterEntry.viewport.w;
-        const scaleY = fEntry.viewport.h / masterEntry.viewport.h;
-        const rx = Math.round(payload.x * scaleX);
-        const ry = Math.round(payload.y * scaleY);
-        
-        for (const sId of fEntry.sessionIds) {
-            syncCount++;
-            if (payload.type === 'mousemove') {
-                fireCDP(fEntry.ws, "Input.dispatchMouseEvent", { type: "mouseMoved", x: rx, y: ry }, sId);
-            } else if (payload.type === 'mousedown' || payload.type === 'mouseup') {
-                const buttonMap: any = { 0: 'left', 1: 'middle', 2: 'right' };
-                fireCDP(fEntry.ws, "Input.dispatchMouseEvent", {
-                    type: payload.type === 'mousedown' ? "mousePressed" : "mouseReleased",
-                    x: rx, y: ry, button: buttonMap[payload.button] || 'left', clickCount: 1
-                }, sId);
-            } else if (payload.type === 'wheel') {
-                fireCDP(fEntry.ws, "Input.dispatchMouseEvent", {
-                    type: "mouseWheel", x: rx, y: ry, deltaX: payload.deltaX, deltaY: payload.deltaY
-                }, sId);
-            } else if (payload.type === 'keydown' || payload.type === 'keyup') {
-                fireCDP(fEntry.ws, "Input.dispatchKeyEvent", {
-                    type: payload.type === 'keydown' ? (payload.text ? "keyDown" : "rawKeyDown") : "keyUp",
-                    windowsVirtualKeyCode: payload.keyCode, key: payload.key, code: payload.code, text: payload.text
-                }, sId);
-            }
+        if (!commandQueues.has(fId)) {
+            commandQueues.set(fId, []);
         }
+        const queue = commandQueues.get(fId)!;
+        
+        // 翻译前端收集到的事件
+        if (payload.type === 'click') {
+            queue.push({ type: 'click', selector: payload.selector });
+        } else if (payload.type === 'fill') {
+            queue.push({ type: 'fill', selector: payload.selector, value: payload.value });
+        } else if (payload.type === 'keydown' && payload.key) {
+            // 过滤无意义的修饰键
+            if (['Shift', 'Control', 'Alt', 'Meta'].includes(payload.key)) continue;
+            queue.push({ type: 'press', key: payload.key });
+        } else if (payload.type === 'wheel') {
+            queue.push({ type: 'scroll', direction: payload.deltaY > 0 ? 'down' : 'up', amount: Math.abs(payload.deltaY) });
+        }
+        
+        syncCount++;
+        // 异步触发队列消费，不阻塞当前主线程
+        processQueue(fId).catch(() => {});
     }
     
-    // 只在关键事件打印分发日志，mousemove 太多了
     if (payload.type !== 'mousemove' && payload.type !== 'wheel') {
-        console.log(`[Daemon->Follower] 已将 ${payload.type} 分发给 ${syncCount} 个从控窗口`);
+        console.log(`[Daemon->Queue] 已将 ${payload.type} (Selector: ${payload.selector}) 指令推入 ${syncCount} 个从控队列`);
     }
 }
 
+const lastNavUrls = new Map<string, string>();
+
 function handleSyncNavigation(masterId: string, url: string) {
+    if (url.startsWith('chrome://') || url.startsWith('edge://') || url === 'about:blank') return;
+    
+    // 防重复跳转 (针对单页应用或 hash 变化引发的乱跳)
+    const lastUrl = lastNavUrls.get(masterId);
+    if (lastUrl === url) return;
+    lastNavUrls.set(masterId, url);
+
     const session = syncSessions.get(masterId);
     if (!session) return;
     for (const fId of session.followers) {
         const fEntry = activeEnvs.get(fId);
-        if (fEntry?.ws && fEntry.sessionIds.size > 0) {
-            for (const sId of fEntry.sessionIds) {
-                fireCDP(fEntry.ws, "Page.navigate", { url }, sId);
-            }
+        if (fEntry?.ws) {
+            if (!commandQueues.has(fId)) commandQueues.set(fId, []);
+            const cliCommand = `"${AGENT_BROWSER_BIN}" --cdp ${fEntry.debugPort} open "${url}"`;
+            console.log(`[QUEUE] 添加跳转指令: ${cliCommand}`);
+            commandQueues.get(fId)!.push({ type: 'fill', selector: 'IGNORE_ME', value: 'PLACEHOLDER_FOR_SYNC' }); // 维持队列状态标志
+            execAsync(cliCommand).catch(e => console.error(`[QUEUE ERROR] 跳转失败: ${e.message}`));
         }
     }
 }
@@ -230,29 +303,158 @@ const TRACKING_SCRIPT = `
 (function() {
     if (window.__joii_sync_injected) return;
     window.__joii_sync_injected = true;
-    let lastMoveTime = 0; let lastScrollTime = 0; const THROTTLE = 16;
-    function emit(type, event) {
-        if (!window.joiiSync) return;
-        const payload = {
-            type, x: event.clientX, y: event.clientY, deltaX: event.deltaX, deltaY: event.deltaY,
-            button: event.button, buttons: event.buttons, key: event.key, code: event.code, keyCode: event.keyCode,
-            text: event.key && event.key.length === 1 ? event.key : undefined,
-            viewport: { w: window.innerWidth, h: window.innerHeight }
-        };
-        window.joiiSync(JSON.stringify(payload));
+    
+    // 强制打印，不带颜色以防被过滤
+    console.log("[JoiiSync] 核心语义录制引擎已成功注入 - " + location.href);
+    
+    const originalDebug = console.debug;
+    
+    // 采用双通道发送：如果 binding 丢失，则通过隐秘的 console.debug 通道触发 Runtime.consoleAPICalled
+    function sendSyncEvent(payload) {
+        payload.__joii_sync_payload = true;
+        const msg = JSON.stringify(payload);
+        if (typeof window.joiiSync === 'function') {
+            window.joiiSync(msg);
+        } else {
+            originalDebug.call(console, msg);
+        }
     }
-    window.addEventListener('mousemove', (e) => {
-        const now = Date.now();
-        if (now - lastMoveTime > THROTTLE) { lastMoveTime = now; emit('mousemove', e); }
+
+    // 向上寻找最近的可点击容器，避免点到 svg/span 导致 Playwright 执行失败
+    function getClickableTarget(el) {
+        let current = el;
+        while (current && current !== document.body && current.nodeType === 1) {
+            const tag = current.tagName.toLowerCase();
+            if (['a', 'button', 'input', 'select', 'textarea'].includes(tag) || 
+                current.getAttribute('role') === 'button' || 
+                current.getAttribute('role') === 'link' ||
+                current.hasAttribute('tabindex')) {
+                return current;
+            }
+            current = current.parentNode;
+        }
+        return el;
+    }
+
+    // 标准 CSS Selector 计算器 (强化语义定位，防元素偏移)
+    function getSelector(el) {
+        if (!el || el.nodeType !== 1) return '';
+        if (el.tagName.toLowerCase() === 'html') return 'html';
+        if (el.tagName.toLowerCase() === 'body') return 'body';
+
+        // 优先级 1: 具有唯一意义的业务属性
+        const uniqueAttrs = ['data-testid', 'data-cy', 'data-id', 'name', 'placeholder'];
+        for (const attr of uniqueAttrs) {
+            if (el.hasAttribute(attr)) {
+                const val = el.getAttribute(attr);
+                if (val) return \`\${el.tagName.toLowerCase()}[\${attr}="\${CSS.escape(val)}"]\`;
+            }
+        }
+        
+        // 优先级 2: 具有明确指向性的链接
+        if (el.tagName.toLowerCase() === 'a' && el.hasAttribute('href')) {
+            const href = el.getAttribute('href');
+            if (href && href.startsWith('/')) return \`a[href="\${CSS.escape(href)}"]\`;
+        }
+
+        // 优先级 3: 规整的 ID
+        if (el.id && !/^[0-9]/.test(el.id)) return '#' + CSS.escape(el.id);
+
+        let path = [];
+        while (el && el.nodeType === 1) {
+            let selector = el.nodeName.toLowerCase();
+            if (el.id && !/^[0-9]/.test(el.id)) {
+                selector = '#' + CSS.escape(el.id);
+                path.unshift(selector);
+                break;
+            } else {
+                let sib = el, nth = 1;
+                while (sib = sib.previousElementSibling) {
+                    if (sib.nodeName.toLowerCase() === selector) nth++;
+                }
+                
+                // 加入 class 辅助定位
+                let classStr = '';
+                if (el.className && typeof el.className === 'string') {
+                    const classes = el.className.split(/\\s+/).filter(c => c && !c.includes(':') && !c.match(/^[0-9]/));
+                    if (classes.length > 0) classStr = '.' + CSS.escape(classes[0]);
+                }
+
+                if (nth !== 1) {
+                    selector += classStr + ':nth-of-type(' + nth + ')';
+                } else {
+                    selector += classStr;
+                }
+            }
+            path.unshift(selector);
+            el = el.parentNode;
+            if (el && el.nodeName && el.nodeName.toLowerCase() === 'body') {
+                path.unshift('body');
+                break;
+            }
+        }
+        return path.join(' > ');
+    }
+
+    let lastScrollTime = 0;
+    let fillTimeout = null;
+
+    window.addEventListener('click', (e) => {
+        const target = getClickableTarget(e.target);
+        const selector = getSelector(target);
+        if (selector) {
+            console.log("[JoiiSync] 🚀 捕获 Click 事件:", selector);
+            sendSyncEvent({ type: 'click', selector });
+        }
     }, true);
-    window.addEventListener('mousedown', (e) => emit('mousedown', e), true);
-    window.addEventListener('mouseup', (e) => emit('mouseup', e), true);
+
+    // 采用 input 防抖，解决 change 事件必须要失去焦点才触发的问题
+    window.addEventListener('input', (e) => {
+        const target = e.target;
+        if (!target || !['INPUT', 'TEXTAREA'].includes(target.tagName)) return;
+        const selector = getSelector(target);
+        if (selector) {
+            clearTimeout(fillTimeout);
+            fillTimeout = setTimeout(() => {
+                console.log("[JoiiSync] 📝 捕获 Input 防抖事件:", selector, target.value);
+                sendSyncEvent({ type: 'fill', selector, value: target.value });
+            }, 800);
+        }
+    }, true);
+
     window.addEventListener('wheel', (e) => {
         const now = Date.now();
-        if (now - lastScrollTime > THROTTLE) { lastScrollTime = now; emit('wheel', e); }
+        if (now - lastScrollTime > 200) { 
+            lastScrollTime = now; 
+            sendSyncEvent({ type: 'scroll', direction: e.deltaY > 0 ? 'down' : 'up', amount: Math.abs(e.deltaY) }); 
+        }
     }, { capture: true, passive: true });
-    window.addEventListener('keydown', (e) => emit('keydown', e), true);
-    window.addEventListener('keyup', (e) => emit('keyup', e), true);
+
+    window.addEventListener('keydown', (e) => {
+        // 忽略纯修饰键
+        if (['Shift', 'Control', 'Alt', 'Meta'].includes(e.key)) return;
+        
+        const isInput = e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA');
+        if (isInput) {
+            if (e.key === 'Enter') {
+                // 如果按下回车，立即强制 flush 当前的输入框值，防止 fill 滞后于按键！
+                clearTimeout(fillTimeout);
+                const selector = getSelector(e.target);
+                if (selector) {
+                    sendSyncEvent({ type: 'fill', selector, value: e.target.value });
+                    setTimeout(() => {
+                        console.log("[JoiiSync] ⌨️ 捕获 Keydown (Enter):", e.key);
+                        sendSyncEvent({ type: 'keydown', key: e.key });
+                    }, 100);
+                }
+                return;
+            }
+            if (e.key !== 'Escape') return;
+        }
+        
+        console.log("[JoiiSync] ⌨️ 捕获 Keydown 事件:", e.key);
+        sendSyncEvent({ type: 'keydown', key: e.key });
+    }, true);
 })();
 `;
 
@@ -295,7 +497,8 @@ async function startCDPWatcher(id: string, debugPort: number) {
             const sessionId = data.params.sessionId;
             const targetInfo = data.params.targetInfo;
             
-            if (targetInfo.type === 'page') {
+            // 必须包含 iframe，否则无法拦截网页内部嵌套广告或组件的点击
+            if (targetInfo.type === 'page' || targetInfo.type === 'iframe') {
                 const entry = activeEnvs.get(id);
                 if (entry) {
                     entry.sessionIds.add(sessionId);
@@ -328,21 +531,69 @@ async function startCDPWatcher(id: string, debugPort: number) {
                 entry.sessionIds.delete(sessionId);
             }
         }
+        
+        // 暴力重注机制 1：无论何时创建新的 JS 上下文（新页面、新 iframe），都强制打入引擎
+        if (data.method === "Runtime.executionContextCreated") {
+            const sessionId = data.sessionId;
+            if (sessionId) {
+                // 忽略注入错误
+                fireCDP(ws, "Runtime.addBinding", { name: "joiiSync" }, sessionId);
+                fireCDP(ws, "Runtime.evaluate", { expression: TRACKING_SCRIPT }, sessionId);
+            }
+        }
 
+        // 暴力重注机制 2：页面导航完成后，强制打入引擎
         if (data.method === "Page.frameNavigated" && data.params?.frame) {
+            const sessionId = data.sessionId;
+            if (sessionId) {
+                fireCDP(ws, "Runtime.addBinding", { name: "joiiSync" }, sessionId);
+                fireCDP(ws, "Runtime.evaluate", { expression: TRACKING_SCRIPT }, sessionId);
+            }
             if (!data.params.frame.parentId && syncSessions.has(id)) { 
                 handleSyncNavigation(id, data.params.frame.url);
             }
         }
+
+        // 双通道拦截：1. 标准 Binding
         if (data.method === "Runtime.bindingCalled" && data.params?.name === "joiiSync") {
             try { 
                 const payload = JSON.parse(data.params.payload);
-                // 打印关键日志（只打印 master 避免日志刷屏）
                 if (syncSessions.has(id)) {
-                    console.log(`[CDP->Daemon] 捕获主控(${id})操作: ${payload.type} x:${payload.x || '-'} y:${payload.y || '-'}`);
+                    if (payload.type !== 'mousemove' && payload.type !== 'wheel') {
+                        console.log(`\n[CDP->Daemon] === (Binding 通道) ========================`);
+                        console.log(`[CDP->Daemon] 主控(${id}) 动作: ${payload.type}`);
+                        console.log(`[CDP->Daemon] 目标: ${payload.selector}`);
+                        if (payload.value !== undefined) console.log(`[CDP->Daemon] 值: ${payload.value}`);
+                        console.log(`[CDP->Daemon] =======================================`);
+                    }
                 }
                 handleSyncEvent(id, payload); 
-            } catch(e) { }
+            } catch(e) { 
+                console.error("[CDP->Daemon] 解析 Payload 失败", e);
+            }
+        }
+        
+        // 双通道拦截：2. console.debug 隐秘通道 (防御 binding 丢失)
+        if (data.method === "Runtime.consoleAPICalled" && data.params?.type === "debug") {
+            const args = data.params.args;
+            if (args && args.length > 0 && args[0].type === "string") {
+                const text = args[0].value;
+                if (text.includes('__joii_sync_payload')) {
+                    try {
+                        const payload = JSON.parse(text);
+                        if (syncSessions.has(id)) {
+                            if (payload.type !== 'mousemove' && payload.type !== 'wheel') {
+                                console.log(`\n[CDP->Daemon] === (Console 通道) ======================`);
+                                console.log(`[CDP->Daemon] 主控(${id}) 动作: ${payload.type}`);
+                                console.log(`[CDP->Daemon] 目标: ${payload.selector}`);
+                                if (payload.value !== undefined) console.log(`[CDP->Daemon] 值: ${payload.value}`);
+                                console.log(`[CDP->Daemon] =======================================`);
+                            }
+                        }
+                        handleSyncEvent(id, payload);
+                    } catch(e) {}
+                }
+            }
         }
     });
 
