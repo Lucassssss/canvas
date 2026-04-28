@@ -393,9 +393,6 @@ export class EnvironmentService {
     const fingerprintSeed = Math.abs(seedInt).toString();
 
     const cliArgs: Record<string, string> = {
-      // ── 用户数据目录 ──────────────────────────────────────
-      "--user-data-dir": `D:\\ai\\canvas\\apps\\local-daemon\\profiles\\${id}`,
-
       // ── 指纹参数 ──────────────────────────────────────────
       // ⚠️ 注意：browserVersion 必须与实际 Chromium 二进制版本一致，
       //    伪造高版本会被 Sec-CH-UA / CDP 协议版本特征检测出来。

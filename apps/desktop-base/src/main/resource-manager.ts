@@ -17,7 +17,7 @@ export class ResourceManager {
   }
 
   getResourcePath(resourceId: string): string {
-    return path.join(this.userDataPath, 'resources', resourceId)
+    return path.join(this.userDataPath, 'bin', resourceId)
   }
 
   getUpdatesDir(): string {
@@ -46,7 +46,7 @@ export class ResourceManager {
 
   async ensureInitialAssets(): Promise<void> {
     const webDir = this.getWebDir()
-    const resourcesDir = path.join(this.userDataPath, 'resources')
+    const resourcesDir = path.join(this.userDataPath, 'bin')
     const updatesDir = this.getUpdatesDir()
 
     fs.mkdirSync(webDir, { recursive: true })

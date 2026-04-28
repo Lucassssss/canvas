@@ -1,4 +1,9 @@
 import { app, BrowserWindow, Menu } from 'electron'
+import * as path from 'path'
+
+// Set root app data path before doing anything else
+app.setPath('userData', path.join(app.getPath('appData'), 'jbrowser', 'jdata'))
+
 import log from 'electron-log'
 import { loadConfig } from './config'
 import { registerSchemesBeforeReady, registerAppProtocol } from './protocol'
@@ -7,6 +12,8 @@ import { ServerManager } from './server-manager'
 import { registerIpcHandlers } from './ipc-handlers'
 import { createWindow } from './window'
 
+// Configure logging path to match the standard layout
+log.transports.file.resolvePath = () => path.join(app.getPath('userData'), 'log', 'main.log')
 log.initialize()
 log.transports.file.level = 'debug'
 log.transports.console.level = 'debug'

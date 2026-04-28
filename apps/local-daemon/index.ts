@@ -8,10 +8,11 @@ import { $ } from "bun";
 import killPort from 'kill-port';
 
 const PORT = process.env.PORT ? parseInt(process.env.PORT) : 4003;
-const APP_DATA_DIR = process.env.APP_DATA_DIR || path.join(os.homedir(), "AppData/Roaming/desktop-base");
+const APP_DATA_DIR = process.env.APP_DATA_DIR || path.join(os.homedir(), "AppData/Roaming/jbrowser/jdata");
 const BROWSER_DIR = path.join(APP_DATA_DIR, "browser");
-const CHROME_BIN = path.join(BROWSER_DIR, "chrome.exe");
-const RUN_DIR = path.join(APP_DATA_DIR, '.run');
+const RUN_DIR = path.join(APP_DATA_DIR, 'run');
+const PROFILE_DIR = path.join(APP_DATA_DIR, 'profile');
+const DOWNLOAD_CACHE_DIR = path.join(APP_DATA_DIR, 'download-cache');
 
 let browserInstallState = {
     status: 'idle', // 'idle' | 'downloading' | 'extracting' | 'done' | 'error'
@@ -678,7 +679,10 @@ const server = Bun.serve({
         }
 
         if (req.method === "GET" && url.pathname === "/api/browser/status") {
-            const installed = fs.existsSync(CHROME_BIN);
+            const version = url.searchParams.get("version");
+            if (!version) return new Response(JSON.stringify({ success: false, error: '缺少 version' }), { status: 400, headers });
+            const chromeBin = path.join(BROWSER_DIR, version, "chrome.exe");
+            const installed = fs.existsSync(chromeBin);
             return new Response(JSON.stringify({ success: true, installed }), { headers });
         }
 
@@ -688,8 +692,8 @@ const server = Bun.serve({
 
         if (req.method === "POST" && url.pathname === "/api/browser/install") {
             try {
-                const { downloadUrl } = await req.json();
-                if (!downloadUrl) return new Response(JSON.stringify({ success: false, error: '缺少 downloadUrl' }), { status: 400, headers });
+                const { downloadUrl, version } = await req.json();
+                if (!downloadUrl || !version) return new Response(JSON.stringify({ success: false, error: '缺少参数' }), { status: 400, headers });
 
                 if (browserInstallState.status === 'downloading' || browserInstallState.status === 'extracting') {
                     return new Response(JSON.stringify({ success: true, state: browserInstallState }), { headers });
@@ -700,8 +704,8 @@ const server = Bun.serve({
                 // 异步处理下载
                 (async () => {
                     try {
-                        const zipPath = path.join(APP_DATA_DIR, "chrome.zip");
-                        if (!fs.existsSync(APP_DATA_DIR)) fs.mkdirSync(APP_DATA_DIR, { recursive: true });
+                        if (!fs.existsSync(DOWNLOAD_CACHE_DIR)) fs.mkdirSync(DOWNLOAD_CACHE_DIR, { recursive: true });
+                        const zipPath = path.join(DOWNLOAD_CACHE_DIR, `chrome-${version}.zip`);
 
                         const response = await fetch(downloadUrl);
                         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
@@ -728,8 +732,10 @@ const server = Bun.serve({
                         browserInstallState.percent = 0;
 
                         // 解压
-                        if (!fs.existsSync(BROWSER_DIR)) fs.mkdirSync(BROWSER_DIR, { recursive: true });
-                        const expandCmd = ['tar', '-xf', zipPath, '-C', BROWSER_DIR];
+                        const targetDir = path.join(BROWSER_DIR, version);
+                        if (!fs.existsSync(targetDir)) fs.mkdirSync(targetDir, { recursive: true });
+                        
+                        const expandCmd = ['tar', '-xf', zipPath, '-C', targetDir];
                         const proc = Bun.spawn(expandCmd, { stderr: "pipe" });
                         await proc.exited;
                         if (proc.exitCode !== 0) {
@@ -762,12 +768,16 @@ const server = Bun.serve({
 
         if (req.method === "POST" && url.pathname === "/api/start") {
             try {
-                const { id, cli_args } = await req.json();
-                if (!id || !cli_args) return new Response(JSON.stringify({ success: false, error: '缺少参数' }), { status: 400, headers });
+                const { id, cli_args, version } = await req.json();
+                if (!id || !cli_args || !version) return new Response(JSON.stringify({ success: false, error: '缺少参数' }), { status: 400, headers });
 
-                if (!fs.existsSync(CHROME_BIN)) {
+                const chromeBin = path.join(BROWSER_DIR, version, "chrome.exe");
+                if (!fs.existsSync(chromeBin)) {
                     return new Response(JSON.stringify({ success: false, error: '内核文件不存在，请先下载' }), { status: 400, headers });
                 }
+
+                // 注入 User Data Dir
+                cli_args["--user-data-dir"] = path.join(PROFILE_DIR, id);
 
                 // 双重校验：内存 + 文件级锁
                 const runningEnvs = await getRunningEnvs();
@@ -784,7 +794,7 @@ const server = Bun.serve({
                     else cmdArgs.push(`${key}=${value}`);
                 }
 
-                const child = spawn(CHROME_BIN, cmdArgs, {
+                const child = spawn(chromeBin, cmdArgs, {
                     detached: true,
                     stdio: 'ignore',
                     windowsHide: true,
