@@ -22,6 +22,7 @@ import authRoutes from "./auth.js";
 import userRoutes from "./users.js";
 import creditRoutes from "./credits.js";
 import paymentRoutes from "./payments.js";
+import leadsRoutes from "./leads.js";
 import { handlePaymentCallback } from "../services/payment/index.js";
 import {
   getEnabledModels,
@@ -37,6 +38,8 @@ function asyncHandler<T extends (...args: any[]) => Promise<any>>(fn: T) {
 }
 
 // ========== 公开接口 (无需认证) ==========
+router.use('/api/leads', leadsRoutes);
+
 router.get("/api/credits/pricing", async (req: Request, res: Response) => {
   try {
     const models = await getPricingInfo()
