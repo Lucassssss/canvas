@@ -3,7 +3,7 @@ import { BrowserNavbar } from './components/BrowserNavbar'
 import { BrowserHero } from './components/BrowserHero'
 import { BrowserFeatures } from './components/BrowserFeatures'
 import { BrowserSocialProof } from './components/BrowserSocialProof'
-import { BrowserShowcase } from './components/BrowserShowcase'
+import { BrowserContact } from './components/BrowserContact'
 import { BrowserFooter } from './components/BrowserFooter'
 
 export function BrowserLandingPage() {
@@ -15,7 +15,7 @@ export function BrowserLandingPage() {
         <BrowserHero />
         <BrowserFeatures />
         <BrowserSocialProof />
-        <BrowserShowcase />
+        <BrowserContact />
       </main>
 
       <BrowserFooter />
