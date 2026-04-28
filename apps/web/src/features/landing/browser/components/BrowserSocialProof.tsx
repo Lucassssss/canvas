@@ -2,7 +2,7 @@ import React from 'react'
 
 export function BrowserSocialProof() {
   return (
-    <section className="py-24 md:py-32 bg-neutral-950 text-white relative overflow-hidden">
+    <section id="social-proof" className="py-24 md:py-32 bg-neutral-950 text-white relative overflow-hidden">
       {/* 装饰元素 */}
       <div className="absolute top-0 right-0 w-1/3 h-full bg-[#2B7FFF]/5 border-l border-[#2B7FFF]/10 skew-x-12 translate-x-20"></div>
       

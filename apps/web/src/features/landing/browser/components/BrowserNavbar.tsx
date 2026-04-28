@@ -22,8 +22,9 @@ export function BrowserNavbar() {
             <img src="/joii_berry_logo_withtext.svg" alt="Joii Berry" className="h-6" height="24" />
           </Link>
           <nav className="hidden md:flex items-center gap-8 font-sans-zh text-sm text-neutral-500">
-            <Link href="#features" className="hover:text-neutral-950 transition-colors">核心优势</Link>
-            <Link href="#contact" className="hover:text-neutral-950 transition-colors">专属方案</Link>
+            <Link href="#showcase" className="hover:text-neutral-950 transition-colors">实战架构</Link>
+            <Link href="#features" className="hover:text-neutral-950 transition-colors">核心能力</Link>
+            <Link href="#social-proof" className="hover:text-neutral-950 transition-colors">客户信赖</Link>
             <Link href="/news" className="hover:text-neutral-950 transition-colors">最新资讯</Link>
             <Link href="/help" className="hover:text-neutral-950 transition-colors">帮助支持</Link>
           </nav>

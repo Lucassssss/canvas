@@ -39,10 +39,13 @@ export function BrowserFooter() {
               <img src="/joii_berry_logo_withtext.svg" alt="Joii Berry" className="h-6 brightness-0 invert" />
             </div>
             
-            <div className="flex gap-8 font-sans-zh text-sm text-neutral-500">
+            <div className="flex flex-wrap justify-center gap-6 md:gap-8 font-sans-zh text-sm text-neutral-500">
+              <Link href="#showcase" className="hover:text-white transition-colors">实战架构</Link>
+              <Link href="#features" className="hover:text-white transition-colors">核心能力</Link>
+              <Link href="/news" className="hover:text-white transition-colors">最新资讯</Link>
+              <Link href="/help" className="hover:text-white transition-colors">帮助支持</Link>
               <Link href="#" className="hover:text-white transition-colors">隐私政策</Link>
               <Link href="#" className="hover:text-white transition-colors">服务条款</Link>
-              <Link href="#" className="hover:text-white transition-colors">帮助中心</Link>
             </div>
           </div>
           
