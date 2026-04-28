@@ -8,9 +8,16 @@ import { $ } from "bun";
 import killPort from 'kill-port';
 
 const PORT = process.env.PORT ? parseInt(process.env.PORT) : 4003;
-const CHROME_BIN = "e:\\chromium\\c142-5\\chrome.exe";
-const RUN_DIR = path.join(process.env.APP_DATA_DIR || process.cwd(), '.run');
+const APP_DATA_DIR = process.env.APP_DATA_DIR || path.join(os.homedir(), "AppData/Roaming/desktop-base");
+const BROWSER_DIR = path.join(APP_DATA_DIR, "browser");
+const CHROME_BIN = path.join(BROWSER_DIR, "chrome.exe");
+const RUN_DIR = path.join(APP_DATA_DIR, '.run');
 
+let browserInstallState = {
+    status: 'idle', // 'idle' | 'downloading' | 'extracting' | 'done' | 'error'
+    percent: 0,
+    error: ''
+};
 const isCompiled = !!process.isBun;
 const defaultBinPath = os.platform() === 'win32'
     ? path.join(process.cwd(), 'node_modules', '.bin', 'agent-browser.exe')
@@ -670,6 +677,83 @@ const server = Bun.serve({
             return new Response(JSON.stringify({ status: "ok" }), { headers });
         }
 
+        if (req.method === "GET" && url.pathname === "/api/browser/status") {
+            const installed = fs.existsSync(CHROME_BIN);
+            return new Response(JSON.stringify({ success: true, installed }), { headers });
+        }
+
+        if (req.method === "GET" && url.pathname === "/api/browser/progress") {
+            return new Response(JSON.stringify({ success: true, state: browserInstallState }), { headers });
+        }
+
+        if (req.method === "POST" && url.pathname === "/api/browser/install") {
+            try {
+                const { downloadUrl } = await req.json();
+                if (!downloadUrl) return new Response(JSON.stringify({ success: false, error: '缺少 downloadUrl' }), { status: 400, headers });
+
+                if (browserInstallState.status === 'downloading' || browserInstallState.status === 'extracting') {
+                    return new Response(JSON.stringify({ success: true, state: browserInstallState }), { headers });
+                }
+
+                browserInstallState = { status: 'downloading', percent: 0, error: '' };
+
+                // 异步处理下载
+                (async () => {
+                    try {
+                        const zipPath = path.join(APP_DATA_DIR, "chrome.zip");
+                        if (!fs.existsSync(APP_DATA_DIR)) fs.mkdirSync(APP_DATA_DIR, { recursive: true });
+
+                        const response = await fetch(downloadUrl);
+                        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                        
+                        const totalBytes = parseInt(response.headers.get('content-length') || '0', 10);
+                        let downloadedBytes = 0;
+                        
+                        const writer = Bun.file(zipPath).writer();
+                        const reader = response.body?.getReader();
+                        if (!reader) throw new Error("无法读取流");
+
+                        while (true) {
+                            const { done, value } = await reader.read();
+                            if (done) break;
+                            writer.write(value);
+                            downloadedBytes += value.length;
+                            if (totalBytes > 0) {
+                                browserInstallState.percent = Math.floor((downloadedBytes / totalBytes) * 100);
+                            }
+                        }
+                        await writer.end();
+
+                        browserInstallState.status = 'extracting';
+                        browserInstallState.percent = 0;
+
+                        // 解压
+                        if (!fs.existsSync(BROWSER_DIR)) fs.mkdirSync(BROWSER_DIR, { recursive: true });
+                        const expandCmd = ['tar', '-xf', zipPath, '-C', BROWSER_DIR];
+                        const proc = Bun.spawn(expandCmd, { stderr: "pipe" });
+                        await proc.exited;
+                        if (proc.exitCode !== 0) {
+                            const errText = await new Response(proc.stderr).text();
+                            throw new Error(`解压失败: ${errText}`);
+                        }
+
+                        // 清理
+                        fs.unlinkSync(zipPath);
+                        browserInstallState.status = 'done';
+                        browserInstallState.percent = 100;
+                    } catch (e: any) {
+                        browserInstallState.status = 'error';
+                        browserInstallState.error = e.message;
+                        console.error("[BrowserInstall] Error:", e);
+                    }
+                })();
+
+                return new Response(JSON.stringify({ success: true, state: browserInstallState }), { headers });
+            } catch (err: any) {
+                return new Response(JSON.stringify({ success: false, error: err.message }), { status: 500, headers });
+            }
+        }
+
         if (req.method === "GET" && url.pathname === "/api/status") {
             // 获取最新绝对存活的环境 ID 列表
             const runningEnvs = await getRunningEnvs();
@@ -680,6 +764,10 @@ const server = Bun.serve({
             try {
                 const { id, cli_args } = await req.json();
                 if (!id || !cli_args) return new Response(JSON.stringify({ success: false, error: '缺少参数' }), { status: 400, headers });
+
+                if (!fs.existsSync(CHROME_BIN)) {
+                    return new Response(JSON.stringify({ success: false, error: '内核文件不存在，请先下载' }), { status: 400, headers });
+                }
 
                 // 双重校验：内存 + 文件级锁
                 const runningEnvs = await getRunningEnvs();

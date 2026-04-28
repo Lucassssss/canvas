@@ -3,6 +3,8 @@
 import { useEffect, useState, useRef } from "react"
 import { cloudFetch } from "@/lib/api"
 import { toast } from "sonner"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
+import { Progress } from "@/components/ui/progress"
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -110,6 +112,7 @@ export default function EnvironmentsPage() {
   const [profiles, setProfiles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [startingState, setStartingState] = useState<Record<string, 'checking' | 'starting'>>({});
+  const [downloadState, setDownloadState] = useState<{ open: boolean, status: string, percent: number, error: string }>({ open: false, status: 'idle', percent: 0, error: '' });
 
   // Selection and filtering state
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -224,6 +227,52 @@ export default function EnvironmentsPage() {
   }
 
   const handleStart = async (id: string) => {
+    try {
+      // 0. 检查内核状态
+      const statusRes = await fetch(`${process.env.NEXT_PUBLIC_LOCAL_DAEMON_URL}/api/browser/status`);
+      const statusData = await statusRes.json();
+      
+      if (statusData.success && !statusData.installed) {
+        setDownloadState({ open: true, status: 'downloading', percent: 0, error: '' });
+        // 触发下载
+        const downloadUrl = "https://d-assets-cn.joii.cc/a1-joii-browser/c142/chrome.zip";
+        await fetch(`${process.env.NEXT_PUBLIC_LOCAL_DAEMON_URL}/api/browser/install`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ downloadUrl })
+        });
+        
+        // 轮询进度
+        const timer = setInterval(async () => {
+          try {
+            const pRes = await fetch(`${process.env.NEXT_PUBLIC_LOCAL_DAEMON_URL}/api/browser/progress`);
+            const pData = await pRes.json();
+            if (pData.success && pData.state) {
+              setDownloadState(prev => ({ ...prev, ...pData.state }));
+              if (pData.state.status === 'done') {
+                clearInterval(timer);
+                setTimeout(() => {
+                  setDownloadState(prev => ({ ...prev, open: false }));
+                  startEnvironmentActual(id);
+                }, 500);
+              } else if (pData.state.status === 'error') {
+                clearInterval(timer);
+                toast.error("内核下载失败: " + pData.state.error);
+              }
+            }
+          } catch (e) { }
+        }, 500);
+        return;
+      }
+
+      await startEnvironmentActual(id);
+    } catch (error: any) {
+      console.error("Check install failed", error);
+      toast.error("无法连接到本地守护进程检测内核状态");
+    }
+  }
+
+  const startEnvironmentActual = async (id: string) => {
     try {
       // 1. 确认代理位置
       setStartingState(prev => ({ ...prev, [id]: 'checking' }));
@@ -583,6 +632,30 @@ export default function EnvironmentsPage() {
           </div>
         </div>
       </div>
+      
+      {/* 内核下载进度弹窗 */}
+      <Dialog open={downloadState.open} onOpenChange={(o) => { if (!o && downloadState.status !== 'downloading' && downloadState.status !== 'extracting') setDownloadState(prev => ({ ...prev, open: false })) }}>
+        <DialogContent className="sm:max-w-md [&>button]:hidden">
+          <DialogHeader>
+            <DialogTitle>正在配置浏览器内核</DialogTitle>
+            <DialogDescription>
+              首次启动需要下载并解压专用 Chromium 内核环境，请耐心等待...
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-6 flex flex-col gap-4">
+            <Progress value={downloadState.percent} className="h-2" />
+            <div className="flex justify-between items-center text-sm text-muted-foreground">
+              <span>{downloadState.status === 'downloading' ? '正在下载压缩包...' : downloadState.status === 'extracting' ? '正在解压...' : downloadState.status === 'done' ? '准备就绪' : downloadState.status === 'error' ? '下载失败' : '初始化...'}</span>
+              <span>{downloadState.percent}%</span>
+            </div>
+            {downloadState.status === 'error' && (
+              <div className="text-sm text-destructive mt-2">
+                错误信息: {downloadState.error}
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   )
 }

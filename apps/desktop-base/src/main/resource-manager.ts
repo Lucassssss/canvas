@@ -63,17 +63,19 @@ export class ResourceManager {
     if (fs.existsSync(bundledRes)) {
       for (const entry of fs.readdirSync(bundledRes)) {
         const dest = path.join(resourcesDir, entry)
-        if (fs.existsSync(dest)) continue
-
         const src = path.join(bundledRes, entry)
-        log.info(`[ResourceManager] Copying initial resource: ${entry}`)
+        log.info(`[ResourceManager] Copying/updating resource: ${entry}`)
 
         const stat = fs.statSync(src)
         if (stat.isDirectory()) {
           this.copyDirSync(src, dest)
         } else {
-          fs.copyFileSync(src, dest)
-          if (process.platform !== 'win32') fs.chmodSync(dest, 0o755)
+          try {
+            fs.copyFileSync(src, dest)
+            if (process.platform !== 'win32') fs.chmodSync(dest, 0o755)
+          } catch (err: any) {
+            log.warn(`[ResourceManager] Failed to copy resource ${src} to ${dest}: ${err.message}`)
+          }
         }
       }
     }
@@ -84,9 +86,15 @@ export class ResourceManager {
     for (const entry of fs.readdirSync(src)) {
       const srcPath = path.join(src, entry)
       const destPath = path.join(dest, entry)
-      fs.statSync(srcPath).isDirectory()
-        ? this.copyDirSync(srcPath, destPath)
-        : fs.copyFileSync(srcPath, destPath)
+      if (fs.statSync(srcPath).isDirectory()) {
+        this.copyDirSync(srcPath, destPath)
+      } else {
+        try {
+          fs.copyFileSync(srcPath, destPath)
+        } catch (err: any) {
+          log.warn(`[ResourceManager] Failed to copy ${srcPath} to ${destPath}: ${err.message}`)
+        }
+      }
     }
   }
 }
