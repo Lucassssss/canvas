@@ -42,80 +42,14 @@ export function BrowserHero() {
         </div>
 
         {/* 底部 Mockup 界面 */}
-        <div className="w-full max-w-5xl mx-auto relative group perspective-[2000px]">
+        <div className="w-full max-w-7xl mx-auto relative group perspective-[2000px]">
           {/* Mockup 阴影/光晕 */}
           <div className="absolute -inset-4 bg-[#2B7FFF]/10 blur-3xl rounded-[2rem] opacity-50 group-hover:opacity-80 transition-opacity duration-700 -z-10"></div>
 
-          <div className="relative rounded-2xl border border-neutral-200 bg-white shadow-2xl overflow-hidden aspect-[16/10] md:aspect-[16/9] transform transition-transform duration-700 hover:-translate-y-2">
-
-            {/* Mock UI 顶部控制栏 (原生 App 风格) */}
-            <div className="h-12 bg-neutral-50 border-b border-neutral-200 flex items-center px-4 justify-between">
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-red-400"></div>
-                <div className="w-3 h-3 rounded-full bg-amber-400"></div>
-                <div className="w-3 h-3 rounded-full bg-green-400"></div>
-              </div>
-              <div className="font-serif-zh text-sm font-medium text-neutral-500">Joii Berry Client</div>
-              <div className="w-16"></div> {/* 占位平衡 */}
-            </div>
-
-            {/* Mock UI 主体 */}
-            <div className="flex h-[calc(100%-3rem)] bg-neutral-50/50">
-              {/* 侧边栏 */}
-              <div className="w-48 border-r border-neutral-200 bg-white p-4 hidden md:flex flex-col gap-2">
-                <div className="flex items-center gap-2 mb-6 px-2">
-                  <div className="w-6 h-6 bg-[#2B7FFF] rounded flex items-center justify-center text-white font-serif-display text-xs font-bold">J</div>
-                  <span className="text-sm font-bold text-neutral-900 font-serif-zh tracking-wide">浆果浏览器</span>
-                </div>
-                <div className="h-8 rounded bg-[#2B7FFF]/10 border border-[#2B7FFF]/20 w-full mb-2 flex items-center px-3">
-                  <div className="w-3 h-3 rounded-sm bg-[#2B7FFF]"></div>
-                  <div className="ml-2 h-2 w-16 bg-[#2B7FFF]/60 rounded"></div>
-                </div>
-                <div className="h-8 rounded w-full flex items-center px-3 hover:bg-neutral-100">
-                  <div className="w-3 h-3 rounded-sm bg-neutral-300"></div>
-                  <div className="ml-2 h-2 w-12 bg-neutral-300 rounded"></div>
-                </div>
-                <div className="h-8 rounded w-full flex items-center px-3 hover:bg-neutral-100">
-                  <div className="w-3 h-3 rounded-sm bg-neutral-300"></div>
-                  <div className="ml-2 h-2 w-16 bg-neutral-300 rounded"></div>
-                </div>
-              </div>
-
-              {/* 内容区 */}
-              <div className="flex-1 p-6 flex flex-col gap-4 overflow-hidden">
-                <div className="flex justify-between items-center mb-2">
-                  <div className="h-6 w-32 bg-neutral-200 rounded"></div>
-                  <div className="h-8 w-24 bg-[#2B7FFF] rounded shadow-sm shadow-[#2B7FFF]/30"></div>
-                </div>
-
-                {/* 模拟表格头 */}
-                <div className="h-10 w-full bg-white border border-neutral-200 rounded flex items-center px-4 shadow-sm">
-                  <div className="w-1/3 h-3 bg-neutral-100 rounded"></div>
-                  <div className="w-1/3 h-3 bg-neutral-100 rounded"></div>
-                  <div className="w-1/3 h-3 bg-neutral-100 rounded"></div>
-                </div>
-
-                {/* 模拟数据行 */}
-                {[1, 2, 3, 4].map((i) => (
-                  <div key={i} className="h-14 w-full bg-white border border-neutral-200 rounded flex items-center px-4 shadow-sm group hover:border-[#2B7FFF]/30 transition-colors">
-                    <div className="w-1/3 flex items-center gap-3">
-                      <div className="w-6 h-6 rounded-full bg-neutral-100 border border-neutral-200 flex items-center justify-center text-[10px] text-neutral-400 font-mono">{i}</div>
-                      <div className="h-3 w-24 bg-neutral-200 rounded"></div>
-                    </div>
-                    <div className="w-1/3 flex items-center">
-                      <div className="h-5 w-20 bg-emerald-50 border border-emerald-200 rounded-full flex items-center justify-center px-2">
-                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5"></div>
-                        <div className="text-[10px] text-emerald-600 font-sans-zh">安全隔离</div>
-                      </div>
-                    </div>
-                    <div className="w-1/3 flex items-center justify-end">
-                      <div className="h-7 w-16 bg-neutral-100 rounded border border-neutral-200"></div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
+          <div className="relative">
+            <img src="/browser-preview/env_list.png" alt="浆果浏览器多环境管理" className="w-full h-auto block" />
+            {/* 渐变遮罩，使截图底部自然融入背景 */}
+            <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-white via-white/80 to-transparent pointer-events-none"></div>
           </div>
         </div>
 

@@ -24,8 +24,8 @@ export function NavbarCN() {
           </Link>
           <nav className="hidden md:flex items-center gap-8 font-sans-zh text-sm text-neutral-500">
             <Link href="#features" className="hover:text-neutral-950 transition-colors">核心能力</Link>
-            <Link href="/browser" className="hover:text-neutral-950 transition-colors">多环境浏览器</Link>
-            <Link href="#showcase" className="hover:text-neutral-950 transition-colors">商业案例</Link>
+            <Link href="/browser" className="hover:text-neutral-950 transition-colors">浆果浏览器</Link>
+            <Link href="#showcase" className="hover:text-neutral-950 transition-colors">实战案例</Link>
             <Link href="/news" className="hover:text-neutral-950 transition-colors">最新资讯</Link>
             <Link href="/help" className="hover:text-neutral-950 transition-colors">帮助支持</Link>
           </nav>
