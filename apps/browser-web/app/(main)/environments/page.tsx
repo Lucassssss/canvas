@@ -228,18 +228,19 @@ export default function EnvironmentsPage() {
 
   const handleStart = async (id: string) => {
     try {
+      const BROWSER_VERSION = "c142";
       // 0. 检查内核状态
-      const statusRes = await fetch(`${process.env.NEXT_PUBLIC_LOCAL_DAEMON_URL}/api/browser/status`);
+      const statusRes = await fetch(`${process.env.NEXT_PUBLIC_LOCAL_DAEMON_URL}/api/browser/status?version=${BROWSER_VERSION}`);
       const statusData = await statusRes.json();
       
       if (statusData.success && !statusData.installed) {
         setDownloadState({ open: true, status: 'downloading', percent: 0, error: '' });
         // 触发下载
-        const downloadUrl = "https://d-assets-cn.joii.cc/a1-joii-browser/c142/chrome.zip";
+        const downloadUrl = `https://d-assets-cn.joii.cc/a1-joii-browser/${BROWSER_VERSION}/chrome.zip`;
         await fetch(`${process.env.NEXT_PUBLIC_LOCAL_DAEMON_URL}/api/browser/install`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ downloadUrl })
+          body: JSON.stringify({ downloadUrl, version: BROWSER_VERSION })
         });
         
         // 轮询进度
@@ -274,6 +275,7 @@ export default function EnvironmentsPage() {
 
   const startEnvironmentActual = async (id: string) => {
     try {
+      const BROWSER_VERSION = "c142";
       // 1. 确认代理位置
       setStartingState(prev => ({ ...prev, [id]: 'checking' }));
       await cloudFetch(`/api/environments/${id}/check-proxy`, { method: "POST" });
@@ -287,7 +289,7 @@ export default function EnvironmentsPage() {
         const daemonRes = await fetch(`${process.env.NEXT_PUBLIC_LOCAL_DAEMON_URL}/api/start`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ id, cli_args: data.data.cli_args })
+          body: JSON.stringify({ id, cli_args: data.data.cli_args, version: BROWSER_VERSION })
         });
         const daemonData = await daemonRes.json();
         if (!daemonData.success) {
