@@ -175,7 +175,7 @@ export default function MembersPage() {
   // Perm maps for UI
   const permList = [
     { title: "环境管理", id: "p_env", items: [{ i: "p_env_1", n: "查看列表" }, { i: "p_env_2", n: "创建环境" }, { i: "p_env_3", n: "编辑环境" }, { i: "p_env_4", n: "删除环境" }] },
-    { title: "应用与分组", id: "p_app", items: [{ i: "p_app_1", n: "分组管理" }, { i: "p_app_2", n: "应用中心" }] },
+    { title: "应用与分组", id: "p_app", items: [{ i: "p_app_1", n: "分组管理" }, { i: "p_app_2", n: "素材中心" }] },
     { title: "团队管理", id: "p_team", items: [{ i: "p_team_1", n: "成员配置" }, { i: "p_team_2", n: "访问控制" }, { i: "p_team_3", n: "操作日志" }] },
   ]
 

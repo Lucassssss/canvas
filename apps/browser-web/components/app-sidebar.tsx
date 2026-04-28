@@ -51,7 +51,7 @@ const flatNavItems = [
   { title: "环境管理", shortTitle: "环境", url: "/environments", icon: RiLayout4Line },
   { title: "分组管理", shortTitle: "分组", url: "/groups", icon: RiFolder2Line },
   { title: "设备管理", shortTitle: "设备", url: "/devices", icon: RiComputerLine },
-  { title: "应用中心", shortTitle: "应用", url: "/apps", icon: RiPuzzleLine },
+  { title: "素材中心", shortTitle: "素材", url: "/apps", icon: RiPuzzleLine },
   { title: "回收站", shortTitle: "回收", url: "/trash", icon: RiDeleteBinLine },
 ]
 

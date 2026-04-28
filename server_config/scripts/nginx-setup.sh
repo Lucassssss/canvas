@@ -109,7 +109,8 @@ ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDS
 ssl_session_timeout 1d;
 ssl_session_cache shared:SSL:50m;
 add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
-add_header X-Frame-Options "SAMEORIGIN" always;
+# add_header X-Frame-Options "SAMEORIGIN" always; # Commented out to allow iframe embedding
+add_header X-XSS-Protection "1; mode=block" always;
 add_header X-Content-Type-Options "nosniff" always;
 ssl_certificate ${SSL_DIR}/fullchain.cer;
 ssl_certificate_key ${SSL_DIR}/key.pem;
