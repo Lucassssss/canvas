@@ -23,15 +23,29 @@ export function registerAppProtocol(webDir: string): void {
     const urlPath = new URL(request.url).pathname
     const decoded = decodeURIComponent(urlPath)
     const relative = decoded === '/' ? 'index.html' : decoded.replace(/^\//, '')
-    const target = path.join(webDir, relative)
+    let target = path.join(webDir, relative)
+
+    if (fs.existsSync(target) && fs.statSync(target).isDirectory()) {
+      target = path.join(target, 'index.html')
+    }
+
     const index = path.join(webDir, 'index.html')
 
-    const filePath =
-      fs.existsSync(target) && fs.statSync(target).isFile() ? target : index
+    let filePath = target
+    const isAsset = relative.match(/\.(js|css|json|txt|ico|png|jpg|woff2?|svg)$/i) || relative.startsWith('_next/')
 
-    log.debug(`[Protocol] app://${relative} → ${filePath}`)
+    if (!fs.existsSync(target) || !fs.statSync(target).isFile()) {
+      if (isAsset) {
+        // log.warn(`[Protocol] 404 Not Found: app://${relative}`)
+        return new Response('Not Found', { status: 404 })
+      } else {
+        filePath = index
+      }
+    }
+
+    // log.debug(`[Protocol] app://${relative} → ${filePath}`)
     return net.fetch(`file://${filePath}`)
   })
 
-  log.info('[Protocol] app:// registered, serving from', webDir)
+  // log.info('[Protocol] app:// registered, serving from', webDir)
 }

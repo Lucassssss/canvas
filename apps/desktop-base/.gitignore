@@ -1,0 +1,6 @@
+dist
+resources/resources
+resources/web
+node_modules
+release
+*.exe
