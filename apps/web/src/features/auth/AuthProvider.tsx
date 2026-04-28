@@ -4,6 +4,8 @@ import React, { useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from './useAuth'
 
+import { authApi } from '@/lib/api/auth-api'
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const { fetchUser, logout } = useAuth()
   const hasFetched = useRef(false)
@@ -18,27 +20,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const ssoToken = urlParams.get('sso_token');
     
     if (ssoToken) {
-      fetch('/api/auth/sso-login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: ssoToken })
-      })
-      .then(res => res.json())
-      .then(data => {
-        if (data.success) {
-          const newUrl = new URL(window.location.href);
-          newUrl.searchParams.delete('sso_token');
-          window.history.replaceState({}, document.title, newUrl.pathname + newUrl.search);
-        } else {
-          console.error("SSO Login failed:", data.error);
-        }
-      })
-      .catch(err => {
-        console.error("SSO Login fetch error:", err);
-      })
-      .finally(() => {
-        fetchUser();
-      });
+      authApi.ssoLogin(ssoToken)
+        .then(data => {
+          if (data.success) {
+            const newUrl = new URL(window.location.href);
+            newUrl.searchParams.delete('sso_token');
+            window.history.replaceState({}, document.title, newUrl.pathname + newUrl.search);
+          } else {
+            console.error("SSO Login failed:", data.error);
+          }
+        })
+        .catch(err => {
+          console.error("SSO Login fetch error:", err);
+        })
+        .finally(() => {
+          fetchUser();
+        });
     } else {
       fetchUser()
     }
