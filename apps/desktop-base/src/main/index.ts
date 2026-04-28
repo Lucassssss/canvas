@@ -10,7 +10,7 @@ import { registerSchemesBeforeReady, registerAppProtocol } from './protocol'
 import { ResourceManager } from './resource-manager'
 import { ServerManager } from './server-manager'
 import { registerIpcHandlers } from './ipc-handlers'
-import { createWindow } from './window'
+import { createWindow, getMainWindow } from './window'
 
 // Configure logging path to match the standard layout
 log.transports.file.resolvePath = () => path.join(app.getPath('userData'), 'log', 'main.log')
@@ -68,6 +68,18 @@ app.whenReady().then(async () => {
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow(config)
   })
+
+  // Background web OTA polling
+  if (config.update.enabled && config.update.webManifestUrl) {
+    const runCheck = async () => {
+      const result = await resourceManager.checkAndApplyWebUpdate(config.update.webManifestUrl)
+      if (result.updated) {
+        getMainWindow()?.webContents.send('update:web-ready', result.version)
+      }
+    }
+    setTimeout(runCheck, 10_000)
+    setInterval(runCheck, config.update.checkIntervalMs)
+  }
 })
 
 app.on('window-all-closed', async () => {

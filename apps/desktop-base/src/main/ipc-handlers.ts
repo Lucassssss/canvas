@@ -37,5 +37,25 @@ export function registerIpcHandlers(
     }
   })
 
+  // OTA: renderer triggers a manual check; main downloads + swaps, then notifies renderer
+  ipcMain.handle('update:check-web', async () => {
+    const config = getConfig()
+    if (!config.update.enabled || !config.update.webManifestUrl) {
+      return { updated: false, version: '' }
+    }
+    const result = await resourceManager.checkAndApplyWebUpdate(config.update.webManifestUrl)
+    if (result.updated) {
+      // Notify renderer to show "new version ready" prompt
+      getMainWindow()?.webContents.send('update:web-ready', result.version)
+    }
+    return result
+  })
+
+  // OTA: renderer calls this after user confirms reload
+  ipcMain.handle('update:apply-web', () => {
+    log.info('[IPC] Reloading renderer for web update')
+    getMainWindow()?.webContents.reload()
+  })
+
   log.info('[IPC] P0 handlers registered')
 }

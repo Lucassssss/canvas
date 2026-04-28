@@ -19,6 +19,7 @@ const fontMono = Geist_Mono({
 
 import { WindowControls } from "@/components/window-controls"
 import { AuthInterceptor } from "@/components/auth-interceptor"
+import { UpdateNotifier } from "@/components/update-notifier"
 
 export default function RootLayout({
   children,
@@ -36,6 +37,7 @@ export default function RootLayout({
           <TooltipProvider>{children}</TooltipProvider>
           <AuthInterceptor />
           <WindowControls />
+          <UpdateNotifier />
         </ThemeProvider>
       </body>
     </html>

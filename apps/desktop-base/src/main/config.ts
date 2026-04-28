@@ -28,7 +28,8 @@ export interface ServerConfig {
 
 export interface UpdateConfig {
   enabled: boolean
-  manifestUrl: string
+  webManifestUrl: string
+  binManifestUrl: string
   checkIntervalMs: number
 }
 
