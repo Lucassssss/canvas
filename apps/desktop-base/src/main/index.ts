@@ -20,6 +20,16 @@ const serverManager = new ServerManager(resourceManager)
 app.whenReady().then(async () => {
   Menu.setApplicationMenu(null)
   
+  // Kill any stray local-daemon processes from previous runs to release file locks
+  try {
+    const { execSync } = require('child_process')
+    if (process.platform === 'win32') {
+      execSync('taskkill /F /IM jbrowser-server.exe /T', { stdio: 'ignore', windowsHide: true })
+    } else {
+      execSync('pkill -f jbrowser-server', { stdio: 'ignore' })
+    }
+  } catch (e) { }
+
   let config
   try {
     config = loadConfig()
