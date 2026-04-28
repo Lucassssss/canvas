@@ -13,7 +13,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (hasFetched.current) return
     hasFetched.current = true
-    fetchUser()
+    
+    const urlParams = new URLSearchParams(window.location.search);
+    const ssoToken = urlParams.get('sso_token');
+    
+    if (ssoToken) {
+      fetch('/api/auth/sso-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: ssoToken })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          const newUrl = new URL(window.location.href);
+          newUrl.searchParams.delete('sso_token');
+          window.history.replaceState({}, document.title, newUrl.pathname + newUrl.search);
+        } else {
+          console.error("SSO Login failed:", data.error);
+        }
+      })
+      .catch(err => {
+        console.error("SSO Login fetch error:", err);
+      })
+      .finally(() => {
+        fetchUser();
+      });
+    } else {
+      fetchUser()
+    }
   }, [fetchUser])
 
   // 监听 API 客户端派发的 401 事件，自动清除状态并跳转登录

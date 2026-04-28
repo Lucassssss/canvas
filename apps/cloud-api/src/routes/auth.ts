@@ -183,4 +183,35 @@ router.get("/me", requireAuth, async (req: Request, res: Response) => {
   }
 });
 
+// GET /api/auth/sso-ticket
+router.get("/sso-ticket", requireAuth, async (req: Request, res: Response) => {
+  try {
+    const user = await db.query.users.findFirst({
+      where: eq(users.id, req.user!.id)
+    });
+
+    if (!user) return res.status(404).json({ success: false, error: "用户信息不存在" });
+
+    // Use SSO_SECRET from env
+    const ssoSecret = process.env.SSO_SECRET;
+    if (!ssoSecret) {
+      return res.status(500).json({ success: false, error: "服务器未配置 SSO_SECRET" });
+    }
+
+    // Generate a short-lived token (1 minute) for SSO
+    // Only include safe, necessary information to identify the user on the target system
+    const ticket = jwt.sign({ phone: user.phone }, ssoSecret, { expiresIn: '1m' });
+
+    res.json({
+      success: true,
+      data: {
+        ticket
+      }
+    });
+
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 export const authRouter = router;

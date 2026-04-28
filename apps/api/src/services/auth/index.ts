@@ -81,6 +81,23 @@ export async function loginWithCode(phone: string, code: string): Promise<Verify
   }
 }
 
+export async function loginWithSSO(phone: string): Promise<VerifyCodeResponse> {
+  let user = await getUserByPhone(phone)
+  
+  if (!user) {
+    user = await createUser(phone)
+  }
+  
+  const { token, refreshToken } = generateToken(user.id, user.phone)
+  
+  return {
+    success: true,
+    token,
+    refreshToken,
+    user,
+  }
+}
+
 export function logout(jti: string, exp: number): void {
   blacklistToken(jti, new Date(exp * 1000))
 }
