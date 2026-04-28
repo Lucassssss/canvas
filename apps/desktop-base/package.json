@@ -26,6 +26,7 @@
   "build": {
     "appId": "com.placeholder.app",
     "productName": "PlaceholderApp",
+    "publish": null,
     "directories": {
       "output": "release"
     },
@@ -37,6 +38,14 @@
       {
         "from": "resources/app.config.json",
         "to": "app.config.json"
+      },
+      {
+        "from": "resources/web",
+        "to": "web"
+      },
+      {
+        "from": "resources/resources",
+        "to": "resources"
       }
     ],
     "mac": {

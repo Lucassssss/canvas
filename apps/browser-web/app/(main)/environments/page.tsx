@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from "react"
 import { cloudFetch } from "@/lib/api"
+import { toast } from "sonner"
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -242,10 +243,16 @@ export default function EnvironmentsPage() {
         const daemonData = await daemonRes.json();
         if (!daemonData.success) {
           console.error("Local daemon start failed", daemonData.error);
+          toast.error("本地守护进程启动环境失败: " + daemonData.error);
+        } else {
+          toast.success("浏览器环境已启动");
         }
+      } else {
+        toast.error("云端下发启动配置失败: " + (data.error || "未知错误"));
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Start failed", error);
+      toast.error("启动失败: " + (error.message || "无法连接到云端API"));
     } finally {
       setStartingState(prev => {
         const next = { ...prev };

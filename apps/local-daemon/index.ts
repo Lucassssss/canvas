@@ -4,14 +4,23 @@ const execAsync = promisify(exec);
 import os from 'os';
 import fs from 'fs';
 import path from 'path';
+import { $ } from "bun";
 import killPort from 'kill-port';
 
-const PORT = 4003;
+const PORT = process.env.PORT ? parseInt(process.env.PORT) : 4003;
 const CHROME_BIN = "e:\\chromium\\c142-5\\chrome.exe";
-const RUN_DIR = path.join(process.cwd(), '.run');
-const AGENT_BROWSER_BIN = os.platform() === 'win32' 
+const RUN_DIR = path.join(process.env.APP_DATA_DIR || process.cwd(), '.run');
+
+const isCompiled = !!process.isBun;
+const defaultBinPath = os.platform() === 'win32'
     ? path.join(process.cwd(), 'node_modules', '.bin', 'agent-browser.exe')
     : path.join(process.cwd(), 'node_modules', '.bin', 'agent-browser');
+
+const AGENT_BROWSER_BIN = isCompiled
+    ? os.platform() === 'win32'
+        ? path.join(path.dirname(process.execPath), 'agent-browser.exe')
+        : path.join(path.dirname(process.execPath), 'agent-browser')
+    : defaultBinPath;
 
 // 确保状态目录存在
 if (!fs.existsSync(RUN_DIR)) {
@@ -48,25 +57,25 @@ const isProcessing = new Set<string>();
 async function processQueue(followerId: string) {
     if (isProcessing.has(followerId)) return;
     isProcessing.add(followerId);
-    
+
     const followerEntry = activeEnvs.get(followerId);
     if (!followerEntry) {
         isProcessing.delete(followerId);
         return;
     }
-    
+
     const queue = commandQueues.get(followerId);
     if (!queue) {
         isProcessing.delete(followerId);
         return;
     }
-    
+
     while (queue.length > 0) {
         const cmd = queue.shift();
         if (!cmd) continue;
-        
+
         let cliCommand = "";
-        
+
         // 按照用户约定的规范语义拼接 agent-browser CLI 指令
         if (cmd.type === 'click' && cmd.selector) {
             cliCommand = `"${AGENT_BROWSER_BIN}" --cdp ${followerEntry.debugPort} click "${cmd.selector}"`;
@@ -78,7 +87,7 @@ async function processQueue(followerId: string) {
         } else if (cmd.type === 'scroll') {
             cliCommand = `"${AGENT_BROWSER_BIN}" --cdp ${followerEntry.debugPort} scroll ${cmd.direction} ${cmd.amount}`;
         }
-        
+
         if (cliCommand) {
             console.log(`\n=================================================`);
             console.log(`[QUEUE_EXEC] 从控(${followerId}) 即将执行:`);
@@ -94,7 +103,7 @@ async function processQueue(followerId: string) {
             console.log(`=================================================\n`);
         }
     }
-    
+
     isProcessing.delete(followerId);
 }
 
@@ -112,7 +121,7 @@ async function saveEnvState(id: string, pid: number, debugPort: number) {
 async function removeEnvState(id: string) {
     const file = path.join(RUN_DIR, `${id}.json`);
     if (fs.existsSync(file)) {
-        await fs.promises.unlink(file).catch(() => {});
+        await fs.promises.unlink(file).catch(() => { });
     }
 }
 
@@ -120,16 +129,16 @@ async function removeEnvState(id: string) {
 async function getRunningEnvs(): Promise<string[]> {
     const files = await fs.promises.readdir(RUN_DIR).catch(() => []);
     const aliveIds: string[] = [];
-    
+
     for (const file of files) {
         if (!file.endsWith('.json')) continue;
         const id = file.replace('.json', '');
         const filePath = path.join(RUN_DIR, file);
-        
+
         try {
             const content = await Bun.file(filePath).text();
             const data = JSON.parse(content);
-            
+
             // 零成本保活检测 (0信号)
             let isAlive = true;
             try {
@@ -138,7 +147,7 @@ async function getRunningEnvs(): Promise<string[]> {
                 // 如果抛出错误，说明进程不存在
                 isAlive = false;
             }
-            
+
             if (isAlive) {
                 aliveIds.push(id);
             } else {
@@ -152,7 +161,7 @@ async function getRunningEnvs(): Promise<string[]> {
             activeEnvs.delete(id);
         }
     }
-    
+
     return aliveIds;
 }
 
@@ -160,19 +169,19 @@ async function getRunningEnvs(): Promise<string[]> {
 async function restoreRunningEnvs() {
     console.log(`[INIT] 正在通过状态锁文件恢复存活环境...`);
     const files = await fs.promises.readdir(RUN_DIR).catch(() => []);
-    
+
     for (const file of files) {
         if (!file.endsWith('.json')) continue;
         const id = file.replace('.json', '');
         const filePath = path.join(RUN_DIR, file);
-        
+
         try {
             const content = await Bun.file(filePath).text();
             const data = JSON.parse(content);
-            
+
             let isAlive = true;
             try { process.kill(data.pid, 0); } catch (e) { isAlive = false; }
-            
+
             if (isAlive && !activeEnvs.has(id)) {
                 console.log(`[INIT] 恢复运行中的环境: ${id} (端口: ${data.debugPort}, PID: ${data.pid})`);
                 activeEnvs.set(id, { debugPort: data.debugPort, sessionIds: new Set() });
@@ -180,7 +189,7 @@ async function restoreRunningEnvs() {
             } else if (!isAlive) {
                 await removeEnvState(id);
             }
-        } catch (e) {}
+        } catch (e) { }
     }
 }
 
@@ -189,15 +198,15 @@ let nextDebugPort = 9300;
 async function allocateDebugPort(): Promise<number> {
     const files = await fs.promises.readdir(RUN_DIR).catch(() => []);
     const usedPorts = new Set<number>();
-    
+
     for (const file of files) {
         if (!file.endsWith('.json')) continue;
         try {
             const content = await Bun.file(path.join(RUN_DIR, file)).text();
             usedPorts.add(JSON.parse(content).debugPort);
-        } catch(e) {}
+        } catch (e) { }
     }
-    
+
     while (usedPorts.has(nextDebugPort)) {
         nextDebugPort++;
         if (nextDebugPort > 9400) nextDebugPort = 9300;
@@ -238,7 +247,7 @@ function fireCDP(ws: WebSocket, method: string, params: any = {}, sessionId?: st
 function handleSyncEvent(masterId: string, payload: any) {
     const session = syncSessions.get(masterId);
     if (!session) return;
-    
+
     const masterEntry = activeEnvs.get(masterId);
     if (!masterEntry) return;
 
@@ -246,12 +255,12 @@ function handleSyncEvent(masterId: string, payload: any) {
     for (const fId of session.followers) {
         const fEntry = activeEnvs.get(fId);
         if (!fEntry?.ws) continue;
-        
+
         if (!commandQueues.has(fId)) {
             commandQueues.set(fId, []);
         }
         const queue = commandQueues.get(fId)!;
-        
+
         // 翻译前端收集到的事件
         if (payload.type === 'click') {
             queue.push({ type: 'click', selector: payload.selector });
@@ -264,12 +273,12 @@ function handleSyncEvent(masterId: string, payload: any) {
         } else if (payload.type === 'wheel') {
             queue.push({ type: 'scroll', direction: payload.deltaY > 0 ? 'down' : 'up', amount: Math.abs(payload.deltaY) });
         }
-        
+
         syncCount++;
         // 异步触发队列消费，不阻塞当前主线程
-        processQueue(fId).catch(() => {});
+        processQueue(fId).catch(() => { });
     }
-    
+
     if (payload.type !== 'mousemove' && payload.type !== 'wheel') {
         console.log(`[Daemon->Queue] 已将 ${payload.type} (Selector: ${payload.selector}) 指令推入 ${syncCount} 个从控队列`);
     }
@@ -279,7 +288,7 @@ const lastNavUrls = new Map<string, string>();
 
 function handleSyncNavigation(masterId: string, url: string) {
     if (url.startsWith('chrome://') || url.startsWith('edge://') || url === 'about:blank') return;
-    
+
     // 防重复跳转 (针对单页应用或 hash 变化引发的乱跳)
     const lastUrl = lastNavUrls.get(masterId);
     if (lastUrl === url) return;
@@ -473,45 +482,45 @@ async function startCDPWatcher(id: string, debugPort: number) {
     }
 
     if (!wsUrl) return console.warn(`[CDP] 无法连接到环境 ${id}，可能已退出`);
-    
+
     const ws = new WebSocket(wsUrl);
     ws.onopen = async () => {
         const entry = activeEnvs.get(id);
         if (entry) entry.ws = ws;
 
         // 让浏览器自动为所有新老 Target (Page/iframe) 进行附加
-        await sendCDP(ws, "Target.setAutoAttach", { 
-            autoAttach: true, 
-            waitForDebuggerOnStart: true, 
-            flatten: true 
+        await sendCDP(ws, "Target.setAutoAttach", {
+            autoAttach: true,
+            waitForDebuggerOnStart: true,
+            flatten: true
         });
-        
+
         console.log(`[CDP] 环境 ${id} 已开启全局 Target 自动追踪`);
     };
 
     ws.addEventListener('message', async (event: MessageEvent) => {
         const data = JSON.parse(event.data.toString());
-        
+
         // 当自动追踪到任何一个新的 Target（如页面跳转、新开标签页、跨域 iframe）时
         if (data.method === "Target.attachedToTarget") {
             const sessionId = data.params.sessionId;
             const targetInfo = data.params.targetInfo;
-            
+
             // 必须包含 iframe，否则无法拦截网页内部嵌套广告或组件的点击
             if (targetInfo.type === 'page' || targetInfo.type === 'iframe') {
                 const entry = activeEnvs.get(id);
                 if (entry) {
                     entry.sessionIds.add(sessionId);
                 }
-                
+
                 await sendCDP(ws, "Runtime.enable", {}, sessionId);
                 await sendCDP(ws, "Page.enable", {}, sessionId);
                 await sendCDP(ws, "Runtime.addBinding", { name: "joiiSync" }, sessionId);
                 await sendCDP(ws, "Page.addScriptToEvaluateOnNewDocument", { source: TRACKING_SCRIPT }, sessionId);
                 await sendCDP(ws, "Runtime.evaluate", { expression: TRACKING_SCRIPT }, sessionId);
-                
+
                 console.log(`[CDP] 环境 ${id} 成功注入脚本到新目标: ${targetInfo.url}`);
-                
+
                 if (entry) {
                     const vpRes = await sendCDP(ws, "Runtime.evaluate", { expression: "({ w: window.innerWidth, h: window.innerHeight })", returnByValue: true }, sessionId);
                     if (vpRes?.result?.value) entry.viewport = vpRes.result.value;
@@ -522,7 +531,7 @@ async function startCDPWatcher(id: string, debugPort: number) {
                 await sendCDP(ws, "Runtime.runIfWaitingForDebugger", {}, sessionId);
             }
         }
-        
+
         // 当 Target 被销毁时清理
         if (data.method === "Target.detachedFromTarget") {
             const sessionId = data.params.sessionId;
@@ -531,7 +540,7 @@ async function startCDPWatcher(id: string, debugPort: number) {
                 entry.sessionIds.delete(sessionId);
             }
         }
-        
+
         // 暴力重注机制 1：无论何时创建新的 JS 上下文（新页面、新 iframe），都强制打入引擎
         if (data.method === "Runtime.executionContextCreated") {
             const sessionId = data.sessionId;
@@ -549,14 +558,14 @@ async function startCDPWatcher(id: string, debugPort: number) {
                 fireCDP(ws, "Runtime.addBinding", { name: "joiiSync" }, sessionId);
                 fireCDP(ws, "Runtime.evaluate", { expression: TRACKING_SCRIPT }, sessionId);
             }
-            if (!data.params.frame.parentId && syncSessions.has(id)) { 
+            if (!data.params.frame.parentId && syncSessions.has(id)) {
                 handleSyncNavigation(id, data.params.frame.url);
             }
         }
 
         // 双通道拦截：1. 标准 Binding
         if (data.method === "Runtime.bindingCalled" && data.params?.name === "joiiSync") {
-            try { 
+            try {
                 const payload = JSON.parse(data.params.payload);
                 if (syncSessions.has(id)) {
                     if (payload.type !== 'mousemove' && payload.type !== 'wheel') {
@@ -567,12 +576,12 @@ async function startCDPWatcher(id: string, debugPort: number) {
                         console.log(`[CDP->Daemon] =======================================`);
                     }
                 }
-                handleSyncEvent(id, payload); 
-            } catch(e) { 
+                handleSyncEvent(id, payload);
+            } catch (e) {
                 console.error("[CDP->Daemon] 解析 Payload 失败", e);
             }
         }
-        
+
         // 双通道拦截：2. console.debug 隐秘通道 (防御 binding 丢失)
         if (data.method === "Runtime.consoleAPICalled" && data.params?.type === "debug") {
             const args = data.params.args;
@@ -591,7 +600,7 @@ async function startCDPWatcher(id: string, debugPort: number) {
                             }
                         }
                         handleSyncEvent(id, payload);
-                    } catch(e) {}
+                    } catch (e) { }
                 }
             }
         }
@@ -636,6 +645,7 @@ try { await killPort(PORT, 'tcp'); } catch (e) { }
 await restoreRunningEnvs();
 
 const server = Bun.serve({
+    hostname: "127.0.0.1",
     port: PORT,
     reusePort: true,
     async fetch(req) {
@@ -656,6 +666,10 @@ const server = Bun.serve({
             "Content-Type": "application/json"
         };
 
+        if (req.method === "GET" && url.pathname === "/health") {
+            return new Response(JSON.stringify({ status: "ok" }), { headers });
+        }
+
         if (req.method === "GET" && url.pathname === "/api/status") {
             // 获取最新绝对存活的环境 ID 列表
             const runningEnvs = await getRunningEnvs();
@@ -666,7 +680,7 @@ const server = Bun.serve({
             try {
                 const { id, cli_args } = await req.json();
                 if (!id || !cli_args) return new Response(JSON.stringify({ success: false, error: '缺少参数' }), { status: 400, headers });
-                
+
                 // 双重校验：内存 + 文件级锁
                 const runningEnvs = await getRunningEnvs();
                 if (runningEnvs.includes(id)) {
@@ -675,7 +689,7 @@ const server = Bun.serve({
 
                 await killChromiumByProfile(id);
                 const debugPort = await allocateDebugPort();
-                
+
                 const cmdArgs: string[] = [`--remote-debugging-port=${debugPort}`];
                 for (const [key, value] of Object.entries(cli_args)) {
                     if (value === "") cmdArgs.push(`${key}`);
@@ -713,7 +727,7 @@ const server = Bun.serve({
                 syncSessions.delete(id);
                 if (entry?.ws) { try { entry.ws.close(); } catch { } }
 
-                killChromiumByProfile(id).catch(() => {});
+                killChromiumByProfile(id).catch(() => { });
                 return new Response(JSON.stringify({ success: true }), { headers });
             } catch (err: any) {
                 return new Response(JSON.stringify({ success: false, error: err.message }), { status: 500, headers });
@@ -726,7 +740,7 @@ const server = Bun.serve({
                 if (!masterId || !followerIds || !Array.isArray(followerIds)) {
                     return new Response(JSON.stringify({ success: false, error: '参数错误' }), { status: 400, headers });
                 }
-                
+
                 const runningEnvs = await getRunningEnvs();
                 if (!runningEnvs.includes(masterId)) {
                     return new Response(JSON.stringify({ success: false, error: '主控环境未运行' }), { status: 400, headers });
@@ -817,5 +831,4 @@ console.log(`============================================`);
 console.log(`🚀 Joii Berry Local Daemon 启动成功`);
 console.log(`📡 监听端口: http://localhost:${server.port}`);
 console.log(`🚀 文件级 PID 状态锁挂载: ${RUN_DIR}`);
-console.log(`🔗 零阻塞稳定调度 + 精准状态感知`);
 console.log(`============================================`);

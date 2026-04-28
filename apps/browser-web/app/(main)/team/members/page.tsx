@@ -48,7 +48,7 @@ const memberSchema = z.object({
   password: z.string().min(6, "初始密码至少6位"),
   roleId: z.string().min(1, "请选择角色"),
   groupId: z.string().optional(),
-  browserLimit: z.number().min(0).default(0),
+  browserLimit: z.number().min(0),
 })
 
 export default function MembersPage() {

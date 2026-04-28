@@ -29,7 +29,7 @@ export default function SyncPage() {
     try {
       const [envsRes, statusRes] = await Promise.all([
         cloudFetch("/api/environments"),
-        fetch("http://localhost:4003/api/status").catch(() => null)
+        fetch(`${process.env.NEXT_PUBLIC_LOCAL_DAEMON_URL}/api/status`).catch(() => null)
       ])
       
       if (envsRes.ok) {
@@ -59,7 +59,7 @@ export default function SyncPage() {
     // 轮询状态
     const timer = setInterval(() => {
       if (!syncing) {
-        fetch("http://localhost:4003/api/status")
+        fetch(`${process.env.NEXT_PUBLIC_LOCAL_DAEMON_URL}/api/status`)
           .then(res => res.json())
           .then(data => {
              if(data.success) setRunningIds(data.runningEnvs || [])
@@ -77,7 +77,7 @@ export default function SyncPage() {
     if (followerIds.length === 0) return toast.error("请选择至少一个被控环境")
     
     try {
-      const res = await fetch("http://localhost:4003/api/sync/start", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_LOCAL_DAEMON_URL}/api/sync/start`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ masterId, followerIds })
@@ -96,7 +96,7 @@ export default function SyncPage() {
 
   const handleStopSync = async () => {
     try {
-      const res = await fetch("http://localhost:4003/api/sync/stop", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_LOCAL_DAEMON_URL}/api/sync/stop`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ masterId })

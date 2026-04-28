@@ -5,7 +5,8 @@
   "private": true,
   "scripts": {
     "dev": "bun run --watch index.ts",
-    "start": "bun run index.ts"
+    "start": "bun run index.ts",
+    "build": "bun build ./index.ts --compile --outfile=jbrowser-server"
   },
   "devDependencies": {
     "@types/bun": "latest",

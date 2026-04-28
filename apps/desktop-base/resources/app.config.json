@@ -1,6 +1,6 @@
 {
-  "appName": "MyApp",
-  "appId": "com.myapp.desktop",
+  "appName": "浆果浏览器",
+  "appId": "cc.joii.browser",
   "window": {
     "width": 1280,
     "height": 800,
@@ -16,8 +16,8 @@
   "servers": [
     {
       "id": "api",
-      "resource": "api",
-      "port": 26318,
+      "resource": "jbrowser-server",
+      "port": 4003,
       "healthPath": "/health",
       "startupTimeoutMs": 15000,
       "autoStart": true,

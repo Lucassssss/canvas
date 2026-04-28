@@ -44,7 +44,11 @@ export class ServerManager {
     if (!instance) throw new Error(`Unknown server: ${id}`)
     if (instance.status === 'running' || instance.status === 'starting') return
 
-    const binaryPath = this.resourceManager.getResourcePath(instance.config.resource)
+    let binaryPath = this.resourceManager.getResourcePath(instance.config.resource)
+    if (process.platform === 'win32' && !binaryPath.endsWith('.exe')) {
+      binaryPath += '.exe'
+    }
+    
     instance.status = 'starting'
     instance.stopping = false
 

@@ -37,6 +37,7 @@ export function createWindow(config: AppConfig): BrowserWindow {
   } else {
     log.info('[Window] Prod mode → loading app://web/index.html')
     mainWindow.loadURL('app://web/index.html')
+    mainWindow.webContents.openDevTools()
   }
 
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {

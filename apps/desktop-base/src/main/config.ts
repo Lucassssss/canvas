@@ -56,6 +56,11 @@ export function loadConfig(): AppConfig {
 
   const raw = fs.readFileSync(configPath, 'utf-8')
   cachedConfig = JSON.parse(raw) as AppConfig
+  
+  if (app.isPackaged) {
+    cachedConfig.dev.enabled = false
+  }
+  
   return cachedConfig
 }
 
