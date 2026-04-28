@@ -27,8 +27,9 @@
     }
   ],
   "update": {
-    "enabled": false,
-    "manifestUrl": "https://cdn.example.com/manifest.json",
+    "enabled": true,
+    "webManifestUrl": "https://d-assets-cn.joii.cc/a1-joii-browser/web/manifest.json",
+    "binManifestUrl": "",
     "checkIntervalMs": 3600000
   }
 }

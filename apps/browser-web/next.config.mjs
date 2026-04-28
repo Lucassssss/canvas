@@ -7,10 +7,10 @@ const nextConfig = {
     images: {
         unoptimized: true,
     },
-    trailingSlash: true,
-    turbopack: {
-        root: path.resolve(process.cwd(), '../../'),
-    },
+    // trailingSlash: true,
+    // turbopack: {
+    //     root: path.resolve(process.cwd(), '../../'),
+    // },
 }
 
 export default nextConfig

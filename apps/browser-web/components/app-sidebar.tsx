@@ -8,7 +8,6 @@ import { usePathname } from "next/navigation"
 import logoRound from "@/images/joii_berry_logo_round.svg"
 import logoWithText from "@/images/joii_berry_logo_withtext.svg"
 
-import { NavUser } from "@/components/nav-user"
 import { ButtonGroup } from "@/components/ui/button-group"
 import {
   Sidebar,
@@ -67,12 +66,6 @@ const teamNavItems = [
   { title: "访问控制", shortTitle: "访问", url: "/team/access-control", icon: RiShieldKeyholeLine },
   { title: "全局设置", shortTitle: "设置", url: "/settings", icon: RiSettings4Line },
 ]
-
-const user = {
-  name: "Admin Boss",
-  email: "admin@joiiberry.com",
-  avatar: "",
-}
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname()
@@ -251,9 +244,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarGroup>
 
       </SidebarContent>
-      <SidebarFooter>
-        <NavUser user={user} />
-      </SidebarFooter>
     </Sidebar>
   )
 }
