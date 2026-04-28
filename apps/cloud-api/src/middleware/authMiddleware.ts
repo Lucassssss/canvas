@@ -27,7 +27,7 @@ export const requireAuth = async (req: Request, res: Response, next: NextFunctio
     }
 
     const token = authHeader.split(" ")[1];
-    
+
     let decoded: any;
     try {
       decoded = jwt.verify(token, JWT_SECRET);
@@ -66,6 +66,7 @@ export const requireAuth = async (req: Request, res: Response, next: NextFunctio
     next();
 
   } catch (error: any) {
+    console.error("认证系统内部错误", error);
     res.status(500).json({ success: false, error: "认证系统内部错误" });
   }
 };

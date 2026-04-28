@@ -8,13 +8,26 @@ export default function AppsPage() {
 
   React.useEffect(() => {
     async function fetchTicket() {
+      // Create a cache key tied to the current user's token (to handle account switching safely)
+      const currentToken = localStorage.getItem('auth_token') || 'none';
+      const cacheKey = `joii_sso_time_${currentToken.slice(-15)}`;
+      const lastSsoTime = localStorage.getItem(cacheKey);
+      const now = Date.now();
+      const TWELVE_HOURS = 12 * 60 * 60 * 1000;
+      
+      // If we performed SSO recently for this user, skip fetching the ticket
+      if (lastSsoTime && now - parseInt(lastSsoTime) < TWELVE_HOURS) {
+        setSsoToken(""); 
+        return;
+      }
+
       try {
         const res = await cloudFetch('/api/auth/sso-ticket');
         const data = await res.json();
         if (data.success && data.data.ticket) {
           setSsoToken(data.data.ticket);
+          localStorage.setItem(cacheKey, now.toString());
         } else {
-          // If fetching fails or no ticket, just show without token
           setSsoToken("");
         }
       } catch (err) {
@@ -23,9 +36,8 @@ export default function AppsPage() {
     }
     fetchTicket();
   }, []);
+  const iframeSrc = ssoToken ? `https://joii.cc/dashboard?sso_token=${ssoToken}` : ssoToken === "" ? "https://joii.cc/dashboard" : undefined;
 
-  const iframeSrc = ssoToken ? `https://joii.cc/?sso_token=${ssoToken}` : ssoToken === "" ? "https://joii.cc/" : undefined;
-  debugger
   return (
     <>
       <PageHeader breadcrumb={[{ label: "核心业务" }, { label: "素材中心" }]} />

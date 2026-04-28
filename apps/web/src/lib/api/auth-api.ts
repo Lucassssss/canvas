@@ -42,6 +42,10 @@ export const authApi = {
     return apiClient.post('/api/auth/logout')
   },
 
+  async ssoLogin(token: string): Promise<LoginResponse> {
+    return apiClient.post('/api/auth/sso-login', { token })
+  },
+
   async getCurrentUser(): Promise<User | null> {
     try {
       return await apiClient.get<User>('/api/auth/me')

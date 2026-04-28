@@ -52,20 +52,20 @@ export async function blacklistToken(jti: string, expiresAt: Date): Promise<void
 }
 
 export function setAuthCookies(res: Response, token: string, refreshToken: string): void {
-  const isProd = process.env.NODE_ENV === 'production'
-  
+  // Always use secure: true and sameSite: 'none' to support iframe embedding (SSO)
+  // regardless of NODE_ENV, as SameSite=None requires Secure.
   res.cookie(TOKEN_COOKIE_NAME, token, {
     httpOnly: true,
-    secure: isProd,
-    sameSite: 'lax',
+    secure: true,
+    sameSite: 'none',
     maxAge: 7 * 24 * 60 * 60 * 1000,
     path: '/',
   })
   
   res.cookie(REFRESH_TOKEN_COOKIE_NAME, refreshToken, {
     httpOnly: true,
-    secure: isProd,
-    sameSite: 'lax',
+    secure: true,
+    sameSite: 'none',
     maxAge: 30 * 24 * 60 * 60 * 1000,
     path: '/',
   })
@@ -74,11 +74,15 @@ export function setAuthCookies(res: Response, token: string, refreshToken: strin
 export function clearAuthCookies(res: Response): void {
   res.cookie(TOKEN_COOKIE_NAME, '', {
     httpOnly: true,
+    secure: true,
+    sameSite: 'none',
     maxAge: 0,
     path: '/',
   })
   res.cookie(REFRESH_TOKEN_COOKIE_NAME, '', {
     httpOnly: true,
+    secure: true,
+    sameSite: 'none',
     maxAge: 0,
     path: '/',
   })
