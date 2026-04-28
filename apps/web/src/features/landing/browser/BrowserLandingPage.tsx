@@ -1,6 +1,7 @@
 import React from 'react'
 import { BrowserNavbar } from './components/BrowserNavbar'
 import { BrowserHero } from './components/BrowserHero'
+import { BrowserShowcase } from './components/BrowserShowcase'
 import { BrowserFeatures } from './components/BrowserFeatures'
 import { BrowserSocialProof } from './components/BrowserSocialProof'
 import { BrowserContact } from './components/BrowserContact'
@@ -13,6 +14,7 @@ export function BrowserLandingPage() {
       
       <main className="w-full pt-16 md:pt-20">
         <BrowserHero />
+        <BrowserShowcase />
         <BrowserFeatures />
         <BrowserSocialProof />
         <BrowserContact />

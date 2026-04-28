@@ -43,14 +43,14 @@ function HeaderActions() {
           >
             <Avatar className="h-5 w-5">
               <AvatarImage src="" alt="Avatar" />
-              <AvatarFallback className="text-[8px] bg-primary font-bold text-white">王</AvatarFallback>
+              <AvatarFallback className="text-[8px] bg-primary font-bold text-white">L</AvatarFallback>
             </Avatar>
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-40 mt-1">
           <DropdownMenuItem className="cursor-pointer">
             <Avatar className="h-5 w-5 mr-2">
-              <AvatarFallback className="text-[8px] bg-primary font-bold text-white">王</AvatarFallback>
+              <AvatarFallback className="text-[8px] bg-primary font-bold text-white">L</AvatarFallback>
             </Avatar>
             个人资料
           </DropdownMenuItem>
