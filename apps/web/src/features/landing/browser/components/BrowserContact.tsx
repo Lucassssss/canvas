@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState } from 'react'
-import { ArrowRight, ShieldCheck, CheckCircle2, Loader2 } from 'lucide-react'
+import { ArrowRight, ShieldCheck, CheckCircle2, Loader2, ChevronDown } from 'lucide-react'
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
 
 export function BrowserContact() {
@@ -59,9 +59,9 @@ export function BrowserContact() {
   }
 
   return (
-    <section id="contact" className="py-24 md:py-32 bg-white text-neutral-950 border-t border-neutral-200">
+    <section id="contact" className="py-16 md:py-24 lg:py-32 bg-white text-neutral-950 border-t border-neutral-200">
       <div className="max-w-[1600px] mx-auto px-6 md:px-12">
-        <div className="grid grid-cols-12 gap-12 lg:gap-24 items-start">
+        <div className="flex flex-col lg:grid lg:grid-cols-12 gap-12 lg:gap-24 items-start">
 
           {/* 左侧文字区：编辑排版风格 */}
           <div className="col-span-12 lg:col-span-6">
@@ -69,18 +69,18 @@ export function BrowserContact() {
               专属咨询服务
             </div>
 
-            <h2 className="font-serif-display text-5xl md:text-6xl lg:text-7xl mb-8 tracking-tight leading-[1.1]">
-              定制您的<br />
-              <span className="font-sans-zh font-extralight text-neutral-400">专属</span><br />
+            <h2 className="font-serif-display text-4xl sm:text-5xl md:text-6xl lg:text-7xl mb-6 md:mb-8 tracking-tight leading-[1.1]">
+              定制您的<br className="hidden md:block" />
+              <span className="font-sans-zh font-extralight text-neutral-400">专属</span><br className="hidden md:block" />
               防关联方案
             </h2>
 
-            <p className="font-sans-zh text-lg text-neutral-500 max-w-md leading-relaxed mb-12">
+            <p className="font-sans-zh text-base md:text-lg text-neutral-500 max-w-md leading-relaxed mb-8 md:mb-12">
               不要让一次环境风控，毁掉半年的运营心血。留下联系方式，我们的安全出海专家将在 24 小时内为您提供 1对1 架构指导。
             </p>
 
             {/* 信任状数据统计 */}
-            <div className="flex items-center gap-12 pt-10 border-t border-neutral-200">
+            <div className="grid grid-cols-2 gap-6 pt-8 md:pt-10 border-t border-neutral-200">
               <div>
                 <div className="font-serif-display text-3xl md:text-4xl text-neutral-950 mb-2">100%</div>
                 <div className="font-sans-zh text-xs text-neutral-400 tracking-wider">物理级环境隔离</div>
@@ -93,11 +93,11 @@ export function BrowserContact() {
           </div>
 
           {/* 右侧表单区：极简框线风格 */}
-          <div className="col-span-12 lg:col-span-5 lg:col-start-8">
-            <div className="bg-neutral-50 p-8 md:p-12 border border-neutral-200">
-              <form className="space-y-8" onSubmit={handleSubmit}>
+          <div className="col-span-12 lg:col-span-5 lg:col-start-8 lg:mt-12 w-full">
+            <div className="lg:bg-neutral-50 lg:p-12 lg:border lg:border-neutral-200">
+              <form className="space-y-6 md:space-y-8" onSubmit={handleSubmit}>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
                   <div className="space-y-2">
                     <label className="font-sans-zh text-xs font-medium text-neutral-500 uppercase tracking-widest">称呼<span className="text-red-500 ml-1">*</span></label>
                     <input
@@ -124,17 +124,20 @@ export function BrowserContact() {
 
                 <div className="space-y-2">
                   <label className="font-sans-zh text-xs font-medium text-neutral-500 uppercase tracking-widest">团队规模<span className="text-red-500 ml-1">*</span></label>
-                  <select
-                    name="teamSize"
-                    value={formData.teamSize}
-                    onChange={handleChange}
-                    className="w-full h-10 bg-transparent border-b border-neutral-300 focus:border-neutral-950 outline-none transition-colors font-sans-zh text-sm text-neutral-900 px-0 rounded-none appearance-none cursor-pointer"
-                  >
-                    <option value="" disabled hidden>请选择</option>
-                    <option value="1-10">1-10人团队</option>
-                    <option value="11-50">11-50人团队</option>
-                    <option value="50+">50人以上大卖团队</option>
-                  </select>
+                  <div className="relative">
+                    <select
+                      name="teamSize"
+                      value={formData.teamSize}
+                      onChange={handleChange}
+                      className="w-full h-10 bg-transparent border-b border-neutral-300 focus:border-neutral-950 outline-none transition-colors font-sans-zh text-sm text-neutral-900 px-0 rounded-none appearance-none cursor-pointer relative z-10"
+                    >
+                      <option value="" disabled hidden>请选择</option>
+                      <option value="1-10">1-10人团队</option>
+                      <option value="11-50">11-50人团队</option>
+                      <option value="50+">50人以上大卖团队</option>
+                    </select>
+                    <ChevronDown className="absolute right-0 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400 z-0" />
+                  </div>
                 </div>
 
                 <div className="space-y-2">
@@ -184,8 +187,8 @@ export function BrowserContact() {
                     )}
                   </button>
 
-                  <div className="mt-6 flex items-center justify-center gap-2 text-xs text-neutral-400 font-sans-zh">
-                    <ShieldCheck className="w-4 h-4 text-emerald-500" />
+                  <div className="mt-4 md:mt-6 flex flex-col sm:flex-row items-center justify-center gap-2 text-xs text-neutral-400 font-sans-zh text-center">
+                    <ShieldCheck className="w-4 h-4 text-emerald-500 flex-shrink-0" />
                     <span>信息已采取端到端加密，我们将严格保密您的团队数据</span>
                   </div>
                 </div>

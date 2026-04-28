@@ -59,7 +59,7 @@ export function BrowserFeatures() {
           </h2>
         </div>
 
-        <div className="grid grid-cols-12 gap-6">
+        <div className="flex flex-col md:grid md:grid-cols-12 gap-6">
           {features.map((feature, idx) => (
             <div 
               key={idx} 
