@@ -105,6 +105,26 @@ export const MODEL_CONFIGS: ModelConfig[] = [
 
   // ==================== OpenRouter ====================
   {
+    id: "openrouter-gpt-5.4-image-2",
+    name: "GPT-5.4 Image 2",
+    provider: "OpenRouter",
+    providerId: "openrouter",
+    registryProviderId: "openrouter-gemini",
+    modelId: "openai/gpt-5.4-image-2",
+    description: "OpenAI GPT-5.4 Image 2，结合 GPT-5.4 推理能力与 GPT Image 2 图像生成，支持多模态工作流",
+    capabilities: {
+      maxImages: 10,
+      resolutions: ["1K", "2K", "4K"],
+      aspectRatios: ["1:1", "2:3", "3:2", "3:4", "4:3", "4:5", "5:4", "9:16", "16:9"],
+      modalities: ["image", "text"],
+      async: false,
+      stream: false,
+    },
+    pricing: { low: 0.2, high: 0.5 },
+    enabled: true,
+    tags: ["高质量", "多模态"],
+  },
+  {
     id: "openrouter-gemini-3-flash-preview",
     name: "Nano Banana 2",
     provider: "OpenRouter",

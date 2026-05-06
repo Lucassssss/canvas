@@ -70,7 +70,7 @@ export class OpenRouterProvider implements GenerationProvider {
           "Content-Type": "application/json",
           Authorization: `Bearer ${apiKey}`,
           "HTTP-Referer": process.env.SITE_URL || "http://localhost:3001",
-          "X-Title": "Joii Canvas",
+          "X-Title": "Joii",
         },
         body: JSON.stringify(requestBody),
       });
