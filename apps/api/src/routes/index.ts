@@ -4,7 +4,7 @@ import { runChat } from "../services/llm.js";
 import { imageGenerationService, s3UploadService } from "../services/image/index.js";
 import { sendVerificationCode } from "../services/sms/index.js";
 import { loginWithCode } from "../services/auth/index.js";
-import { consumeCredits, getPricingInfo, checkCredits } from "../services/credits/index.js";
+import { consumeCredits, getPricingInfo, checkCredits, calculateCredits } from "../services/credits/index.js";
 import {
   getConversation,
   getConversations,
@@ -80,14 +80,14 @@ function validateCode(code: unknown): { valid: boolean; error?: string } {
 
 router.post("/api/auth/send-code", asyncHandler(async (req: Request, res: Response) => {
   const { phone } = req.body
-  
+
   const validation = validatePhone(phone)
   if (!validation.valid) {
     return res.status(400).json({ success: false, message: validation.error })
   }
-  
+
   const result = await sendVerificationCode(phone)
-  
+
   if (result.success) {
     res.json(result)
   } else {
@@ -97,19 +97,19 @@ router.post("/api/auth/send-code", asyncHandler(async (req: Request, res: Respon
 
 router.post("/api/auth/verify-code", asyncHandler(async (req: Request, res: Response) => {
   const { phone, code } = req.body
-  
+
   const phoneValidation = validatePhone(phone)
   if (!phoneValidation.valid) {
     return res.status(400).json({ success: false, error: phoneValidation.error })
   }
-  
+
   const codeValidation = validateCode(code)
   if (!codeValidation.valid) {
     return res.status(400).json({ success: false, error: codeValidation.error })
   }
-  
+
   const result = await loginWithCode(phone, code)
-  
+
   if (result.success) {
     setAuthCookies(res, result.token!, result.refreshToken!)
     res.json({ success: true, user: result.user })
@@ -141,11 +141,11 @@ router.post("/api/image/generate", authMiddleware, async (req, res) => {
     }
 
     const modelId = settings?.model || 'openrouter-gemini-2-5-flash'
-    
+
     const creditCheck = await checkCredits(userId, modelId)
     if (!creditCheck.sufficient) {
-      return res.status(402).json({ 
-        success: false, 
+      return res.status(402).json({
+        success: false,
         error: '积分不足',
         required: creditCheck.required,
         current: creditCheck.current
@@ -153,7 +153,7 @@ router.post("/api/image/generate", authMiddleware, async (req, res) => {
     }
 
     let inputImages = images || []
-    
+
     if (slotContents && typeof slotContents === 'object') {
       const extractedImages: string[] = []
       for (const slotId of Object.keys(slotContents)) {
@@ -181,8 +181,8 @@ router.post("/api/image/generate", authMiddleware, async (req, res) => {
         modelId,
         'image_generate',
         '图片生成',
-        { 
-          combinationTypeId, 
+        {
+          combinationTypeId,
           resolution: settings?.resolution,
           aspectRatio: settings?.aspectRatio,
           imageCount: result.images.length,
@@ -352,13 +352,13 @@ router.post("/api/chat", authMiddleware, async (req, res) => {
     res.setHeader("Content-Type", "text/event-stream");
     res.setHeader("Cache-Control", "no-cache");
     res.setHeader("Connection", "keep-alive");
-    
+
     const defaultModel = process.env.DEFAULT_MODEL;
 
-    const { 
-      conversationId, 
-      messages, 
-      mode = "agent", 
+    const {
+      conversationId,
+      messages,
+      mode = "agent",
       model,
     } = req.body;
 
@@ -366,8 +366,8 @@ router.post("/api/chat", authMiddleware, async (req, res) => {
 
     const creditCheck = await checkCredits(userId, modelName)
     if (!creditCheck.sufficient) {
-      res.write(`data: ${JSON.stringify({ 
-        type: "error", 
+      res.write(`data: ${JSON.stringify({
+        type: "error",
         error: '积分不足',
         required: creditCheck.required,
         current: creditCheck.current
@@ -409,12 +409,12 @@ router.post("/api/chat", authMiddleware, async (req, res) => {
 
     try {
       let lastAssistantContent = "";
-      
+
       await runChat(
-        allMessages, 
-        modelName, 
-        res, 
-        currentConversationId, 
+        allMessages,
+        modelName,
+        res,
+        currentConversationId,
         mode,
         (content, isComplete) => {
           if (isComplete) {
@@ -431,7 +431,7 @@ router.post("/api/chat", authMiddleware, async (req, res) => {
 
       if (lastAssistantContent) {
         await addMessage(currentConversationId, "assistant", lastAssistantContent);
-        
+
         await consumeCredits(
           userId,
           modelName,
@@ -471,9 +471,15 @@ router.get("/health", (req, res) => {
   res.json({ status: "ok" });
 });
 
-router.get("/models", (req, res) => {
+router.get("/api/models", (req, res) => {
   const stats = getModelStats();
-  const models = getEnabledModels();
+  const rawModels = getEnabledModels();
+
+  const models = rawModels.map(model => {
+    const credits = calculateCredits(model.pricing);
+    const { pricing, ...rest } = model;
+    return { ...rest, credits };
+  });
 
   res.json({
     success: true,

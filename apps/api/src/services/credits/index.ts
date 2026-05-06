@@ -2,7 +2,7 @@ import { db, users, creditTransactions, usageLogs } from '../../db/index.js'
 import { eq, desc } from 'drizzle-orm'
 import { nanoid } from 'nanoid'
 import { getUserById } from '../auth/index.js'
-import { getCreditsForModel, getAllModelPricing } from './rules.js'
+import { getCreditsForModel, getAllModelPricing, calculateCredits } from './rules.js'
 import type { CreditsInfo, CreditTransaction, UsageLog, ConsumeCreditsResponse } from '../../types/auth.js'
 
 export async function getCreditsInfo(userId: string): Promise<CreditsInfo | null> {
@@ -196,3 +196,5 @@ export async function addCredits(
     return null
   }
 }
+
+export { calculateCredits }
