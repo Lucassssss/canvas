@@ -45,6 +45,7 @@ export const ChatModelSelect: React.FC<ChatModelSelectProps> = ({ value, onChang
   const { models, loading } = useChatModels()
 
   const groupedModels = useMemo(() => groupModelsByProvider(models), [models])
+  console.log(groupedModels)
 
   const selectedModel = useMemo(() => {
     return models.find((m) => m.id === value)
@@ -72,10 +73,10 @@ export const ChatModelSelect: React.FC<ChatModelSelectProps> = ({ value, onChang
         <SelectValue>
           {selectedModel ? (
             <span className="flex items-center gap-1.5">
-              <img 
-                src={getModelIcon(selectedModel.provider)} 
-                alt={selectedModel.provider} 
-                className="w-4 h-4" 
+              <img
+                src={getModelIcon(selectedModel.provider)}
+                alt={selectedModel.provider}
+                className="w-4 h-4"
               />
               <span>{selectedModel.name}</span>
             </span>
@@ -92,7 +93,7 @@ export const ChatModelSelect: React.FC<ChatModelSelectProps> = ({ value, onChang
               {provider}
             </SelectLabel>
             {providerModels.map((model) => (
-              <SelectItem key={model.id} value={model.id}>
+              < SelectItem key={model.id} value={model.id} >
                 <span className="flex items-center gap-2">
                   <span className="text-[10px] bg-gray-100 text-gray-500 px-1 rounded shrink-0">
                     {model.credits === 0 ? '免费' : `${model.credits}积分`}
@@ -104,6 +105,6 @@ export const ChatModelSelect: React.FC<ChatModelSelectProps> = ({ value, onChang
           </SelectGroup>
         ))}
       </SelectContent>
-    </Select>
+    </Select >
   )
 }
