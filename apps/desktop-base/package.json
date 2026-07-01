@@ -1,6 +1,6 @@
 {
   "name": "desktop-base",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "description": "Generic Electron desktop shell with hot-updatable web + server resources",
   "main": "dist/main/index.js",
@@ -24,8 +24,9 @@
     "typescript": "^5.7.3"
   },
   "build": {
-    "appId": "com.placeholder.app",
-    "productName": "PlaceholderApp",
+    "appId": "cc.joii.browser",
+    "productName": "JoiiBrowser",
+    "icon": "./resources/joii_berry_logo.png",
     "publish": null,
     "directories": {
       "output": "release"
@@ -58,7 +59,8 @@
     "win": {
       "target": [
         { "target": "nsis", "arch": ["x64"] }
-      ]
+      ],
+      "artifactName": "JoiiBrowserSetup_v${version}.${ext}"
     },
     "linux": {
       "target": [

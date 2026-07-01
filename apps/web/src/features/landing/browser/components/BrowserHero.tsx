@@ -24,13 +24,17 @@ export function BrowserHero() {
 
         {/* 按钮组 */}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-20 w-full">
-          <button className="group inline-flex flex-col items-center justify-center h-16 px-10 bg-[#2B7FFF] text-white font-sans-zh font-medium hover:bg-[#2266cc] transition-all shadow-lg shadow-[#2B7FFF]/20 w-full sm:w-auto rounded-none">
+          <a
+            href="https://d-assets-cn.joii.cc/a1-joii-browser/JoiiBrowserSetup_v1.0.0.exe"
+            download="JoiiBrowserSetup_v1.0.0.exe"
+            className="group inline-flex flex-col items-center justify-center h-16 px-10 bg-[#2B7FFF] text-white font-sans-zh font-medium hover:bg-[#2266cc] transition-all shadow-lg shadow-[#2B7FFF]/20 w-full sm:w-auto rounded-none"
+          >
             <span className="flex items-center gap-2 text-base">
               免费下载客户端
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </span>
             <span className="text-[10px] text-white/70 font-normal mt-0.5 tracking-widest uppercase">无隐形消费 · 3分钟极速上手</span>
-          </button>
+          </a>
           <a href="#contact" className="h-16 px-8 bg-neutral-100 text-neutral-600 font-sans-zh font-medium hover:bg-neutral-200 transition-colors w-full sm:w-auto border border-neutral-200 flex items-center justify-center gap-2">
             <Headset className="w-5 h-5" />
             联系顾问

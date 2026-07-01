@@ -36,9 +36,13 @@ export function BrowserNavbar() {
             <Headset className="w-4 h-4" />
             联系顾问
           </a>
-          <button className="inline-flex items-center gap-2 px-6 py-2.5 bg-[#2B7FFF] text-white font-sans-zh text-sm font-medium hover:bg-[#2266cc] transition-colors shadow-md">
+          <a
+            href="https://d-assets-cn.joii.cc/a1-joii-browser/JoiiBrowserSetup_v1.0.0.exe"
+            download="JoiiBrowserSetup_v1.0.0.exe"
+            className="inline-flex items-center gap-2 px-6 py-2.5 bg-[#2B7FFF] text-white font-sans-zh text-sm font-medium hover:bg-[#2266cc] transition-colors shadow-md"
+          >
             免费下载客户端
-          </button>
+          </a>
         </div>
 
       </div>
