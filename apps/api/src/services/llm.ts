@@ -51,7 +51,7 @@ export const runChat = async (
   }, ...messages];
 
   if(mode === "auto") {
-    const agent = Agent.get(modelName);
+    const agent = Agent.get(modelName, userId);
     result = await agent.stream({
       messages: messages,
     });

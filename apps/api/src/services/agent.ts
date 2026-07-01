@@ -2,32 +2,20 @@ import { ToolLoopAgent } from "ai";
 import { getTools } from "../tools";
 import Model from "./model";
 
-// 模块级缓存：存储 Agent 实例
-const agentCache = new Map<string, ToolLoopAgent>();
-
 export default class Agent {
   private constructor() {} // 禁止外部 new
 
   /**
-   * 获取全局唯一的 Agent 实例
+   * 获取 Agent 实例
    */
-  static get(modelFull: string): ToolLoopAgent {
-    // 1. 命中缓存直接返回
-    if (agentCache.has(modelFull)) {
-      return agentCache.get(modelFull)!;
-    }
-
-    // 2. 获取（或创建）底层模型实例
+  static get(modelFull: string, userId?: string): ToolLoopAgent {
+    // 获取（或创建）底层模型实例
     const modelInstance = Model.create(modelFull);
 
-    // 3. 创建 Agent 实例（只在第一次调用时执行）
-    const newAgent = new ToolLoopAgent({
+    // 创建并返回 Agent 实例
+    return new ToolLoopAgent({
       model: modelInstance,
-      tools: getTools(),
+      tools: getTools(userId),
     });
-
-    // 4. 存入缓存
-    agentCache.set(modelFull, newAgent);
-    return newAgent;
   }
 }
